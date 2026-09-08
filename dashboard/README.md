@@ -1,36 +1,39 @@
 # SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-08T21:57:39+00:00 from 0 gate run(s)._
+_Generated 2026-09-08T23:07:02+00:00 from 1 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 0 |
-| Pass rate | 0% |
+| Gate runs | 1 |
+| Pass rate | 100% |
 | Runs flagged (findings at/above threshold) | 0 (0%) |
 | Runs blocked | 0 (0%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
 | Findings per run | 0.0 |
 | Runs with local client attestation | 0% |
-| Active developers / repositories | 0 / 0 |
+| Active developers / repositories | 1 / 1 |
 | Top finding categories | - |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
+| 2026-09 | 1 | 100% | 0 | 0 | 0 | 0 | 0 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
+| @arijitaich-og1o | 1 | 100% | 0 | 0 | 0/0 | 0 | 0.0 | 0% | - | 2026-09-08 |
 
 ## Repositories
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
+| arijitaich-og1o/hook-demo | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
 
 ### Reading this dashboard
 
