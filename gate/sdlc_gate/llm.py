@@ -22,6 +22,16 @@ import httpx
 from .config import Config
 
 RETRY_STATUSES = {408, 409, 425, 429, 500, 502, 503, 504}
+_KEY_TOKEN = re.compile(r"sk-[A-Za-z0-9_-]{16,}")
+
+
+def normalize_api_key(raw: str) -> str:
+    """Accept a LiteLLM virtual key pasted together with its display name ("Name: sk-...") and keep only the key."""
+    raw = (raw or "").strip()
+    if raw.startswith("sk-"):
+        return raw
+    m = _KEY_TOKEN.search(raw)
+    return m.group(0) if m else raw
 
 
 class LLMError(RuntimeError):
@@ -93,7 +103,7 @@ class LLMClient:
     def from_config(cls, cfg: Config, model: str | None = None, **kwargs: Any) -> "LLMClient":
         llm = cfg.llm
         base_url = os.environ.get(llm.get("base_url_env", "LITELLM_BASE_URL"), "")
-        api_key = os.environ.get(llm.get("api_key_env", "LITELLM_API_KEY"), "")
+        api_key = normalize_api_key(os.environ.get(llm.get("api_key_env", "LITELLM_API_KEY"), ""))
         return cls(
             base_url=base_url,
             api_key=api_key,
