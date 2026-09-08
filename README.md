@@ -3,9 +3,9 @@
 Every change a developer commits, pushes or releases in the organisation passes through one gate. The gate
 reviews the change against the seven phases of the software development life cycle with the organisation's own
 LiteLLM models, blocks it until findings are fixed or explicitly waived with a recorded reason, and keeps a
-scoreboard so we all know how we are doing. It runs from this repository and covers every repository in the
-organisation automatically. There is nothing to add to any project. Developers install the client once on
-their machine and then simply commit and push as usual.
+scoreboard so we all know how we are doing. It is installed once on every developer machine, by IT or with a
+one-click installer, and from then on every commit and push from any IDE or terminal goes through it. There is
+nothing to add to any project.
 
 ![Gate runs](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/badge-runs.svg?raw=true)
 ![Pass rate](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/badge-pass-rate.svg?raw=true)
@@ -40,19 +40,16 @@ Developers are identified by their verified corporate e-mail. See [docs/metrics.
 
 ## Install once, then just work
 
-The gate runs centrally on every pull request and push, whether or not you install anything. Installing the client
-on your machine gives you the same findings before the code leaves your laptop, in any IDE or terminal, and ties
-your work to your verified identity. On company devices IT installs it for you; anywhere else:
+On company devices IT installs the gate for you. On any other machine, download and run the installer for your
+operating system:
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash
-```
+| OS | Installer |
+|---|---|
+| Windows | [install.cmd](client/install.cmd) (double-click) or `irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 \| iex` |
+| macOS | [install.command](client/install.command) (double-click) or `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh \| bash` |
+| Linux / WSL | `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh \| bash` |
 
-```powershell
-irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 | iex
-```
-
-Then, once:
+Requirements: git and Python 3.10+. The installer finishes with two one-time steps (it prompts for them):
 
 ```bash
 sdlc-gate identity login     # one-click Microsoft sign-in; your corporate e-mail becomes your gate identity
@@ -67,16 +64,19 @@ SDLC-Skip: 5
 SDLC-Skip-Reason: Tests are being rewritten in PAY-1432; this commit only moves files and adds no logic.
 ```
 
-Leaked secrets, hard-coded credentials and known-vulnerable dependencies can never be waived. Skipping
-deployment or maintenance phases needs a code owner's `sdlc-skip-approved` label. Details:
+Leaked secrets, hard-coded credentials and known-vulnerable dependencies can never be waived. Skips of the
+deployment and maintenance phases are highlighted separately on the dashboard. Details:
 [developer guide](docs/onboarding-developers.md) · [skip policy](docs/skip-policy.md).
 
 ## How enforcement works
 
-This repository watches the whole organisation. Every open pull request and every push to a main or long-lived
-branch gets an `SDLC Gate` status on its commit within minutes, and the organisation ruleset refuses to merge
-without a passing status. No repository can opt out, and there is no file to add or remove in a project. Details in
-[docs/enforcement.md](docs/enforcement.md).
+The gate hooks into git itself on the developer's machine, so it applies to every repository and every tool that
+commits or pushes. It fails closed, requires a verified identity, stamps each passing commit with an attestation,
+and reports every run to the scoreboard. On company devices IT installs it in managed mode, where standard users
+cannot disable it. Details in [docs/enforcement.md](docs/enforcement.md).
+
+**IT roll-out:** push `client/managed/install-managed.ps1` (Windows) or `client/managed/install-managed.sh` (macOS,
+Linux) through Intune, Jamf, SCCM or Ansible as administrator. Developers then only sign in once.
 
 ## Challenging a skill
 
@@ -91,6 +91,6 @@ challenge.
 ## Documentation
 
 - [Developer guide](docs/onboarding-developers.md) · [Skip policy](docs/skip-policy.md)
-- [Central set-up](docs/setup-central-repo.md) · [Repositories](docs/onboarding-repositories.md)
+- [Central set-up](docs/setup-central-repo.md)
 - [Enforcement and identity](docs/enforcement.md) · [Security](SECURITY.md)
 - [Metrics](docs/metrics.md) · [Skill challenge](docs/skill-challenge.md) · [Contributing](CONTRIBUTING.md)

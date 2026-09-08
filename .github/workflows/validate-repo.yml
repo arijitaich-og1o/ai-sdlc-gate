@@ -40,10 +40,10 @@ jobs:
         run: sdlc-gate validate-skills --config gate.config.yaml
 
       - name: Workflow hygiene (pinned actions, least privilege)
-        run: python scripts/check_pinned_actions.py .github/workflows templates
+        run: python scripts/check_pinned_actions.py .github/workflows
 
       - name: No secrets in the repository (trials excluded by design)
-        run: sdlc-gate precheck --config gate.config.yaml --paths gate skills docs client templates scripts README.md SECURITY.md CONTRIBUTING.md CREDITS.md gate.config.yaml
+        run: sdlc-gate precheck --config gate.config.yaml --paths gate skills docs client scripts README.md SECURITY.md CONTRIBUTING.md CREDITS.md gate.config.yaml
 
       - name: Ground truth files are well-formed
         run: python scripts/check_ground_truth.py trials

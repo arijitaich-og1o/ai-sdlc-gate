@@ -15,6 +15,9 @@ dashboard/weekly/        Monday snapshots
 
 A pinned issue **"SDLC Gate — Weekly Report"** mirrors the dashboard every Monday 09:00 IST.
 
+Events are sent from developer machines by the installed gate after every commit and push, using the developer's own
+GitHub credential; this repository's own pull requests are recorded by the Self Gate workflow.
+
 ## Event contents
 
 Compact by design (≤ 60 KB, no full findings text): repository, actor, ref, sha, PR number, run URL, intent and
@@ -35,7 +38,7 @@ token usage and duration.
 | Waived findings | findings neutralised by granted skips |
 | Findings per run | total findings (all severities) ÷ runs |
 | Top categories | most frequent finding categories |
-| Client attested | share of runs whose commits carry the local gate's `SDLC-Gate-Client` trailer |
+| Client attested | share of runs whose commits carry the gate's `SDLC-Gate-Client` trailer |
 
 `Flagged − Blocked` is the number of runs that passed only because of a skip.
 

@@ -75,22 +75,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "known-vulnerable-dependency",
         ],
         "never_skippable_phases": [],
-        "require_approval_for_phases": [6, 7],
+        "require_approval_for_phases": [],
         "approval_label": "sdlc-skip-approved",
     },
     "metrics": {
         "central_repo": "arijitaich-og1o/ai-sdlc-gate",
         "dispatch_event": "sdlc-gate-result",
         "branch": "metrics",
-    },
-    "org_gate": {
-        "owners": [],
-        "exclude_repos": [],
-        "extra_branches": ["develop"],
-        "since_minutes": 120,
-        "max_candidates": 25,
-        "max_pending_minutes": 45,
-        "status_context": "SDLC Gate",
     },
     "identity": {
         "provider": "entra",
@@ -186,9 +177,6 @@ class Config:
     def identity(self) -> dict[str, Any]:
         return self.data.get("identity", {})
 
-    @property
-    def org_gate(self) -> dict[str, Any]:
-        return self.data.get("org_gate", {})
 
     def phase_slug(self, phase: int) -> str:
         return self.phases[int(phase)]["slug"]

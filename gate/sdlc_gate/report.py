@@ -122,7 +122,7 @@ def to_markdown(report: GateReport, cfg=None, compact: bool = False) -> str:
         lines.append("```")
         lines.append("")
         lines.append("Secrets, hard-coded credentials and known-vulnerable dependencies can never be skipped. "
-                     "Skipping deployment or maintenance phases additionally requires the `sdlc-skip-approved` label from a code owner.")
+                     "Skips of the deployment and maintenance phases are highlighted separately on the dashboard.")
     else:
         lines.append("_All required phases satisfied. Findings below the blocking threshold are advisory._")
     return "\n".join(lines)

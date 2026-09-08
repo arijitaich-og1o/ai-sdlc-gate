@@ -22,19 +22,19 @@ SDLC-Skip-Reason: Legacy module is deleted in LEG-201 next sprint; the flagged c
 | Rule | Default |
 |---|---|
 | Minimum reason length | 40 characters |
-| Phases needing code-owner approval label `sdlc-skip-approved` | 6 (Deployment), 7 (Maintenance) |
+| Phases whose skips are highlighted separately on the dashboard | 6 (Deployment), 7 (Maintenance) |
 | Phases that can never be skipped | none |
 | Categories that are never waived, even in a skipped phase | `secret-exposure`, `hardcoded-credential`, `known-vulnerable-dependency`, `gate-manipulation` |
 | Deterministic pre-check findings (secrets, private keys, `.env` files) | never waived |
 
-An invalid skip request (short reason, missing label, unknown phase) is reported in the PR comment and the
+An invalid skip request (short reason, unknown phase) is reported in the PR comment and the
 gate proceeds as if no skip was requested.
 
-## Approval label
+## Deployment and maintenance skips
 
-For phases 6 and 7 a code owner of the repository adds the `sdlc-skip-approved` label to the pull request after
-reading the reason. The label applies to that PR only. Re-running the gate after the label is added applies the
-skip. Pushes without a PR cannot use approved skips; open a PR.
+The gate runs on the developer's machine before a pull request exists, so there is no reviewer in the loop at that
+moment. Skips of phases 6 and 7 are therefore allowed with a reason but are called out separately on the dashboard
+so leads can follow up.
 
 ## What management sees
 

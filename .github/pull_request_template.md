@@ -9,8 +9,7 @@ SDLC-Intent: deploy
 SDLC-Skip: 5
 SDLC-Skip-Reason: <at least 40 characters explaining why, with a ticket reference>
     Waives findings of the listed phases. Skips are always recorded in the organisation metrics.
-    Secrets, credentials and known-vulnerable dependencies can never be waived. Skipping phases 6 or 7
-    additionally requires a code owner to add the `sdlc-skip-approved` label.
+    Secrets, credentials and known-vulnerable dependencies can never be waived.
 -->
 
 ## What and why

@@ -19,7 +19,7 @@ SHA_RE = re.compile(r"@[0-9a-f]{40}(\s|$)")
 DIGEST_RE = re.compile(r"@sha256:[0-9a-f]{64}")
 INJECTION_RE = re.compile(r"\$\{\{\s*github\.event\.(pull_request|issue|comment|review|head_commit|commits)\b[^}]*\}\}")
 LOCAL_PREFIXES = ("./",)
-# First-party reusable workflows from the central repository may be referenced by branch/tag in templates.
+# First-party reusable workflows from this repository may be referenced by branch/tag.
 FIRST_PARTY_PREFIX = "arijitaich-og1o/ai-sdlc-gate/.github/workflows/"
 
 
