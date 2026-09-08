@@ -550,7 +550,9 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     show.add_argument("--quiet", action="store_true", help="print only the e-mail; exit 3 when absent")
     check = isub.add_parser("check", help="exit 0 if an identity exists or none is required yet; 3 if one is required and missing")
     check.add_argument("--strict", action="store_true", help="require an identity whenever the provider is configured (managed mode)")
-    isub.add_parser("logout")
+    logout = isub.add_parser("logout")
+    for sp in (login, show, check, logout):
+        sp.add_argument("--config")
     idp.set_defaults(func=cmd_identity)
 
     at = sub.add_parser("attest", help="append the SDLC-Gate-Client trailer to a commit message (hook use)")
