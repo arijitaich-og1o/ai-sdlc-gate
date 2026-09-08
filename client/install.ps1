@@ -88,7 +88,7 @@ if ($env:LITELLM_API_KEY) {
   if ($LASTEXITCODE -ne 0) { Say "Could not fetch the LiteLLM configuration yet; run 'sdlc-gate configure' after signing in to GitHub (gh auth login)." }
 }
 
-Gate identity show --quiet --config $config 2>$null | Out-Null
+Gate identity check --config $config --strict 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) {
   Say "Signing you in with your Microsoft work account (one-time)"
   Gate identity login --config $config

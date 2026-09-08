@@ -143,7 +143,8 @@ identity:
   tenant: ""            # Directory (tenant) ID of the organisation
   client_id: ""         # Application (client) ID of the "SDLC Gate client" public app registration
   allowed_domains: [og1o.in]
-  # When true, the hooks refuse to commit until the developer has signed in once. Managed installs always require it.
+  # When true, the hooks refuse to commit until the developer has signed in once. Only enforced once tenant and
+  # client_id above are set; managed installs always require it once configured.
   required: true
 
 metrics:
