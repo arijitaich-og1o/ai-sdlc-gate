@@ -82,4 +82,4 @@ if [ -t 0 ] && ! $GATE identity check --config "$CONFIG" --strict >/dev/null 2>&
   say "Signing you in with your Microsoft work account (one-time)"
   $GATE identity login --config "$CONFIG" || say "Identity sign-in skipped; run 'sdlc-gate identity login' later."
 fi
-say "Done. Every commit and push on this machine now runs the SDLC Gate locally; GitHub enforces it centrally."
+say "Done. Every commit and push on this machine now goes through the SDLC Gate."

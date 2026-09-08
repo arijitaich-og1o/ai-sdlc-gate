@@ -40,7 +40,7 @@ jobs:
       HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       BASE_SHA: ${{ github.event.pull_request.base.sha }}
       REPO: ${{ github.repository }}
-      OUT_DIR: ${{ runner.temp }}/challenge
+      OUT_DIR: ${{ github.workspace }}/.challenge-out
     steps:
       - name: Refuse pull requests from forks
         if: github.event.pull_request.head.repo.full_name != github.repository
