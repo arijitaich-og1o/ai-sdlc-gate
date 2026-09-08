@@ -46,7 +46,7 @@ if ! "$GATE" identity show --quiet --config "$CONFIG" >/dev/null 2>&1; then
 fi
 
 if [ -z "${LITELLM_API_KEY:-}" ]; then
-  echo "sdlc-gate: no LiteLLM key configured for this user. Run:  sdlc-gate configure" >&2
+  echo "sdlc-gate: LiteLLM configuration missing. Run:  sdlc-gate configure   (fetches it from the central repository)" >&2
   if [ "$FAIL_CLOSED" = "1" ]; then exit 1; fi
   exit 0
 fi

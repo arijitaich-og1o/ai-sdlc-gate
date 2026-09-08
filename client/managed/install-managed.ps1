@@ -12,7 +12,7 @@
     Machine PATH                      C:\ProgramData\sdlc-gate\bin is prepended so `git` resolves to the shim
     Scheduled task                    daily refresh of skills/policy as SYSTEM
 
-  Each developer then runs `sdlc-gate identity login` (own Entra sign-in) and `sdlc-gate configure` (own LiteLLM key).
+  Each developer then runs `sdlc-gate configure` (LiteLLM key from the central repository) and `sdlc-gate identity login`.
   Limits: local administrators can undo this. The GitHub ruleset is the guarantee; see docs/enforcement.md.
 #>
 [CmdletBinding()]
@@ -110,4 +110,4 @@ $trigger = New-ScheduledTaskTrigger -Daily -At 03:15
 Register-ScheduledTask -TaskName "SDLC Gate refresh" -Action $action -Trigger $trigger -User "SYSTEM" -RunLevel Highest -Force | Out-Null
 
 & (Join-Path $Prefix "bin\sdlc-gate.exe") validate-skills --config (Join-Path $repo "gate.config.yaml")
-Say "Managed install complete at $Prefix. Developers: run 'sdlc-gate identity login' and 'sdlc-gate configure'. Restart terminals/IDEs to pick up PATH."
+Say "Managed install complete at $Prefix. Developers: run 'sdlc-gate configure' and 'sdlc-gate identity login'. Restart terminals/IDEs to pick up PATH."

@@ -7,7 +7,8 @@
   2. installs the `sdlc-gate` CLI for the current user (pipx if available, else pip --user)
   3. installs global git hooks (commit-msg, pre-push) via core.hooksPath. Git for Windows runs hooks with its
      bundled sh, so the same bash hooks work in PowerShell, cmd, VS Code, IntelliJ and any other IDE.
-  4. stores the LiteLLM endpoint + key in %USERPROFILE%\.sdlc-gate\env (user-only ACL)
+  4. fetches the LiteLLM configuration from the central repository's secrets (key broker) into %USERPROFILE%\.sdlc-gate\env
+  5. signs the developer in with their Microsoft work account (one-time)
 
 .EXAMPLE
   irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 | iex
@@ -16,8 +17,7 @@
 param(
   [string]$RepoUrl = $(if ($env:SDLC_GATE_REPO_URL) { $env:SDLC_GATE_REPO_URL } else { "https://github.com/arijitaich-og1o/ai-sdlc-gate.git" }),
   [string]$Ref = $(if ($env:SDLC_GATE_REF) { $env:SDLC_GATE_REF } else { "main" }),
-  [string]$BaseUrl = $(if ($env:LITELLM_BASE_URL) { $env:LITELLM_BASE_URL } else { "https://litellm-dev.dev.aime.osp-fine.de" }),
-  [string]$ApiKey = $env:LITELLM_API_KEY
+  [string]$BaseUrl = $(if ($env:LITELLM_BASE_URL) { $env:LITELLM_BASE_URL } else { "https://litellm-dev.dev.aime.osp-fine.de" })
 )
 
 $ErrorActionPreference = "Stop"
@@ -59,6 +59,7 @@ if (Get-Command pipx -ErrorAction SilentlyContinue) {
     Say "Adding $scripts to the user PATH (restart your terminal/IDE afterwards)"
     $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
     if ($userPath -notlike "*$scripts*") { [Environment]::SetEnvironmentVariable("Path", "$userPath;$scripts", "User") }
+    $env:Path = "$env:Path;$scripts"
   }
 }
 
@@ -71,31 +72,25 @@ $current = git config --global --get core.hooksPath
 if ($current -and $current -ne $hooksPosix) { Say "core.hooksPath was '$current'; replacing it." }
 git config --global core.hooksPath $hooksPosix
 
-$envFile = Join-Path $home_ "env"
-if (-not (Test-Path $envFile) -or $ApiKey) {
-  if (-not $ApiKey) {
-    $secure = Read-Host -AsSecureString "LiteLLM API key (stored in $envFile)"
-    $ApiKey = [Runtime.InteropServices.Marshal]::PtrToStringUni([Runtime.InteropServices.Marshal]::SecureStringToGlobalAllocUnicode($secure))
-  }
-  if ($ApiKey) {
-    $content = "export LITELLM_BASE_URL='$BaseUrl'`nexport LITELLM_API_KEY='$ApiKey'`n"
-    [IO.File]::WriteAllText($envFile, $content)
-    # Restrict the file to the current user.
-    icacls $envFile /inheritance:r /grant:r "$($env:USERNAME):(R,W)" | Out-Null
-    Say "Stored LiteLLM configuration in $envFile"
-  } else {
-    Say "No LiteLLM key provided; local hooks will skip the model review until $envFile exists."
-  }
-}
 Set-Content -Path (Join-Path $home_ ".last-refresh") -Value ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -Encoding ascii
 
+$config = Join-Path $repo "gate.config.yaml"
+function Gate { if (Get-Command sdlc-gate -ErrorAction SilentlyContinue) { & sdlc-gate @args } else { & cmd /c "$py -m sdlc_gate.cli $($args -join ' ')" } }
+
 Say "Verifying"
-if (Get-Command sdlc-gate -ErrorAction SilentlyContinue) {
-  sdlc-gate validate-skills --config (Join-Path $repo "gate.config.yaml")
-  sdlc-gate identity show --quiet --config (Join-Path $repo "gate.config.yaml") 2>$null | Out-Null
-  if ($LASTEXITCODE -ne 0) {
-    Say "Signing you in with your Microsoft work account (one-time)"
-    sdlc-gate identity login --config (Join-Path $repo "gate.config.yaml")
-  }
+Gate validate-skills --config $config
+
+Say "Fetching the LiteLLM configuration from the central repository (uses your GitHub sign-in)"
+if ($env:LITELLM_API_KEY) {
+  Gate configure --config $config --api-key $env:LITELLM_API_KEY --base-url $BaseUrl
+} else {
+  Gate configure --config $config
+  if ($LASTEXITCODE -ne 0) { Say "Could not fetch the LiteLLM configuration yet; run 'sdlc-gate configure' after signing in to GitHub (gh auth login)." }
+}
+
+Gate identity show --quiet --config $config 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  Say "Signing you in with your Microsoft work account (one-time)"
+  Gate identity login --config $config
 }
 Say "Done. Every commit and push on this machine now runs the SDLC Gate locally; GitHub enforces it centrally."

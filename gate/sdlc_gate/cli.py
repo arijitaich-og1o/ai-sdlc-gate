@@ -16,6 +16,7 @@ from .evaluate import evaluate_skill
 from .gitutil import GitError, repo_root
 from . import identity as identity_mod
 from . import ghauth
+from . import keybroker
 from .intent import detect_intent
 from .judge import apply_decision, decision_markdown, judge
 from .llm import LLMClient, LLMError, StaticLLM
@@ -471,29 +472,47 @@ def cmd_attest(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
-def cmd_configure(args: argparse.Namespace) -> int:
-    """Store the developer's LiteLLM endpoint and key in ~/.sdlc-gate/env (user-only permissions)."""
-    import getpass
+def _store_env(base_url: str, key: str) -> Path:
     import stat
 
     home = identity_mod.sdlc_home()
     home.mkdir(parents=True, exist_ok=True)
-    base_url = args.base_url or os.environ.get("LITELLM_BASE_URL") or "https://litellm-dev.dev.aime.osp-fine.de"
-    key = args.api_key or os.environ.get("LITELLM_API_KEY") or ""
-    if not key:
-        if not sys.stdin.isatty():
-            _eprint("no key given; pass --api-key or set LITELLM_API_KEY")
-            return EXIT_FAIL
-        key = getpass.getpass("LiteLLM API key (hidden): ").strip()
-    if not key:
-        return EXIT_FAIL
     env_path = home / "env"
     env_path.write_text(f"export LITELLM_BASE_URL='{base_url}'\nexport LITELLM_API_KEY='{key}'\n", encoding="utf-8")
     try:
         os.chmod(env_path, stat.S_IRUSR | stat.S_IWUSR)
     except OSError:
         pass
-    print(f"stored LiteLLM configuration in {env_path}")
+    return env_path
+
+
+def cmd_configure(args: argparse.Namespace) -> int:
+    """Obtain the LiteLLM configuration and store it in ~/.sdlc-gate/env (user-only permissions).
+
+    By default the configuration is fetched from the central repository's GitHub secrets through the key-broker
+    workflow, using the developer's existing GitHub credential. `--api-key` stores an explicitly given key instead.
+    """
+    cfg = Config.load(args.config)
+    default_url = os.environ.get("LITELLM_BASE_URL") or "https://litellm-dev.dev.aime.osp-fine.de"
+    if args.api_key:
+        path = _store_env(args.base_url or default_url, args.api_key)
+        print(f"stored LiteLLM configuration in {path}")
+        return EXIT_PASS
+    cred = ghauth.find_credential(token_env="SDLC_GATE_GITHUB_TOKEN")
+    if cred is None:
+        _eprint(
+            "No GitHub credential found. Sign in once with `gh auth login`, or push/pull any repository so the git credential "
+            "helper stores your credential, then run `sdlc-gate configure` again."
+        )
+        return EXIT_FAIL
+    repo = args.repo or cfg.metrics["central_repo"]
+    try:
+        llm = keybroker.fetch_config(cred.token, repo, ref=args.ref or "main", out=lambda m: _eprint(f"[sdlc-gate] {m}"))
+    except keybroker.KeyBrokerError as exc:
+        _eprint(f"configure: {exc}")
+        return EXIT_FAIL
+    path = _store_env(llm.base_url or args.base_url or default_url, llm.api_key)
+    print(f"LiteLLM configuration obtained from {repo} and stored in {path}")
     return EXIT_PASS
 
 
@@ -515,8 +534,9 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     at.add_argument("--require-identity", action="store_true"), at.add_argument("--quiet", action="store_true")
     at.set_defaults(func=cmd_attest)
 
-    cf = sub.add_parser("configure", help="store your LiteLLM key for the local hooks")
-    cf.add_argument("--base-url"), cf.add_argument("--api-key")
+    cf = sub.add_parser("configure", help="fetch the LiteLLM configuration from the central repository secrets (or store a given key)")
+    cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker")
+    cf.add_argument("--repo", help="central repository (default from policy)"), cf.add_argument("--ref", help="branch of the central repository (default main)")
     cf.set_defaults(func=cmd_configure)
 
 

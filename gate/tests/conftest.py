@@ -40,6 +40,9 @@ def tmp_repo(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
     repo.mkdir()
     git("init", "-q", "-b", "main", cwd=repo)
+    # Keep the developer's globally installed gate hooks out of the test repository.
+    (tmp_path / "nohooks").mkdir()
+    git("config", "core.hooksPath", str(tmp_path / "nohooks"), cwd=repo)
     git("config", "user.email", "dev@example.com", cwd=repo)
     git("config", "user.name", "Dev", cwd=repo)
     (repo / "README.md").write_text("# demo\n", encoding="utf-8")

@@ -17,13 +17,14 @@ The installer installs the `sdlc-gate` CLI, syncs the skills and policy to `~/.s
 - `sdlc-gate identity login` — a Microsoft sign-in opens in your browser (usually one click because you are
   already signed in for Outlook/Teams). Your verified corporate e-mail becomes your gate identity and your git
   `user.email`. Nothing is read from Outlook, Teams or the browser; only what Microsoft returns after you sign in.
-- `sdlc-gate configure` — stores your LiteLLM key (from the platform team; never commit it) in
-  `~/.sdlc-gate/env`, readable only by you.
+- `sdlc-gate configure` — fetches the LiteLLM configuration from the central repository's secrets using your
+  existing GitHub sign-in and stores it in `~/.sdlc-gate/env`, readable only by you. Nothing to type.
 
 On company-managed devices IT installs the gate system-wide (see [enforcement.md](enforcement.md)); you still run
 the two one-time steps above.
 
-Requirements: git and Python 3.10+. Corporate proxies: set `HTTPS_PROXY` in your shell profile.
+Requirements: git, Python 3.10+, and a GitHub sign-in on the machine (GitHub CLI `gh auth login`, or the credential
+helper that stores your login when you push). Corporate proxies: set `HTTPS_PROXY` in your shell profile.
 
 ## What happens on your machine
 
