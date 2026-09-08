@@ -4,7 +4,8 @@
 # Requirements
 #   - Organisation secrets LITELLM_API_KEY, LITELLM_BASE_URL and SDLC_GATE_TOKEN shared with the repository
 #     (secrets: inherit below forwards them). If your org uses different names, map them explicitly.
-#   - Branch protection / ruleset that requires the "SDLC Gate / SDLC Gate" check (see templates/org-ruleset.json).
+#   - The organisation ruleset requires the "SDLC Gate" commit status; this caller's check ("gate / SDLC Gate") is
+#     recognised by the Organisation Gate, which then skips its own review of the same commit.
 #
 # Pin `@main` to a release tag or commit SHA if your team wants to control when policy updates land.
 name: SDLC Gate

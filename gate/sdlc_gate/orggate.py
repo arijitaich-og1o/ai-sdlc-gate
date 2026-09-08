@@ -18,7 +18,7 @@ from typing import Any, Iterable
 import httpx
 
 STATUS_CONTEXT = "SDLC Gate"
-CHECK_RUN_NAME = "SDLC Gate / SDLC Gate"  # produced by repositories that call the reusable workflow directly
+CHECK_RUN_SUFFIX = "SDLC Gate"  # reusable-workflow callers produce a check named "<caller job> / SDLC Gate"
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
 
@@ -100,12 +100,13 @@ def gate_state(gh: GitHub, repo: str, sha: str, context: str = STATUS_CONTEXT) -
         for st in data.get("statuses") or []:
             if st.get("context") == context:
                 return str(st.get("state"))
-    runs = gh.get(f"/repos/{repo}/commits/{sha}/check-runs", {"check_name": CHECK_RUN_NAME}, ok404=True)
-    if runs and runs.get("total_count"):
-        for run in runs.get("check_runs") or []:
-            if run.get("status") != "completed":
-                return "pending"
-            return "success" if run.get("conclusion") == "success" else "failure"
+    runs = gh.get(f"/repos/{repo}/commits/{sha}/check-runs", {"per_page": 100}, ok404=True)
+    for run in (runs or {}).get("check_runs") or []:
+        if not str(run.get("name") or "").endswith(CHECK_RUN_SUFFIX):
+            continue
+        if run.get("status") != "completed":
+            return "pending"
+        return "success" if run.get("conclusion") == "success" else "failure"
     return None
 
 

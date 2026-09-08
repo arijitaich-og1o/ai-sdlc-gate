@@ -36,7 +36,7 @@ Import [templates/org-ruleset.json](../templates/org-ruleset.json) as an **organ
   Note: the `workflows` rule (GitHub Enterprise) is optional. On any plan the `required_status_checks` rule plus the
   organisation gate in this repository is sufficient and needs nothing in the target repositories.
 - The required status check context is `SDLC Gate` (the commit status posted by the organisation gate). Repositories
-  that also use the optional caller produce a check named `SDLC Gate / SDLC Gate`; the organisation gate recognises it
+  that also use the optional caller produce a check named `gate / SDLC Gate`; the organisation gate recognises it
   and skips the duplicate review.
 - Keep `bypass_actors` empty. If an emergency bypass role is needed, add a single admin team and audit its use.
 
