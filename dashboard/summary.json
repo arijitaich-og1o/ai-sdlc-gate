@@ -1,0 +1,38 @@
+{
+  "developers": {},
+  "events": 0,
+  "generated_at": "2026-09-08T21:57:39+00:00",
+  "months": {},
+  "organisation": {
+    "actors": [],
+    "actors_count": 0,
+    "attested": 0,
+    "attested_rate": 0.0,
+    "block_rate": 0.0,
+    "blocked": 0,
+    "developers_count": 0,
+    "findings": {
+      "blocker": 0,
+      "high": 0,
+      "info": 0,
+      "low": 0,
+      "medium": 0
+    },
+    "findings_per_run": 0.0,
+    "first_seen": null,
+    "flag_rate": 0.0,
+    "flagged": 0,
+    "intents": {},
+    "last_seen": null,
+    "pass_rate": 0.0,
+    "passed": 0,
+    "repos": [],
+    "runs": 0,
+    "skip_rate": 0.0,
+    "skips_granted": 0,
+    "skips_requested": 0,
+    "top_categories": [],
+    "waived_findings": 0
+  },
+  "repositories": {}
+}
