@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="174" viewBox="0 0 940 174" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="940" height="174" rx="10" fill="#0d1117"/>
+<text x="24" y="38" font-size="22" font-weight="700" fill="#e6edf3">SDLC Gate — live scoreboard</text>
+<text x="24" y="62" font-size="12" fill="#8b949e">updated 2026-09-08 21:57 UTC · 0 gate runs · 0 developers · 0 repositories</text>
+<rect x="24" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
+<text x="34" y="96" font-size="12" fill="#8b949e">Pass rate</text>
+<text x="184" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">0%</text>
+<rect x="204" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
+<text x="214" y="96" font-size="12" fill="#8b949e">Blocked</text>
+<text x="364" y="97" font-size="14" font-weight="700" fill="#2ea043" text-anchor="end">0</text>
+<rect x="384" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
+<text x="394" y="96" font-size="12" fill="#8b949e">Skips granted</text>
+<text x="544" y="97" font-size="14" font-weight="700" fill="#2ea043" text-anchor="end">0</text>
+<rect x="564" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
+<text x="574" y="96" font-size="12" fill="#8b949e">Findings / run</text>
+<text x="724" y="97" font-size="14" font-weight="700" fill="#58a6ff" text-anchor="end">0.0</text>
+<rect x="744" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
+<text x="754" y="96" font-size="12" fill="#8b949e">Client attested</text>
+<text x="904" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">0%</text>
+<text x="24" y="136" font-size="12" font-weight="700" fill="#8b949e">Developer</text>
+<text x="470" y="136" font-size="12" font-weight="700" fill="#8b949e">Runs</text>
+<text x="540" y="136" font-size="12" font-weight="700" fill="#8b949e">Pass</text>
+<text x="610" y="136" font-size="12" font-weight="700" fill="#8b949e">Blocked</text>
+<text x="690" y="136" font-size="12" font-weight="700" fill="#8b949e">Skips</text>
+<text x="760" y="136" font-size="12" font-weight="700" fill="#8b949e">Attested</text>
+<text x="850" y="136" font-size="12" font-weight="700" fill="#8b949e">Last run</text>
+<line x1="24" y1="144" x2="916" y2="144" stroke="#30363d"/>
+<text x="24" y="162" font-size="13" fill="#8b949e">No gate runs recorded yet.</text>
+</svg>
