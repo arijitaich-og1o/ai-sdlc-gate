@@ -217,7 +217,7 @@ def test_metrics_event_ingest_and_dashboard(cfg, skills_dir, tmp_path):
     org = summary["organisation"]
     assert org["runs"] == 3 and org["blocked"] == 1 and org["flagged"] == 2
     assert org["skips_requested"] == 1 and org["skips_granted"] == 1
-    dev = summary["developers"]["dev1"]
+    dev = summary["developers"]["@dev1"]
     assert dev["runs"] == 3 and dev["waived_findings"] == 3  # one waived finding per skipped phase
     assert "org/x" in summary["repositories"]
 

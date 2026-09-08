@@ -8,6 +8,8 @@ Branch `metrics` of this repository:
 events/YYYY/MM.jsonl     one event per gate run (append-only, deduplicated by id)
 dashboard/README.md      organisation snapshot, monthly trend, per developer, per repository
 dashboard/summary.json   the same numbers for BI tools
+dashboard/scoreboard.svg live scoreboard embedded in the main README
+dashboard/badge-*.svg    badges embedded in the main README
 dashboard/weekly/        Monday snapshots
 ```
 
@@ -33,8 +35,15 @@ token usage and duration.
 | Waived findings | findings neutralised by granted skips |
 | Findings per run | total findings (all severities) ÷ runs |
 | Top categories | most frequent finding categories |
+| Client attested | share of runs whose commits carry the local gate's `SDLC-Gate-Client` trailer |
 
 `Flagged − Blocked` is the number of runs that passed only because of a skip.
+
+## Identity
+
+Developers are keyed by their **verified corporate e-mail** (from the Entra sign-in carried in the attestation
+trailer); runs without an attestation fall back to the GitHub login. The README scoreboard and the dashboard
+tables use the same key, so a person appears once even when they use several GitHub accounts or machines.
 
 ## Interpreting per-developer numbers
 

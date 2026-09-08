@@ -3,44 +3,49 @@
 The seven skills are the organisation's shared review standard. Anyone may try to improve one; the repository
 decides objectively and credits the contributor. The repository never contains more or fewer than seven skills.
 
-## Procedure
+## How to challenge
 
-1. A developer edits `skills/<NN-phase>/SKILL.md` on a branch of this repository and opens a PR.
-2. `Skill Challenge` refuses forks and PRs touching anything but `skills/*/SKILL.md` (and `CREDITS.md`).
-3. For each changed skill the engine:
-   - loads the **current** skill from the base commit and the **candidate** from the PR head;
-   - validates both (front matter, phase, semver, size, no forbidden instruction patterns);
-   - runs both against `demo_codebase/<phase>/` and matches findings against `GROUND_TRUTH.yaml`:
-     `recall` (planted defects found), `precision` (findings that are planted or judged legitimate),
-     `clarity` (judge rating 0–1); `score = 0.6·recall + 0.25·precision + 0.15·clarity`;
-   - asks the arbiter model (`llm.judge_model`) for `keep_current`, `replace` or `merge` with a rationale and,
-     for merge, a merged body and the list of absorbed sections;
-   - applies **guards**: `replace` needs `candidate ≥ current + min_improvement`; a merged skill must parse and
-     validate; with `challenge.verify_merge` the merged skill is re-evaluated and must not score below the
-     better input, otherwise the better input is used; unknown/failed arbiter output means `keep_current`.
-4. The resolved skill is written to the branch (version bumped), `CREDITS.md` gains a row naming the contributor,
-   decision, version and which parts were used, and a commit prefixed `skill-challenge:` is pushed.
-5. The full comparison (scores, missed defects for each version, rationale, guards) is posted on the PR.
-6. Accepted (`replace`/`merge`): label `challenge:accepted`, auto-merge (squash) enabled; the PR author remains
-   the commit author. Rejected (`keep_current`): label `challenge:rejected`, PR closed with the comparison.
-7. On the resolution commit the workflow re-runs, detects the `skill-challenge:` prefix, verifies the seven
-   skills and does not arbitrate again (no loops, no double spend).
+1. Branch from `main` in this repository (forks are not accepted).
+2. Edit `skills/<NN-phase>/SKILL.md`. Keep the front matter (`name`, `phase`, `description`) and bump `version`.
+   Change nothing else: no new files, no other directories.
+3. Open a pull request. The **Skill Challenge** workflow runs automatically.
+
+## What happens
+
+1. Your candidate is checked structurally: valid front matter, matching phase, semantic version, sensible size,
+   and no text that tries to instruct the gate or the arbiter (that fails validation immediately).
+2. The current skill and your candidate are both validated against the organisation's review benchmark and
+   scored on **coverage** (how much of what should be found is found), **precision** (how much of what is found
+   is real), and **clarity** (how specific and actionable the findings are). The weighted score is
+   `0.6·coverage + 0.25·precision + 0.15·clarity`.
+3. The arbiter model reads both skills and both score sheets and proposes one of:
+   - **keep current** — the candidate is not better, or is noisier;
+   - **replace** — the candidate is clearly better as a whole (it must beat the current score by a margin);
+   - **merge** — specific sections of the candidate improve the current skill; a merged skill is produced,
+     validated and re-scored before it is accepted.
+4. The resolved skill (version bumped) and a row in `CREDITS.md` naming you, the decision and the parts of
+   your work that were used are committed to your branch. The full comparison is posted on the pull request.
+5. Accepted challenges (`replace`, `merge`) get the label `challenge:accepted` and merge automatically once
+   checks pass; you remain the author of the merged commit. Rejected challenges get `challenge:rejected` and are
+   closed with the comparison so you can iterate.
 
 ## Credit
 
-- `replace`: your text becomes the skill; CREDITS.md says `entire skill`; you are the author of the squash
-  commit.
-- `merge`: the arbiter lists which sections of your candidate were absorbed; CREDITS.md records them.
-- `keep_current`: no credit row, but the comparison shows exactly which planted defects you missed or found.
+- **replace**: your text becomes the skill; `CREDITS.md` records `entire skill`.
+- **merge**: `CREDITS.md` lists the sections of your candidate that were absorbed.
+- **keep current**: no credit row, but you get both score sheets.
 
 ## Improving your odds
 
-- Read the ground truth for your phase; the missed-defects list in a rejected challenge is your to-do list.
-- Keep the taxonomy stable; new categories are fine if they are kebab-case and used consistently.
-- Be precise: instruct what *not* to flag. Spurious findings lower precision and the arbiter penalises noise.
-- Do not address the arbiter or the gate in the skill text; forbidden-instruction patterns fail validation.
+- Precision matters as much as coverage. A skill that floods reviewers with speculative findings loses even if
+  it finds more.
+- Say what *not* to flag, not just what to flag.
+- Keep the category taxonomy stable; add categories only in kebab-case and use them consistently.
+- Give the model concrete severity rules and ask for file/line and a concrete fix in every finding.
+- Do not address the arbiter or the gate in the skill text.
 
-## Extending the demo codebase
+## Rules
 
-Planted defects are the benchmark. Adding realistic defects (with fake data only) through a code-owner PR makes
-every future challenge more meaningful. Each defect needs a stable id, file, severity and robust keywords.
+- One challenge per pull request per skill is fine; several skills in one PR are scored independently.
+- The arbiter is the only way skills change. Code owners cannot merge a skill change that bypasses it.
+- Every decision, score sheet and guard is recorded in the workflow run for audit.

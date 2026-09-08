@@ -14,6 +14,7 @@ from .changes import collect_paths, collect_range, collect_staged
 from .config import Config
 from .evaluate import evaluate_skill
 from .gitutil import GitError, repo_root
+from . import identity as identity_mod
 from .intent import detect_intent
 from .judge import apply_decision, decision_markdown, judge
 from .llm import LLMClient, LLMError, StaticLLM
@@ -209,7 +210,7 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
     except LLMError as exc:
         _eprint(f"LLM configuration error: {exc}")
         return EXIT_ERROR
-    ev = evaluate_skill(cfg, llm, skill, Path(args.demo), judge_llm)
+    ev = evaluate_skill(cfg, llm, skill, Path(args.trials), judge_llm)
     out = json.dumps(ev.to_dict(), indent=2)
     _write(args.output, out)
     print(out)
@@ -237,7 +238,7 @@ def cmd_challenge(args: argparse.Namespace) -> int:
         _eprint(f"LLM configuration error: {exc}")
         return EXIT_ERROR
     try:
-        decision = judge(cfg, review_llm, judge_llm, baseline, candidate, Path(args.demo))
+        decision = judge(cfg, review_llm, judge_llm, baseline, candidate, Path(args.trials))
     finally:
         review_llm.close()
         if judge_llm:
@@ -372,9 +373,9 @@ def build_parser() -> argparse.ArgumentParser:
     pc.add_argument("--paths", nargs="+")
     pc.set_defaults(func=cmd_precheck)
 
-    e = sub.add_parser("evaluate", help="score one skill against the demo codebase")
+    e = sub.add_parser("evaluate", help="score one skill against the trials")
     common(e, skills=False)
-    e.add_argument("--skill", required=True), e.add_argument("--demo", required=True), e.add_argument("--phase")
+    e.add_argument("--skill", required=True), e.add_argument("--trials", required=True), e.add_argument("--phase")
     e.add_argument("--output"), e.add_argument("--offline", action="store_true")
     e.set_defaults(func=cmd_evaluate)
 
@@ -382,7 +383,7 @@ def build_parser() -> argparse.ArgumentParser:
     common(c, skills=False)
     c.add_argument("--baseline", required=True, help="path to the current SKILL.md (from the base branch)")
     c.add_argument("--candidate", required=True, help="path to the proposed SKILL.md")
-    c.add_argument("--demo", required=True)
+    c.add_argument("--trials", required=True)
     c.add_argument("--skill-path", help="where to write the resolved skill (usually the candidate path)")
     c.add_argument("--credits", help="CREDITS.md to update")
     c.add_argument("--contributor"), c.add_argument("--pr-number"), c.add_argument("--pr-url")
@@ -404,7 +405,113 @@ def build_parser() -> argparse.ArgumentParser:
     mb = msub.add_parser("build")
     mb.add_argument("--events-dir", required=True), mb.add_argument("--out", required=True)
     mb.set_defaults(func=cmd_metrics_build)
+    _add_client_parsers(sub)
     return p
+
+
+# ----------------------------------------------------------------------------- identity / client
+
+EXIT_IDENTITY_REQUIRED = 3
+
+
+def cmd_identity(args: argparse.Namespace) -> int:
+    cfg = Config.load(args.config)
+    idc = cfg.identity
+    if args.icmd == "show":
+        ident = identity_mod.load_identity()
+        if ident is None or ident.expired:
+            if not args.quiet:
+                _eprint("no verified identity; run `sdlc-gate identity login`")
+            return EXIT_IDENTITY_REQUIRED
+        if args.quiet:
+            print(ident.email)
+        else:
+            print(json.dumps(ident.to_dict(), indent=2))
+        return EXIT_PASS
+    if args.icmd == "logout":
+        print("identity removed" if identity_mod.clear_identity() else "no identity stored")
+        return EXIT_PASS
+    tenant = args.tenant or os.environ.get("SDLC_GATE_ENTRA_TENANT") or idc.get("tenant", "")
+    client_id = args.client_id or os.environ.get("SDLC_GATE_ENTRA_CLIENT_ID") or idc.get("client_id", "")
+    try:
+        ident = identity_mod.device_code_login(
+            tenant, client_id, allowed_domains=list(idc.get("allowed_domains") or []),
+            authority=idc.get("authority") or identity_mod.DEFAULT_AUTHORITY, open_browser=not args.no_browser,
+        )
+    except identity_mod.IdentityError as exc:
+        _eprint(f"identity: {exc}")
+        return EXIT_FAIL
+    path = identity_mod.save_identity(ident)
+    if not args.no_git:
+        identity_mod.configure_git_identity(ident)
+    print(f"signed in as {ident.email}; stored at {path}; git user.email updated")
+    return EXIT_PASS
+
+
+def cmd_attest(args: argparse.Namespace) -> int:
+    """Stamp a commit message with the local gate attestation (called by the commit-msg hook)."""
+    cfg = Config.load(args.config)
+    ident = identity_mod.load_identity()
+    if ident is not None and ident.expired:
+        ident = None
+    required = bool(cfg.identity.get("required")) or args.require_identity
+    if required and ident is None:
+        _eprint("A verified identity is required before committing. Run: sdlc-gate identity login")
+        return EXIT_IDENTITY_REQUIRED
+    line = identity_mod.attestation_line(args.result, __version__, ident)
+    added = identity_mod.append_attestation(Path(args.message_file), line)
+    if not args.quiet:
+        print(line if added else "attestation already present")
+    return EXIT_PASS
+
+
+def cmd_configure(args: argparse.Namespace) -> int:
+    """Store the developer's LiteLLM endpoint and key in ~/.sdlc-gate/env (user-only permissions)."""
+    import getpass
+    import stat
+
+    home = identity_mod.sdlc_home()
+    home.mkdir(parents=True, exist_ok=True)
+    base_url = args.base_url or os.environ.get("LITELLM_BASE_URL") or "https://litellm-dev.dev.aime.osp-fine.de"
+    key = args.api_key or os.environ.get("LITELLM_API_KEY") or ""
+    if not key:
+        if not sys.stdin.isatty():
+            _eprint("no key given; pass --api-key or set LITELLM_API_KEY")
+            return EXIT_FAIL
+        key = getpass.getpass("LiteLLM API key (hidden): ").strip()
+    if not key:
+        return EXIT_FAIL
+    env_path = home / "env"
+    env_path.write_text(f"export LITELLM_BASE_URL='{base_url}'\nexport LITELLM_API_KEY='{key}'\n", encoding="utf-8")
+    try:
+        os.chmod(env_path, stat.S_IRUSR | stat.S_IWUSR)
+    except OSError:
+        pass
+    print(f"stored LiteLLM configuration in {env_path}")
+    return EXIT_PASS
+
+
+def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
+    idp = sub.add_parser("identity", help="verified developer identity (Microsoft Entra ID)")
+    idp.add_argument("--config")
+    isub = idp.add_subparsers(dest="icmd", required=True)
+    login = isub.add_parser("login", help="sign in with the device-code flow and store the verified e-mail")
+    login.add_argument("--tenant"), login.add_argument("--client-id")
+    login.add_argument("--no-browser", action="store_true"), login.add_argument("--no-git", action="store_true", help="do not update git user.email/user.name")
+    show = isub.add_parser("show")
+    show.add_argument("--quiet", action="store_true", help="print only the e-mail; exit 3 when absent")
+    isub.add_parser("logout")
+    idp.set_defaults(func=cmd_identity)
+
+    at = sub.add_parser("attest", help="append the SDLC-Gate-Client trailer to a commit message (hook use)")
+    at.add_argument("--config"), at.add_argument("--message-file", required=True)
+    at.add_argument("--result", choices=["pass", "waived"], default="pass")
+    at.add_argument("--require-identity", action="store_true"), at.add_argument("--quiet", action="store_true")
+    at.set_defaults(func=cmd_attest)
+
+    cf = sub.add_parser("configure", help="store your LiteLLM key for the local hooks")
+    cf.add_argument("--base-url"), cf.add_argument("--api-key")
+    cf.set_defaults(func=cmd_configure)
 
 
 def _utf8_console() -> None:

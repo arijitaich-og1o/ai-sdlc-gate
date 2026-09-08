@@ -26,8 +26,8 @@ def skills_dir() -> Path:
 
 
 @pytest.fixture(scope="session")
-def demo_root() -> Path:
-    return REPO_ROOT / "demo_codebase"
+def trials_root() -> Path:
+    return REPO_ROOT / "trials"
 
 
 def git(*args: str, cwd: Path) -> str:

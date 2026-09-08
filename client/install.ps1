@@ -92,5 +92,10 @@ Set-Content -Path (Join-Path $home_ ".last-refresh") -Value ([DateTimeOffset]::U
 Say "Verifying"
 if (Get-Command sdlc-gate -ErrorAction SilentlyContinue) {
   sdlc-gate validate-skills --config (Join-Path $repo "gate.config.yaml")
+  sdlc-gate identity show --quiet --config (Join-Path $repo "gate.config.yaml") 2>$null | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    Say "Signing you in with your Microsoft work account (one-time)"
+    sdlc-gate identity login --config (Join-Path $repo "gate.config.yaml")
+  }
 }
 Say "Done. Every commit and push on this machine now runs the SDLC Gate locally; GitHub enforces it centrally."

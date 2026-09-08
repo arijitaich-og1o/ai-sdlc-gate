@@ -8,7 +8,7 @@ command and input that reproduces the problem.
 
 ## What the gate protects
 
-- **Integrity of enforcement.** Policy (`gate.config.yaml`), engine (`gate/`), workflows and demo codebase can
+- **Integrity of enforcement.** Policy (`gate.config.yaml`), engine (`gate/`), workflows and benchmark can
   only change through code-owner-reviewed pull requests. Skills change only through the arbiter workflow, which
   itself is code-owned.
 - **Secrets.** LiteLLM credentials and the metrics token exist only as GitHub secrets. The engine reads them

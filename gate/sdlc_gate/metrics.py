@@ -1,11 +1,13 @@
 """Metrics: build compact events from gate reports, ship them to the central repository,
-ingest them on a dedicated branch, and build a management dashboard.
+ingest them on a dedicated branch, and build the management dashboard and README scoreboard.
 
 Event storage layout (on the `metrics` branch of the central repository):
 
-    events/YYYY/MM.jsonl     one JSON object per line, deduplicated by `id`
-    dashboard/README.md      human dashboard (org, per repository, per developer, trends)
-    dashboard/summary.json   machine-readable snapshot for BI tooling
+    events/YYYY/MM.jsonl        one JSON object per line, deduplicated by `id`
+    dashboard/README.md         human dashboard (org, per repository, per developer, trends)
+    dashboard/summary.json      machine-readable snapshot for BI tooling
+    dashboard/scoreboard.svg    live scoreboard embedded in the main README
+    dashboard/badge-*.svg       small badges embedded in the main README
 """
 from __future__ import annotations
 
@@ -16,6 +18,7 @@ from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape
 
 import httpx
 
@@ -27,6 +30,7 @@ MAX_BRIEF = 40
 REQUIRED_EVENT_KEYS = {"schema": int, "id": str, "ts": str, "repo": str, "actor": str, "verdict": str, "intent": str, "phases": list}
 LOGIN_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})(?:\[bot\])?$")
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def build_event(report: GateReport) -> dict[str, Any]:
@@ -52,6 +56,7 @@ def build_event(report: GateReport) -> dict[str, Any]:
         for f in sorted(findings, key=lambda x: -severity_rank(x["severity"]))[:MAX_BRIEF]
     ]
     cats = Counter(f["category"] for f in findings)
+    dev_email = str(ctx.get("developer_email") or ctx.get("author_email") or "").lower()[:200]
     event = {
         "schema": 1,
         "id": str(uuid.uuid4()),
@@ -59,6 +64,9 @@ def build_event(report: GateReport) -> dict[str, Any]:
         "repo": str(ctx.get("repo") or "unknown/unknown"),
         "actor": str(ctx.get("actor") or ctx.get("author_name") or "unknown"),
         "author_email": str(ctx.get("author_email") or "")[:200],
+        "developer_email": dev_email if EMAIL_RE.match(dev_email) else "",
+        "email_verified": bool(ctx.get("email_verified")),
+        "client_attested": bool(ctx.get("client_attested")),
         "ref": str(ctx.get("ref") or "")[:200],
         "sha": str(ctx.get("sha") or report.stats.get("head") or "")[:64],
         "event_name": str(ctx.get("event_name") or "")[:40],
@@ -150,6 +158,9 @@ def validate_event(event: Any) -> list[str]:
         errors.append("`actor` is not a valid GitHub login")
     if event["verdict"] not in ("pass", "fail"):
         errors.append("`verdict` must be pass or fail")
+    dev = event.get("developer_email")
+    if dev and (not isinstance(dev, str) or not EMAIL_RE.match(dev) or len(dev) > 200):
+        errors.append("`developer_email` is not a valid e-mail")
     try:
         datetime.fromisoformat(event["ts"].replace("Z", "+00:00"))
     except ValueError:
@@ -199,6 +210,12 @@ def load_events(events_dir: Path) -> list[dict[str, Any]]:
 
 # ----------------------------------------------------------------------------- dashboard
 
+def developer_key(e: dict[str, Any]) -> str:
+    """Developers are keyed by verified e-mail when available, else by GitHub login."""
+    email = str(e.get("developer_email") or "").lower()
+    return email if EMAIL_RE.match(email) else f"@{e.get('actor', 'unknown')}"
+
+
 def _bucket() -> dict[str, Any]:
     return {
         "runs": 0,
@@ -208,6 +225,7 @@ def _bucket() -> dict[str, Any]:
         "skips_requested": 0,
         "skips_granted": 0,
         "waived_findings": 0,
+        "attested": 0,
         "findings": {s: 0 for s in SEVERITIES},
         "categories": Counter(),
         "intents": Counter(),
@@ -215,6 +233,7 @@ def _bucket() -> dict[str, Any]:
         "last_seen": None,
         "repos": set(),
         "actors": set(),
+        "developers": set(),
     }
 
 
@@ -223,6 +242,7 @@ def _add(b: dict[str, Any], e: dict[str, Any]) -> None:
     b["passed"] += 1 if e["verdict"] == "pass" else 0
     b["flagged"] += 1 if e.get("flagged") else 0
     b["blocked"] += 1 if e.get("blocked") else 0
+    b["attested"] += 1 if e.get("client_attested") else 0
     sk = e.get("skip") or {}
     b["skips_requested"] += 1 if sk.get("requested") else 0
     b["skips_granted"] += 1 if sk.get("valid") else 0
@@ -236,6 +256,7 @@ def _add(b: dict[str, Any], e: dict[str, Any]) -> None:
     b["last_seen"] = max(b["last_seen"] or e["ts"], e["ts"])
     b["repos"].add(e["repo"])
     b["actors"].add(e["actor"])
+    b["developers"].add(developer_key(e))
 
 
 def _finalize(b: dict[str, Any]) -> dict[str, Any]:
@@ -252,6 +273,8 @@ def _finalize(b: dict[str, Any]) -> dict[str, Any]:
         "skips_granted": b["skips_granted"],
         "skip_rate": round(b["skips_granted"] / runs, 3),
         "waived_findings": b["waived_findings"],
+        "attested": b["attested"],
+        "attested_rate": round(b["attested"] / runs, 3),
         "findings": b["findings"],
         "findings_per_run": round(sum(b["findings"].values()) / runs, 2),
         "top_categories": [c for c, _ in b["categories"].most_common(5)],
@@ -259,7 +282,9 @@ def _finalize(b: dict[str, Any]) -> dict[str, Any]:
         "first_seen": b["first_seen"],
         "last_seen": b["last_seen"],
         "repos": sorted(b["repos"]),
+        "actors": sorted(b["actors"]),
         "actors_count": len(b["actors"]),
+        "developers_count": len(b["developers"]),
     }
 
 
@@ -270,7 +295,7 @@ def summarize(events: list[dict[str, Any]]) -> dict[str, Any]:
     by_month: dict[str, dict[str, Any]] = defaultdict(_bucket)
     for e in events:
         _add(org, e)
-        _add(by_dev[e["actor"]], e)
+        _add(by_dev[developer_key(e)], e)
         _add(by_repo[e["repo"]], e)
         _add(by_month[e["ts"][:7]], e)
     return {
@@ -285,6 +310,13 @@ def summarize(events: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _pct(x: float) -> str:
     return f"{x * 100:.0f}%"
+
+
+def _dev_label(key: str, b: dict[str, Any]) -> str:
+    if key.startswith("@"):
+        return key
+    logins = b.get("actors") or []
+    return f"{key} (@{logins[0]})" if len(logins) == 1 else key
 
 
 def dashboard_markdown(summary: dict[str, Any]) -> str:
@@ -305,7 +337,8 @@ def dashboard_markdown(summary: dict[str, Any]) -> str:
     L.append(f"| Skips requested / granted | {org['skips_requested']} / {org['skips_granted']} |")
     L.append(f"| Findings waived via skips | {org['waived_findings']} |")
     L.append(f"| Findings per run | {org['findings_per_run']} |")
-    L.append(f"| Active developers / repositories | {org['actors_count']} / {len(org['repos'])} |")
+    L.append(f"| Runs with local client attestation | {_pct(org['attested_rate'])} |")
+    L.append(f"| Active developers / repositories | {org['developers_count']} / {len(org['repos'])} |")
     L.append(f"| Top finding categories | {', '.join(org['top_categories']) or '-'} |")
     L.append("")
     L.append("## Monthly trend")
@@ -317,12 +350,12 @@ def dashboard_markdown(summary: dict[str, Any]) -> str:
     L.append("")
     L.append("## Developers")
     L.append("")
-    L.append("| Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Top categories | Last seen |")
-    L.append("|---|---|---|---|---|---|---|---|---|---|")
+    L.append("| Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |")
+    L.append("|---|---|---|---|---|---|---|---|---|---|---|")
     for dev, b in sorted(summary["developers"].items(), key=lambda kv: -kv[1]["runs"]):
         L.append(
-            f"| @{dev} | {b['runs']} | {_pct(b['pass_rate'])} | {b['flagged']} | {b['blocked']} | {b['skips_requested']}/{b['skips_granted']} "
-            f"| {b['waived_findings']} | {b['findings_per_run']} | {', '.join(b['top_categories'][:3]) or '-'} | {b['last_seen'][:10]} |"
+            f"| {_dev_label(dev, b)} | {b['runs']} | {_pct(b['pass_rate'])} | {b['flagged']} | {b['blocked']} | {b['skips_requested']}/{b['skips_granted']} "
+            f"| {b['waived_findings']} | {b['findings_per_run']} | {_pct(b['attested_rate'])} | {', '.join(b['top_categories'][:3]) or '-'} | {b['last_seen'][:10]} |"
         )
     L.append("")
     L.append("## Repositories")
@@ -330,21 +363,99 @@ def dashboard_markdown(summary: dict[str, Any]) -> str:
     L.append("| Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |")
     L.append("|---|---|---|---|---|---|---|---|")
     for repo, b in sorted(summary["repositories"].items(), key=lambda kv: -kv[1]["runs"]):
-        L.append(f"| {repo} | {b['runs']} | {_pct(b['pass_rate'])} | {b['blocked']} | {b['skips_granted']} | {b['actors_count']} | {b['findings_per_run']} | {', '.join(b['top_categories'][:3]) or '-'} |")
+        L.append(f"| {repo} | {b['runs']} | {_pct(b['pass_rate'])} | {b['blocked']} | {b['skips_granted']} | {b['developers_count']} | {b['findings_per_run']} | {', '.join(b['top_categories'][:3]) or '-'} |")
     L.append("")
     L.append("### Reading this dashboard")
     L.append("")
     L.append("- **Flagged** counts runs where at least one finding met the blocking threshold, before any skip was applied.")
     L.append("- **Blocked** counts runs that failed the gate. Flagged but not blocked means the developer used a valid skip.")
     L.append("- **Skips requested / granted**: requests that failed validation (short reason, missing approval) are counted as requested only.")
-    L.append("- Per-developer numbers reflect the GitHub account that triggered the run; they are a quality signal, not a performance score on their own.")
+    L.append("- **Client attested**: share of runs whose commits carried the local gate's attestation; low values indicate the local client is not installed or was bypassed.")
+    L.append("- Developers are identified by their verified corporate e-mail when available, otherwise by GitHub login. These numbers are a quality signal, not a performance score on their own.")
     return "\n".join(L) + "\n"
+
+
+# ----------------------------------------------------------------------------- SVG scoreboard & badges
+
+def badge_svg(label: str, value: str, color: str = "#2ea043") -> str:
+    lw = 6 * len(label) + 14
+    vw = 6 * len(value) + 14
+    w = lw + vw
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="20" role="img" aria-label="{escape(label)}: {escape(value)}">'
+        f'<linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>'
+        f'<clipPath id="r"><rect width="{w}" height="20" rx="3" fill="#fff"/></clipPath>'
+        f'<g clip-path="url(#r)"><rect width="{lw}" height="20" fill="#555"/><rect x="{lw}" width="{vw}" height="20" fill="{color}"/><rect width="{w}" height="20" fill="url(#s)"/></g>'
+        f'<g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11">'
+        f'<text x="{lw / 2}" y="14">{escape(label)}</text><text x="{lw + vw / 2}" y="14">{escape(value)}</text></g></svg>'
+    )
+
+
+def _rate_color(rate: float, invert: bool = False) -> str:
+    good, mid = ("#2ea043", "#d4a72c")
+    bad = "#cf222e"
+    if invert:
+        rate = 1 - rate
+    return good if rate >= 0.85 else mid if rate >= 0.6 else bad
+
+
+def scoreboard_svg(summary: dict[str, Any], top: int = 10) -> str:
+    org = summary["organisation"]
+    devs = sorted(summary["developers"].items(), key=lambda kv: (-kv[1]["pass_rate"], -kv[1]["runs"]))[:top]
+    row_h, header_h, width = 26, 118, 940
+    height = header_h + row_h * (len(devs) + 1) + 30
+    L = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" font-family="Segoe UI, Helvetica, Arial, sans-serif">',
+        f'<rect width="{width}" height="{height}" rx="10" fill="#0d1117"/>',
+        '<text x="24" y="38" font-size="22" font-weight="700" fill="#e6edf3">SDLC Gate — live scoreboard</text>',
+        f'<text x="24" y="62" font-size="12" fill="#8b949e">updated {escape(summary["generated_at"][:16].replace("T", " "))} UTC · {summary["events"]} gate runs · {org["developers_count"]} developers · {len(org["repos"])} repositories</text>',
+    ]
+    tiles = [
+        ("Pass rate", _pct(org["pass_rate"]), _rate_color(org["pass_rate"])),
+        ("Blocked", str(org["blocked"]), "#cf222e" if org["blocked"] else "#2ea043"),
+        ("Skips granted", str(org["skips_granted"]), "#d4a72c" if org["skips_granted"] else "#2ea043"),
+        ("Findings / run", str(org["findings_per_run"]), "#58a6ff"),
+        ("Client attested", _pct(org["attested_rate"]), _rate_color(org["attested_rate"])),
+    ]
+    x = 24
+    for label, value, color in tiles:
+        L.append(f'<rect x="{x}" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>')
+        L.append(f'<text x="{x + 10}" y="96" font-size="12" fill="#8b949e">{escape(label)}</text>')
+        L.append(f'<text x="{x + 160}" y="97" font-size="14" font-weight="700" fill="{color}" text-anchor="end">{escape(value)}</text>')
+        x += 180
+    y = header_h + 18
+    cols = [(24, "Developer"), (470, "Runs"), (540, "Pass"), (610, "Blocked"), (690, "Skips"), (760, "Attested"), (850, "Last run")]
+    for cx, name in cols:
+        L.append(f'<text x="{cx}" y="{y}" font-size="12" font-weight="700" fill="#8b949e">{escape(name)}</text>')
+    L.append(f'<line x1="24" y1="{y + 8}" x2="{width - 24}" y2="{y + 8}" stroke="#30363d"/>')
+    for i, (dev, b) in enumerate(devs):
+        y = header_h + 18 + row_h * (i + 1)
+        if i % 2 == 0:
+            L.append(f'<rect x="16" y="{y - 17}" width="{width - 32}" height="{row_h}" fill="#161b22" opacity="0.6"/>')
+        label = _dev_label(dev, b)
+        L.append(f'<text x="24" y="{y}" font-size="13" fill="#e6edf3">{escape(label[:58])}</text>')
+        L.append(f'<text x="470" y="{y}" font-size="13" fill="#e6edf3">{b["runs"]}</text>')
+        L.append(f'<text x="540" y="{y}" font-size="13" font-weight="700" fill="{_rate_color(b["pass_rate"])}">{_pct(b["pass_rate"])}</text>')
+        L.append(f'<text x="610" y="{y}" font-size="13" fill="{"#cf222e" if b["blocked"] else "#e6edf3"}">{b["blocked"]}</text>')
+        L.append(f'<text x="690" y="{y}" font-size="13" fill="#e6edf3">{b["skips_granted"]}/{b["skips_requested"]}</text>')
+        L.append(f'<text x="760" y="{y}" font-size="13" fill="{_rate_color(b["attested_rate"])}">{_pct(b["attested_rate"])}</text>')
+        L.append(f'<text x="850" y="{y}" font-size="12" fill="#8b949e">{escape((b["last_seen"] or "")[:10])}</text>')
+    if not devs:
+        L.append(f'<text x="24" y="{header_h + 18 + row_h}" font-size="13" fill="#8b949e">No gate runs recorded yet.</text>')
+    L.append("</svg>")
+    return "\n".join(L)
 
 
 def build_dashboard(events_dir: Path, out_dir: Path) -> dict[str, Any]:
     events = load_events(events_dir)
     summary = summarize(events)
+    org = summary["organisation"]
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
     (out_dir / "README.md").write_text(dashboard_markdown(summary), encoding="utf-8")
+    (out_dir / "scoreboard.svg").write_text(scoreboard_svg(summary), encoding="utf-8")
+    (out_dir / "badge-pass-rate.svg").write_text(badge_svg("gate pass rate", _pct(org["pass_rate"]), _rate_color(org["pass_rate"])), encoding="utf-8")
+    (out_dir / "badge-runs.svg").write_text(badge_svg("gate runs", str(org["runs"]), "#58a6ff"), encoding="utf-8")
+    (out_dir / "badge-blocked.svg").write_text(badge_svg("blocked", str(org["blocked"]), "#cf222e" if org["blocked"] else "#2ea043"), encoding="utf-8")
+    (out_dir / "badge-skips.svg").write_text(badge_svg("skips granted", str(org["skips_granted"]), "#d4a72c" if org["skips_granted"] else "#2ea043"), encoding="utf-8")
     return summary

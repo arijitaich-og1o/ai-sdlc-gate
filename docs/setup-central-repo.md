@@ -41,7 +41,18 @@ Import [templates/org-ruleset.json](../templates/org-ruleset.json) as an **organ
 For this repository additionally require the checks `Validate Repository / Validate (3.10)`,
 `Validate Repository / Validate (3.12)` and `Skill Challenge / Arbitrate` (the last one only fires on skill PRs).
 
-## 4. First run
+## 4. Identity provider
+
+Register a public client application in Microsoft Entra ID ("SDLC Gate client", *Allow public client flows* on),
+and put its tenant id and client id into `gate.config.yaml` under `identity:` (see
+[enforcement.md](enforcement.md)). Set `identity.required: true` once developers have had a week to sign in.
+
+## 5. Managed client roll-out
+
+Deploy `client/managed/install-managed.ps1` (Windows) / `install-managed.sh` (macOS, Linux, WSL) through
+Intune / Jamf / Ansible as administrator. Standard users then cannot disable or bypass the local gate.
+
+## 6. First run
 
 1. Push this repository. `Validate Repository` and `Self Gate` run on `main`.
 2. Trigger `Metrics Weekly Report` manually once (Actions → workflow_dispatch) to confirm the token works; the
@@ -49,7 +60,7 @@ For this repository additionally require the checks `Validate Repository / Valid
 3. Onboard one pilot repository with the caller template and open a PR containing a fake `AKIA…` string to
    confirm blocking, then a PR with `SDLC-Skip` trailers to confirm waivers and metrics.
 
-## 5. Operating
+## 7. Operating
 
 - Bump the gate version with a tag (`vX.Y.Z`) after meaningful policy or engine changes; repositories that pin
   `gate-ref` upgrade deliberately, others follow `main`.

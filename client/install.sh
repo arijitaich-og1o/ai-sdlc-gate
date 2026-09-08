@@ -82,5 +82,9 @@ date +%s > "$SDLC_HOME/.last-refresh"
 say "Verifying"
 if command -v sdlc-gate >/dev/null 2>&1; then
   sdlc-gate validate-skills --config "$SDLC_HOME/repo/gate.config.yaml"
+  if [ -t 0 ] && ! sdlc-gate identity show --quiet --config "$SDLC_HOME/repo/gate.config.yaml" >/dev/null 2>&1; then
+    say "Signing you in with your Microsoft work account (one-time)"
+    sdlc-gate identity login --config "$SDLC_HOME/repo/gate.config.yaml" || say "Identity sign-in skipped; run 'sdlc-gate identity login' later."
+  fi
 fi
 say "Done. Every commit and push on this machine now runs the SDLC Gate locally; GitHub enforces it centrally."

@@ -135,6 +135,16 @@ skip:
   require_approval_for_phases: [6, 7]
   approval_label: sdlc-skip-approved
 
+# Verified developer identity (Microsoft Entra ID device-code sign-in). See docs/enforcement.md.
+identity:
+  provider: entra
+  authority: https://login.microsoftonline.com
+  tenant: ""            # Directory (tenant) ID of the organisation
+  client_id: ""         # Application (client) ID of the "SDLC Gate client" public app registration
+  allowed_domains: [og1o.in]
+  # When true, local hooks refuse to run a commit until the developer has signed in once. Managed installs always require it.
+  required: false
+
 metrics:
   central_repo: arijitaich-og1o/ai-sdlc-gate
   dispatch_event: sdlc-gate-result
