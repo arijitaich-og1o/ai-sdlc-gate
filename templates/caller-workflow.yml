@@ -1,0 +1,37 @@
+# Copy this file to .github/workflows/sdlc-gate.yml in any repository of Otto Group One.O India.
+# Nothing else is needed: the engine, skills and policy come from the central repository at run time.
+#
+# Requirements
+#   - Organisation secrets LITELLM_API_KEY, LITELLM_BASE_URL and SDLC_GATE_TOKEN shared with the repository
+#     (secrets: inherit below forwards them). If your org uses different names, map them explicitly.
+#   - Branch protection / ruleset that requires the "SDLC Gate / SDLC Gate" check (see templates/org-ruleset.json).
+#
+# Pin `@main` to a release tag or commit SHA if your team wants to control when policy updates land.
+name: SDLC Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - "release/**"
+      - "hotfix/**"
+
+permissions: {}
+
+concurrency:
+  group: sdlc-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    permissions:
+      contents: read
+      pull-requests: write
+    uses: arijitaich-og1o/ai-sdlc-gate/.github/workflows/sdlc-gate.yml@main
+    with:
+      gate-ref: main
+      # intent: deploy        # optional: force phases 3-7 for this workflow (defaults to auto-detection)
+    secrets: inherit

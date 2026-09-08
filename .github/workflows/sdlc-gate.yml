@@ -1,0 +1,224 @@
+# Reusable SDLC Gate. Called by every repository in the organisation (see templates/caller-workflow.yml)
+# and by this repository itself (self-gate.yml). This is the authoritative enforcement point: branch
+# protection / rulesets require the "SDLC Gate" check to pass before anything can be merged.
+name: SDLC Gate
+
+on:
+  workflow_call:
+    inputs:
+      intent:
+        description: "Explicit intent (plan|design|commit|push|pr|release|deploy|hotfix|maintenance). Empty = auto-detect."
+        type: string
+        default: ""
+      gate-ref:
+        description: "Ref of arijitaich-og1o/ai-sdlc-gate to run (a release tag or commit SHA is recommended)."
+        type: string
+        default: main
+      fail-on:
+        description: "Override the blocking severity threshold (blocker|high|medium|low)."
+        type: string
+        default: ""
+      python-version:
+        type: string
+        default: "3.12"
+    secrets:
+      LITELLM_API_KEY:
+        required: true
+      LITELLM_BASE_URL:
+        required: true
+      SDLC_GATE_TOKEN:
+        description: "Token with contents:write on the central repository, used to record metrics (and to read a private central repo)."
+        required: false
+    outputs:
+      verdict:
+        description: "pass | fail"
+        value: ${{ jobs.gate.outputs.verdict }}
+
+permissions: {}
+
+jobs:
+  gate:
+    name: SDLC Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      verdict: ${{ steps.gate.outputs.verdict }}
+    env:
+      GATE_DIR: ${{ github.workspace }}/.sdlc-gate
+      REPORT_DIR: ${{ runner.temp }}/sdlc-gate
+
+    steps:
+      - name: Check out the change under review
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check out the SDLC Gate engine and skills
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: arijitaich-og1o/ai-sdlc-gate
+          ref: ${{ inputs.gate-ref }}
+          path: .sdlc-gate
+          persist-credentials: false
+          token: ${{ secrets.SDLC_GATE_TOKEN != '' && secrets.SDLC_GATE_TOKEN || github.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install the gate engine
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet "$GATE_DIR/gate"
+          sdlc-gate --version
+          mkdir -p "$REPORT_DIR"
+
+      - name: Resolve the revision range
+        id: range
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ] || [ "$EVENT_NAME" = "pull_request_target" ]; then
+            BASE="$PR_BASE_SHA"; HEAD="$PR_HEAD_SHA"
+          else
+            HEAD="$HEAD_SHA"
+            if [ -n "$PUSH_BEFORE" ] && [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+              BASE="$PUSH_BEFORE"
+            elif git rev-parse --verify --quiet "origin/$DEFAULT_BRANCH" >/dev/null; then
+              BASE="$(git merge-base "origin/$DEFAULT_BRANCH" "$HEAD" || true)"
+            else
+              BASE=""
+            fi
+          fi
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "Reviewing ${BASE:-<root>}..$HEAD"
+
+      - name: Collect pull request context
+        id: pr
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '.body // ""' > "$REPORT_DIR/pr_body.txt"
+          LABELS="$(gh api "repos/$REPO/issues/$PR_NUMBER/labels" --jq '[.[].name] | join(",")')"
+          echo "labels=$LABELS" >> "$GITHUB_OUTPUT"
+          if printf '%s' ",$LABELS," | grep -q ",sdlc-skip-approved,"; then
+            echo "approved_phases=1,2,3,4,5,6,7" >> "$GITHUB_OUTPUT"
+          else
+            echo "approved_phases=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run the SDLC Gate
+        id: gate
+        env:
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+          SDLC_GATE_CONFIG: ${{ github.workspace }}/.sdlc-gate/gate.config.yaml
+          INTENT: ${{ inputs.intent }}
+          FAIL_ON: ${{ inputs.fail-on }}
+          BASE: ${{ steps.range.outputs.base }}
+          HEAD: ${{ steps.range.outputs.head }}
+          APPROVED: ${{ steps.pr.outputs.approved_phases }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -uo pipefail
+          ARGS=(run --config "$SDLC_GATE_CONFIG" --skills-dir "$GATE_DIR/skills" --head "$HEAD" --quiet
+                --repo "$GITHUB_REPOSITORY" --actor "$GITHUB_ACTOR" --ref "$REF_NAME" --sha "$HEAD"
+                --run-id "$GITHUB_RUN_ID" --run-url "$RUN_URL" --event-name "$GITHUB_EVENT_NAME"
+                --output-json "$REPORT_DIR/report.json" --output-md "$REPORT_DIR/report.md")
+          [ -n "$BASE" ] && ARGS+=(--base "$BASE")
+          [ -n "$INTENT" ] && ARGS+=(--intent "$INTENT")
+          [ -n "$FAIL_ON" ] && ARGS+=(--fail-on "$FAIL_ON")
+          [ -n "$APPROVED" ] && ARGS+=(--approved-skip-phases "$APPROVED")
+          [ -n "$PR_NUMBER" ] && ARGS+=(--pr-number "$PR_NUMBER")
+          [ -f "$REPORT_DIR/pr_body.txt" ] && ARGS+=(--pr-body-file "$REPORT_DIR/pr_body.txt")
+          sdlc-gate "${ARGS[@]}"
+          RC=$?
+          echo "exit_code=$RC" >> "$GITHUB_OUTPUT"
+          if [ -f "$REPORT_DIR/report.md" ]; then
+            echo "report_exists=true" >> "$GITHUB_OUTPUT"
+            cat "$REPORT_DIR/report.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "report_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+          case "$RC" in
+            0) echo "verdict=pass" >> "$GITHUB_OUTPUT" ;;
+            1) echo "verdict=fail" >> "$GITHUB_OUTPUT" ;;
+            *) echo "verdict=fail" >> "$GITHUB_OUTPUT"; echo "::error::SDLC Gate could not complete (exit $RC). The gate fails closed." ;;
+          esac
+          exit 0
+
+      - name: Publish the report on the pull request
+        if: always() && github.event_name == 'pull_request' && steps.gate.outputs.report_exists == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          BODY_FILE="$REPORT_DIR/report.md"
+          # GitHub comments are capped at 65536 characters.
+          if [ "$(wc -c < "$BODY_FILE")" -gt 60000 ]; then
+            head -c 59000 "$BODY_FILE" > "$REPORT_DIR/report.trunc.md"
+            printf '\n\n_Report truncated; the full report is attached to the workflow run as an artifact._\n' >> "$REPORT_DIR/report.trunc.md"
+            BODY_FILE="$REPORT_DIR/report.trunc.md"
+          fi
+          EXISTING="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | contains("<!-- sdlc-gate-report -->")) | .id' | head -n1 || true)"
+          if [ -n "$EXISTING" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$EXISTING" -F body=@"$BODY_FILE" > /dev/null
+          else
+            gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@"$BODY_FILE" > /dev/null
+          fi
+
+      - name: Upload the report
+        if: always() && steps.gate.outputs.report_exists == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sdlc-gate-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sdlc-gate/report.*
+          retention-days: 90
+
+      - name: Record metrics in the central repository
+        if: always() && steps.gate.outputs.report_exists == 'true'
+        continue-on-error: true
+        env:
+          SDLC_GATE_TOKEN: ${{ secrets.SDLC_GATE_TOKEN }}
+          SDLC_GATE_CONFIG: ${{ github.workspace }}/.sdlc-gate/gate.config.yaml
+        run: |
+          set -euo pipefail
+          if [ -z "${SDLC_GATE_TOKEN:-}" ]; then
+            echo "::notice::SDLC_GATE_TOKEN is not configured; this run is not recorded in the organisation metrics."
+            exit 0
+          fi
+          sdlc-gate emit-metrics --config "$SDLC_GATE_CONFIG" --report "$REPORT_DIR/report.json" \
+            --output "$REPORT_DIR/metrics-event.json" --dispatch --token-env SDLC_GATE_TOKEN
+
+      - name: Enforce the verdict
+        if: always()
+        env:
+          RC: ${{ steps.gate.outputs.exit_code }}
+        run: |
+          if [ "${RC:-2}" = "0" ]; then
+            echo "SDLC Gate passed."
+          else
+            echo "::error::SDLC Gate did not pass (exit ${RC:-2}). See the job summary or the pull request comment for findings."
+            exit 1
+          fi

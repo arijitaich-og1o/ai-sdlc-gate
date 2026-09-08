@@ -1,0 +1,77 @@
+# Weekly management snapshot: rebuilds the dashboard from the metrics branch and keeps a single pinned issue
+# up to date so leadership gets a notification without opening the branch.
+name: Metrics Weekly Report
+
+on:
+  schedule:
+    - cron: "30 3 * * 1" # Mondays 03:30 UTC (09:00 IST)
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: metrics-branch
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: Weekly report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+    env:
+      STORE: ${{ runner.temp }}/metrics-store
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install the gate engine
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet ./gate
+
+      - name: Fetch the metrics branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! git clone --quiet --depth 50 --branch metrics "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "$STORE"; then
+            echo "::notice::No metrics branch yet; nothing to report."; echo "skip=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Rebuild dashboard and weekly snapshot
+        if: env.skip != 'true'
+        run: |
+          set -euo pipefail
+          sdlc-gate metrics build --events-dir "$STORE/events" --out "$STORE/dashboard"
+          mkdir -p "$STORE/dashboard/weekly"
+          cp "$STORE/dashboard/README.md" "$STORE/dashboard/weekly/$(date -u +%G-W%V).md"
+          cd "$STORE"
+          git config user.name "sdlc-gate-bot"
+          git config user.email "sdlc-gate-bot@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || { git commit --quiet -m "metrics: weekly snapshot $(date -u +%G-W%V)"; git push --quiet origin HEAD:refs/heads/metrics; }
+
+      - name: Upsert the weekly report issue
+        if: env.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TITLE="SDLC Gate — Weekly Report"
+          BODY="$STORE/dashboard/README.md"
+          NUM="$(gh issue list --repo "$REPO" --state open --search "\"$TITLE\" in:title" --json number,title --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n1 || true)"
+          if [ -n "$NUM" ]; then
+            gh issue edit "$NUM" --repo "$REPO" --body-file "$BODY" > /dev/null
+            gh issue comment "$NUM" --repo "$REPO" --body "Dashboard refreshed $(date -u +%Y-%m-%d). Full history: branch \`metrics\`, folder \`dashboard/weekly/\`." > /dev/null
+          else
+            gh issue create --repo "$REPO" --title "$TITLE" --body-file "$BODY" --label "metrics" > /dev/null || gh issue create --repo "$REPO" --title "$TITLE" --body-file "$BODY" > /dev/null
+          fi

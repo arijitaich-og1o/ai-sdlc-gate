@@ -1,0 +1,57 @@
+phase: 2
+defects:
+  - id: untestable-ac-us1
+    title: Acceptance criteria that cannot fail ("works correctly", "customer is happy")
+    file: 02-requirements/requirements.md
+    severity: high
+    keywords: [untestable-acceptance-criteria, untestable, cannot fail, works correctly, verifiable, testable]
+  - id: ambiguous-nfr-words
+    title: Ambiguous terms (fast, user-friendly, appropriately, reasonable time, quickly) with no measurable target
+    file: 02-requirements/requirements.md
+    severity: high
+    keywords: [ambiguous-requirement, ambiguous, vague, "fast", user-friendly, reasonable time, measurable]
+  - id: contradictory-retention
+    title: BR-4 (retain 30 days) contradicts BR-5 (retain indefinitely)
+    file: 02-requirements/requirements.md
+    severity: high
+    keywords: [inconsistent-requirement, contradict, conflict, br-4, br-5, indefinitely, retention]
+  - id: overlapping-return-windows
+    title: BR-1/BR-2/BR-3 return windows overlap without precedence rules
+    file: 02-requirements/requirements.md
+    severity: medium
+    keywords: [inconsistent-requirement, precedence, overlap, br-1, br-2, br-3, 30 days, 15 days, 45 days]
+  - id: admin-export-no-authz
+    title: Admin export of full customer PII with no authorisation requirement or audit logging
+    file: 02-requirements/requirements.md
+    severity: high
+    keywords: [security-requirement-gap, authoris, authoriz, access control, role, permission, audit, export]
+  - id: id-number-privacy-gap
+    title: Government ID and date of birth collected and stored without purpose limitation, lawful basis, retention or deletion
+    file: 02-requirements/requirements.md
+    severity: blocker
+    keywords: [privacy-requirement-gap, government id, personal data, pii, dpdp, gdpr, lawful basis, retention, sensitive]
+  - id: missing-edge-cases-upload
+    title: No requirements for upload failure, size limits, file types or partial uploads
+    file: 02-requirements/requirements.md
+    severity: medium
+    keywords: [missing-edge-case, edge case, size limit, file type, upload fail, partial]
+  - id: missing-nfrs
+    title: NFRs lack numbers (latency, availability SLO, accessibility, browser support)
+    file: 02-requirements/requirements.md
+    severity: medium
+    keywords: [missing-nfr, non-functional, slo, latency, accessibility, wcag, availability]
+  - id: design-leakage-mongodb
+    title: BR-6 mandates MongoDB and Node.js (solution, not requirement)
+    file: 02-requirements/requirements.md
+    severity: low
+    keywords: [design-leakage, mongodb, node.js, implementation detail, technology choice, solution]
+  - id: unresolved-tbds
+    title: Open items (COD refunds, upload failure, export access) have no owner or due date while development has started
+    file: 02-requirements/requirements.md
+    severity: medium
+    keywords: [unresolved-tbd, tbd, todo, open item, to be decided, owner]
+  - id: no-prioritisation
+    title: No prioritisation (MoSCoW or similar) of stories or business rules
+    file: 02-requirements/requirements.md
+    severity: low
+    keywords: [unprioritised, unprioritized, priorit, moscow]

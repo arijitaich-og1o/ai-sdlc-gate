@@ -1,0 +1,49 @@
+# Structural guarantees of this repository: exactly seven skills, engine tests green, every action pinned,
+# no secrets committed, ground truth files well-formed.
+name: Validate Repository
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet "./gate[dev]"
+
+      - name: Unit tests
+        run: python -m pytest gate/tests -q
+
+      - name: Exactly seven valid skills
+        run: sdlc-gate validate-skills --config gate.config.yaml
+
+      - name: Workflow hygiene (pinned actions, least privilege)
+        run: python scripts/check_pinned_actions.py .github/workflows templates
+
+      - name: No secrets in the repository (demo codebase excluded by design)
+        run: sdlc-gate precheck --config gate.config.yaml --paths gate skills docs client templates scripts README.md SECURITY.md CONTRIBUTING.md CREDITS.md gate.config.yaml
+
+      - name: Ground truth files are well-formed
+        run: python scripts/check_ground_truth.py demo_codebase

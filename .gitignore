@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Local artefacts
+*.log
+.sdlc-gate-local/
+report.json
+report.md
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Never commit environment files
+.env
+.env.*
+!.env.example

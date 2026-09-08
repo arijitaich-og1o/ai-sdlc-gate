@@ -1,0 +1,148 @@
+# SDLC Gate policy for Otto Group One.O India.
+# This file is the single source of truth for how the gate behaves. Changes require code-owner review.
+version: 1
+
+llm:
+  # Names of the environment variables (GitHub secrets) that hold the LiteLLM endpoint and key.
+  base_url_env: LITELLM_BASE_URL
+  api_key_env: LITELLM_API_KEY
+  # Any chat model exposed by the LiteLLM proxy may be used. Override per run with SDLC_GATE_MODEL / SDLC_JUDGE_MODEL.
+  review_model: gpt-4.1
+  judge_model: gpt-5
+  fallback_models: [gpt-4o, stackit-gpt-oss-120B]
+  timeout_seconds: 180
+  max_retries: 3
+  temperature: 0
+  max_output_tokens: 8000
+
+# The seven SDLC phases. This list is fixed; the repository must hold exactly one skill per phase.
+phases:
+  1: { slug: 01-planning,      name: Planning }
+  2: { slug: 02-requirements,  name: Requirements Analysis }
+  3: { slug: 03-design,        name: Design }
+  4: { slug: 04-development,   name: Development }
+  5: { slug: 05-testing,       name: Testing }
+  6: { slug: 06-deployment,    name: Deployment }
+  7: { slug: 07-maintenance,   name: Maintenance }
+
+# What the developer is doing -> which phases are checked.
+intents:
+  plan:        [1, 2]
+  design:      [2, 3]
+  commit:      [3, 4, 5]
+  push:        [3, 4, 5]
+  pr:          [3, 4, 5]
+  release:     [3, 4, 5, 6, 7]
+  deploy:      [3, 4, 5, 6, 7]
+  hotfix:      [4, 5, 6, 7]
+  maintenance: [4, 5, 7]
+
+# How the intent is detected when not given explicitly (first match wins, in this order):
+#   1. commit-message / PR-body trailer   `SDLC-Intent: deploy`
+#   2. branch name patterns
+#   3. changed-path heuristics (a code change never drops below the default phases)
+#   4. default
+intent_detection:
+  trailer: SDLC-Intent
+  branch_patterns:
+    - { pattern: '^(release|releases|deploy|deployment)[/_-]', intent: deploy }
+    - { pattern: '^hotfix(es)?[/_-]',                          intent: hotfix }
+    - { pattern: '^(plan|planning|rfc|proposal)[/_-]',         intent: plan }
+    - { pattern: '^(design|adr|architecture)[/_-]',            intent: design }
+    - { pattern: '^(maint|maintenance|chore/deps|dependabot)[/_-]', intent: maintenance }
+  path_patterns:
+    - intent: deploy
+      glob:
+        - '**/Dockerfile'
+        - '**/Dockerfile.*'
+        - '**/docker-compose*.y*ml'
+        - '**/*.tf'
+        - '**/*.tfvars'
+        - '**/helm/**'
+        - '**/charts/**'
+        - '**/k8s/**'
+        - '**/kubernetes/**'
+        - '**/manifests/**'
+        - '**/.github/workflows/**'
+        - '**/azure-pipelines*.yml'
+        - '**/Jenkinsfile'
+        - '**/serverless.y*ml'
+        - '**/cloudformation/**'
+    - intent: plan
+      glob:
+        - 'docs/planning/**'
+        - 'docs/rfcs/**'
+        - 'docs/proposals/**'
+        - '**/*charter*.md'
+        - '**/*roadmap*.md'
+        - '**/PLAN.md'
+    - intent: design
+      glob:
+        - 'docs/adr/**'
+        - 'docs/design/**'
+        - 'docs/architecture/**'
+        - '**/openapi*.y*ml'
+        - '**/openapi*.json'
+        - '**/*.proto'
+        - '**/*.graphql'
+        - '**/migrations/**'
+    - intent: maintenance
+      glob:
+        - '**/CHANGELOG*.md'
+        - '**/runbook*.md'
+        - '**/SECURITY.md'
+        - '**/requirements*.txt'
+        - '**/package.json'
+        - '**/pom.xml'
+        - '**/build.gradle*'
+        - '**/go.mod'
+        - '**/pyproject.toml'
+  default: commit
+
+gate:
+  # Findings at or above this severity block the change: blocker | high | medium | low
+  fail_on: high
+  # If the model cannot be reached the gate FAILS (never silently passes).
+  fail_closed: true
+  max_diff_bytes: 400000
+  max_file_bytes: 120000
+  # Additional globs to exclude from review (generated code, fixtures, ...). Lock files and binaries are always excluded.
+  exclude_globs:
+    - '**/testdata/**'
+    - '**/__snapshots__/**'
+    - '**/*.generated.*'
+
+prechecks:
+  enabled: true
+  max_file_size_bytes: 5000000
+  # Regexes for lines that are known false positives for secret detection (kept deliberately empty; prefer inline
+  # `# sdlc-gate: allow-secret` comments so exceptions are visible in review).
+  secret_allow_regexes: []
+
+skip:
+  enabled: true
+  min_reason_chars: 40
+  trailer_phases: SDLC-Skip
+  trailer_reason: SDLC-Skip-Reason
+  # Findings in these categories fail the gate even inside a skipped phase.
+  non_skippable_categories:
+    - secret-exposure
+    - hardcoded-credential
+    - known-vulnerable-dependency
+    - gate-manipulation
+  never_skippable_phases: []
+  # Skipping these phases requires a code owner to put the approval label on the pull request.
+  require_approval_for_phases: [6, 7]
+  approval_label: sdlc-skip-approved
+
+metrics:
+  central_repo: arijitaich-og1o/ai-sdlc-gate
+  dispatch_event: sdlc-gate-result
+  branch: metrics
+
+challenge:
+  # A candidate must beat the current skill's weighted score by this margin to replace it outright.
+  min_improvement: 0.02
+  # Re-evaluate merged skills before accepting them.
+  verify_merge: true
+  weights: { recall: 0.6, precision: 0.25, clarity: 0.15 }

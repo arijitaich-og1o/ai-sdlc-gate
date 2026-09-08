@@ -1,0 +1,77 @@
+phase: 4
+defects:
+  - id: hardcoded-secrets
+    title: Production DB password and partner API key hard-coded in source
+    file: 04-development/app.py
+    severity: blocker
+    keywords: [hardcoded-credential, secret-exposure, hard-coded, hardcoded, api key, password, secret]
+  - id: sql-injection-login
+    title: SQL query built with an f-string from user input in login()
+    file: 04-development/app.py
+    severity: blocker
+    keywords: [sql-injection, sql injection, f-string, parameteri, prepared statement]
+  - id: md5-password-hashing
+    title: Passwords hashed with unsalted MD5
+    file: 04-development/app.py
+    severity: high
+    keywords: [weak-cryptography, md5, bcrypt, argon2, password hash]
+  - id: password-in-logs
+    title: Plaintext password written to log on failed login
+    file: 04-development/app.py
+    severity: high
+    keywords: [sensitive-data-in-logs, log, password]
+  - id: idor-profile
+    title: /users/<id>/profile returns any user's PII (including Aadhaar) with no authorisation check
+    file: 04-development/app.py
+    severity: high
+    keywords: [idor, missing-authorization, authoris, authoriz, access control, aadhaar, any user]
+  - id: insecure-random-token
+    title: Password reset token generated with random.random()
+    file: 04-development/app.py
+    severity: high
+    keywords: [insecure-randomness, random.random, secrets module, csprng, cryptographically, predictable]
+  - id: command-injection-export
+    title: subprocess with shell=True and user-controlled format/filename
+    file: 04-development/app.py
+    severity: blocker
+    keywords: [command-injection, command injection, shell=true, shell injection, subprocess]
+  - id: pickle-deserialization
+    title: pickle.loads on request body enables remote code execution
+    file: 04-development/app.py
+    severity: blocker
+    keywords: [unsafe-deserialization, pickle, deserializ, deserialis, remote code]
+  - id: tls-verification-disabled
+    title: requests.post(..., verify=False) disables TLS certificate verification
+    file: 04-development/app.py
+    severity: blocker
+    keywords: [insecure-tls, verify=false, certificate verification, tls]
+  - id: swallowed-exception-fail-open
+    title: "except Exception: pass then return True makes verification fail open"
+    file: 04-development/app.py
+    severity: high
+    keywords: [swallowed-exception, logic-error, except, pass, fail open, fail-open, swallow, return true]
+  - id: missing-timeout
+    title: Outbound HTTP call has no timeout
+    file: 04-development/app.py
+    severity: medium
+    keywords: [missing-timeout, timeout]
+  - id: mutable-default-argument
+    title: attempts=[] mutable default argument leaks state across calls
+    file: 04-development/app.py
+    severity: medium
+    keywords: [mutable default, mutable-default, "attempts=[]", logic-error]
+  - id: float-for-money
+    title: Cashback computed with floats
+    file: 04-development/app.py
+    severity: medium
+    keywords: [float-for-money, float, decimal, money, monetary, rounding]
+  - id: debug-mode-on-all-interfaces
+    title: Flask debug=True bound to 0.0.0.0
+    file: 04-development/app.py
+    severity: high
+    keywords: [debug-enabled, debug=true, debug mode, 0.0.0.0, werkzeug debugger]
+  - id: vulnerable-dependencies
+    title: requests 2.19.0, PyYAML 5.1 and Flask 0.12 have known CVEs; urllib3 unpinned
+    file: 04-development/requirements.txt
+    severity: high
+    keywords: [known-vulnerable-dependency, unpinned-dependency, cve, vulnerab, outdated, unpinned, requests==2.19, pyyaml==5.1, flask==0.12]

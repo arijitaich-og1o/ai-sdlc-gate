@@ -1,0 +1,112 @@
+phase: 6
+defects:
+  - id: unpinned-base-image
+    title: FROM python:latest (floating tag, no digest)
+    file: 06-deployment/Dockerfile
+    severity: high
+    keywords: [unpinned-action-or-image, latest-tag, latest, digest, pinned, pin]
+  - id: secret-as-build-arg-and-env
+    title: API key passed as build ARG and DB password baked into the image via ENV
+    file: 06-deployment/Dockerfile
+    severity: blocker
+    keywords: [secret-in-image, hardcoded-credential, secret-exposure, build arg, build-arg, env, baked, password, api key]
+  - id: root-container-no-user
+    title: No USER instruction; container runs as root
+    file: 06-deployment/Dockerfile
+    severity: high
+    keywords: [root-container, root, non-root, user]
+  - id: curl-pipe-bash-dockerfile
+    title: curl | bash from an unpinned URL during build
+    file: 06-deployment/Dockerfile
+    severity: high
+    keywords: [unverified-download, curl, pipe, bash, checksum, unverified]
+  - id: copy-everything-no-dockerignore
+    title: COPY . . with no .dockerignore copies .git, secrets and tests into the image
+    file: 06-deployment/Dockerfile
+    severity: medium
+    keywords: [dockerignore, copy . ., copy everything, .git, secret-in-image]
+  - id: no-healthcheck-shell-form
+    title: No HEALTHCHECK and shell-form CMD prevents proper signal handling
+    file: 06-deployment/Dockerfile
+    severity: low
+    keywords: [missing-health-check, healthcheck, health check, exec form, signal]
+  - id: write-all-permissions
+    title: permissions write-all on the workflow
+    file: 06-deployment/ci/deploy-workflow.yml
+    severity: high
+    keywords: [excessive-pipeline-permissions, write-all, least privilege, permissions]
+  - id: pull-request-target-checkout
+    title: pull_request_target checks out untrusted PR head with write permissions and secrets
+    file: 06-deployment/ci/deploy-workflow.yml
+    severity: blocker
+    keywords: [pull_request_target, untrusted, pwn request, head.sha, fork]
+  - id: script-injection-title
+    title: PR title and user login interpolated directly into a run script
+    file: 06-deployment/ci/deploy-workflow.yml
+    severity: high
+    keywords: [script-injection, injection, pull_request.title, interpolat, env var, github.event]
+  - id: unpinned-actions
+    title: actions/checkout@main and setup-python@v5 not pinned to a commit SHA
+    file: 06-deployment/ci/deploy-workflow.yml
+    severity: high
+    keywords: [unpinned-action-or-image, pinned, pin, sha, "@main", floating]
+  - id: secret-echoed-and-uploaded
+    title: KUBE_CONFIG secret written to disk, cat'ed to the log and uploaded as an artefact
+    file: 06-deployment/ci/deploy-workflow.yml
+    severity: blocker
+    keywords: [secret-in-pipeline, secret-exposure, kubeconfig, cat, echo, artifact, artefact, log]
+  - id: deploy-any-branch-no-approval
+    title: Production deploy runs on every push from any branch with no environment protection or approval
+    file: 06-deployment/ci/deploy-workflow.yml
+    severity: blocker
+    keywords: [missing-approval-gate, approval, environment, protected branch, any branch, every push]
+  - id: curl-pipe-sudo-bash-ci
+    title: curl | sudo bash of an unpinned master-branch script in CI
+    file: 06-deployment/ci/deploy-workflow.yml
+    severity: high
+    keywords: [unverified-download, curl, sudo bash, pipe, master, unpinned]
+  - id: latest-image-in-deployment
+    title: Deployment uses :latest image tag, so rollback and traceability are impossible
+    file: 06-deployment/k8s/deployment.yaml
+    severity: high
+    keywords: [latest-tag, no-rollback-path, latest, rollback, immutable tag, digest]
+  - id: privileged-root-hostnetwork
+    title: "privileged: true, runAsUser 0, hostNetwork and Docker socket mount in production"
+    file: 06-deployment/k8s/deployment.yaml
+    severity: blocker
+    keywords: [privileged-container, insecure-security-context, privileged, hostnetwork, docker.sock, docker socket, "runasuser: 0", root]
+  - id: plaintext-secrets-in-manifest
+    title: DB password and API key as plaintext env values in the manifest
+    file: 06-deployment/k8s/deployment.yaml
+    severity: blocker
+    keywords: [plaintext-secret-in-config, secret-exposure, hardcoded-credential, plaintext, secretkeyref, secret, password]
+  - id: no-resources-or-probes
+    title: No resource requests/limits, no liveness/readiness probes, single replica
+    file: 06-deployment/k8s/deployment.yaml
+    severity: high
+    keywords: [missing-resource-limits, missing-probes, resources, limits, requests, probe, liveness, readiness, replicas: 1, single replica]
+  - id: public-s3-bucket
+    title: S3 bucket with customer exports is public-read
+    file: 06-deployment/terraform/main.tf
+    severity: blocker
+    keywords: [public-exposure, public-read, public, acl, bucket]
+  - id: open-security-group
+    title: Security group opens Postgres and SSH to 0.0.0.0/0
+    file: 06-deployment/terraform/main.tf
+    severity: blocker
+    keywords: [public-exposure, 0.0.0.0/0, security group, open to the world, ingress]
+  - id: rds-insecure-settings
+    title: RDS publicly accessible, unencrypted, no backups, skip_final_snapshot, hard-coded password
+    file: 06-deployment/terraform/main.tf
+    severity: blocker
+    keywords: [unencrypted-storage, plaintext-secret-in-config, destructive-infra-change, storage_encrypted, publicly_accessible, skip_final_snapshot, backup_retention, password, encrypt]
+  - id: wildcard-iam
+    title: IAM policy allows Action * on Resource *
+    file: 06-deployment/terraform/main.tf
+    severity: blocker
+    keywords: [wildcard-iam, wildcard, "action = \"*\"", "\"*\"", admin, least privilege, all actions]
+  - id: unpinned-provider-local-state
+    title: AWS provider version not pinned and no remote state backend configured
+    file: 06-deployment/terraform/main.tf
+    severity: medium
+    keywords: [unpinned-provider, provider version, required_providers, remote state, backend, state lock]

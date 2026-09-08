@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accounts
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: accounts
+  template:
+    metadata:
+      labels:
+        app: accounts
+    spec:
+      hostNetwork: true
+      containers:
+        - name: accounts
+          image: registry.internal/accounts:latest
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          env:
+            - name: DB_PASSWORD
+              value: Sup3rS3cretPr0d!
+            - name: PARTNER_API_KEY
+              value: og1o-prod-9f8e7d6c5b4a39281706f5e4d3c2b1a0
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: accounts
+  namespace: production
+spec:
+  type: LoadBalancer
+  selector:
+    app: accounts
+  ports:
+    - port: 80
+      targetPort: 8080
