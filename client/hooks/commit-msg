@@ -38,9 +38,11 @@ fi
 
 CONFIG="$REPO_DIR/gate.config.yaml"
 
-# Identity: required (policy default) and always in managed mode.
+# Identity: required by policy once the identity provider is configured; always strict in managed mode.
 REQ_FLAG="--require-identity"
-if ! "$GATE" identity show --quiet --config "$CONFIG" >/dev/null 2>&1; then
+STRICT=""
+[ "$MANAGED" = "true" ] && STRICT="--strict"
+if ! "$GATE" identity check --config "$CONFIG" $STRICT >/dev/null 2>&1; then
   echo "sdlc-gate: a verified identity is required. Run:  sdlc-gate identity login" >&2
   exit 1
 fi

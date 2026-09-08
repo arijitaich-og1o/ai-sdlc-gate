@@ -78,7 +78,7 @@ else
   $GATE configure --config "$CONFIG" || say "Could not fetch the LiteLLM configuration yet; run 'sdlc-gate configure' after signing in to GitHub (gh auth login)."
 fi
 
-if [ -t 0 ] && ! $GATE identity show --quiet --config "$CONFIG" >/dev/null 2>&1; then
+if [ -t 0 ] && ! $GATE identity check --config "$CONFIG" --strict >/dev/null 2>&1; then
   say "Signing you in with your Microsoft work account (one-time)"
   $GATE identity login --config "$CONFIG" || say "Identity sign-in skipped; run 'sdlc-gate identity login' later."
 fi

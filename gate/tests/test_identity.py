@@ -134,3 +134,26 @@ def test_dashboard_writes_scoreboard_and_badges(tmp_path):
         assert (tmp_path / "dash" / name).is_file()
     svg = (tmp_path / "dash" / "scoreboard.svg").read_text(encoding="utf-8")
     assert svg.startswith("<svg") and "No gate runs recorded yet" in svg
+
+
+def test_identity_check_command_respects_configuration(tmp_path, monkeypatch, cfg):
+    from sdlc_gate.cli import main
+
+    monkeypatch.setenv("SDLC_GATE_HOME", str(tmp_path))
+    # Provider not configured (repository default): nothing is required.
+    cfg_path = tmp_path / "gate.config.yaml"
+    cfg_path.write_text("identity:\n  tenant: ''\n  client_id: ''\n  required: true\n", encoding="utf-8")
+    assert main(["identity", "check", "--config", str(cfg_path), "--strict"]) == 0
+    # Provider configured and required: missing identity blocks.
+    cfg_path.write_text(f"identity:\n  tenant: '{TENANT}'\n  client_id: '{CLIENT}'\n  required: true\n", encoding="utf-8")
+    assert main(["identity", "check", "--config", str(cfg_path)]) == 3
+    idm.save_identity(idm.Identity(email="dev@og1o.in", name="Dev", oid="o", tid=TENANT))
+    assert main(["identity", "check", "--config", str(cfg_path)]) == 0
+    # attest honours the same rule
+    msg = tmp_path / "msg"
+    msg.write_text("feat: x\n", encoding="utf-8")
+    idm.clear_identity()
+    assert main(["attest", "--config", str(cfg_path), "--message-file", str(msg), "--quiet"]) == 3
+    cfg_path.write_text("identity:\n  tenant: ''\n  client_id: ''\n  required: true\n", encoding="utf-8")
+    assert main(["attest", "--config", str(cfg_path), "--message-file", str(msg), "--quiet"]) == 0
+    assert "anonymous" in msg.read_text(encoding="utf-8")

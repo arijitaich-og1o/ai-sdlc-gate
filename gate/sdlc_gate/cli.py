@@ -421,6 +421,10 @@ def build_parser() -> argparse.ArgumentParser:
 EXIT_IDENTITY_REQUIRED = 3
 
 
+def _identity_configured(idc: dict) -> bool:
+    return bool(str(idc.get("tenant") or "").strip()) and bool(str(idc.get("client_id") or "").strip())
+
+
 def cmd_identity(args: argparse.Namespace) -> int:
     cfg = Config.load(args.config)
     idc = cfg.identity
@@ -438,8 +442,27 @@ def cmd_identity(args: argparse.Namespace) -> int:
     if args.icmd == "logout":
         print("identity removed" if identity_mod.clear_identity() else "no identity stored")
         return EXIT_PASS
+    if args.icmd == "check":
+        # Exit 0 when a valid identity exists, or when the identity provider is not configured yet (nothing to
+        # require). Exit 3 when the policy requires an identity and none is present.
+        ident = identity_mod.load_identity()
+        if ident is not None and not ident.expired:
+            print(ident.email)
+            return EXIT_PASS
+        if not _identity_configured(idc):
+            print("identity provider not configured; identity not required")
+            return EXIT_PASS
+        if not idc.get("required", False) and not args.strict:
+            print("identity optional by policy")
+            return EXIT_PASS
+        _eprint("A verified identity is required before committing. Run: sdlc-gate identity login")
+        return EXIT_IDENTITY_REQUIRED
     tenant = args.tenant or os.environ.get("SDLC_GATE_ENTRA_TENANT") or idc.get("tenant", "")
     client_id = args.client_id or os.environ.get("SDLC_GATE_ENTRA_CLIENT_ID") or idc.get("client_id", "")
+    if not tenant or not client_id:
+        _eprint("identity: the Microsoft Entra application is not configured yet (identity.tenant / identity.client_id in gate.config.yaml); "
+                "sign-in will be enabled by the platform team. Nothing to do now.")
+        return EXIT_PASS
     try:
         ident = identity_mod.device_code_login(
             tenant, client_id, allowed_domains=list(idc.get("allowed_domains") or []),
@@ -461,7 +484,7 @@ def cmd_attest(args: argparse.Namespace) -> int:
     ident = identity_mod.load_identity()
     if ident is not None and ident.expired:
         ident = None
-    required = bool(cfg.identity.get("required")) or args.require_identity
+    required = (bool(cfg.identity.get("required")) or args.require_identity) and _identity_configured(cfg.identity)
     if required and ident is None:
         _eprint("A verified identity is required before committing. Run: sdlc-gate identity login")
         return EXIT_IDENTITY_REQUIRED
@@ -525,6 +548,8 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     login.add_argument("--no-browser", action="store_true"), login.add_argument("--no-git", action="store_true", help="do not update git user.email/user.name")
     show = isub.add_parser("show")
     show.add_argument("--quiet", action="store_true", help="print only the e-mail; exit 3 when absent")
+    check = isub.add_parser("check", help="exit 0 if an identity exists or none is required yet; 3 if one is required and missing")
+    check.add_argument("--strict", action="store_true", help="require an identity whenever the provider is configured (managed mode)")
     isub.add_parser("logout")
     idp.set_defaults(func=cmd_identity)
 
