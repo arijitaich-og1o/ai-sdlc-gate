@@ -3,7 +3,7 @@
 #
 # For every branch being pushed, reviews the commits that are new to the remote with the intent derived from
 # the branch name / trailers (release/*, hotfix/* -> deployment phases, ...). Managed installs fail closed.
-# The server-side gate remains authoritative. Chains to the repository's own .git/hooks/pre-push if present.
+# Chains to the repository's own .git/hooks/pre-push if present.
 set -u
 
 REMOTE_NAME="$1"
