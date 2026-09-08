@@ -1,7 +1,7 @@
 """Deterministic checks that run before (and independently of) the model review.
 
 These produce findings that are never skippable: leaked credentials, private keys,
-and committed environment files. They are cheap, fast, and do not depend on model gateway.
+and committed environment files. They are cheap, fast, and do not depend on the model gateway.
 """
 from __future__ import annotations
 
