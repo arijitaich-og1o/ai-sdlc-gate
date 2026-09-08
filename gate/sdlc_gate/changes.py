@@ -119,7 +119,7 @@ def collect_staged(cfg: Config, cwd: Path | None = None) -> ChangeSet:
 
 
 def collect_paths(cfg: Config, paths: list[str], root: Path) -> ChangeSet:
-    """Review whole files (used for demo evaluation and ad-hoc scans)."""
+    """Review whole files (used for trials evaluation and ad-hoc scans)."""
     cs = ChangeSet(mode="paths", head="WORKTREE")
     root = root.resolve()
     rows: list[tuple[str, str]] = []

@@ -1,7 +1,7 @@
 """Skill challenge: compare the current skill with a contributor's candidate and decide.
 
 Decision procedure
-1. Both skills are evaluated against the demo codebase (`evaluate.py`) -> objective scores.
+1. Both skills are evaluated against the trials (`evaluate.py`) -> objective scores.
 2. The judge model reads both skills and both evaluations and proposes one of
    `keep_current`, `replace`, or `merge` (with a merged skill body).
 3. Deterministic guards are applied on top of the model's proposal:
@@ -31,7 +31,7 @@ DECISIONS = ("keep_current", "replace", "merge")
 JUDGE_SYSTEM = """You are the skill arbiter for the SDLC Gate of Otto Group One.O India.
 
 Two versions of the SAME phase skill are presented: the CURRENT skill in the repository and a CANDIDATE
-proposed by a contributor. Each has been evaluated objectively against a demo codebase with planted
+proposed by a contributor. Each has been evaluated objectively against a validation suite with planted
 defects (recall, precision, clarity, weighted score). Decide which produces the better gate:
 
 - "keep_current": the candidate is not better, or is riskier/less precise.
@@ -108,15 +108,15 @@ def judge(
     judge_llm: Any | None,
     baseline: Skill,
     candidate: Skill,
-    demo_root: Path,
+    trials_root: Path,
     base_eval: Evaluation | None = None,
     cand_eval: Evaluation | None = None,
 ) -> Decision:
     if baseline.phase != candidate.phase:
         raise ValueError(f"candidate skill is for phase {candidate.phase}, baseline is phase {baseline.phase}")
     min_improvement = float(cfg.challenge.get("min_improvement", 0.02))
-    base_eval = base_eval or evaluate_skill(cfg, review_llm, baseline, demo_root, judge_llm)
-    cand_eval = cand_eval or evaluate_skill(cfg, review_llm, candidate, demo_root, judge_llm)
+    base_eval = base_eval or evaluate_skill(cfg, review_llm, baseline, trials_root, judge_llm)
+    cand_eval = cand_eval or evaluate_skill(cfg, review_llm, candidate, trials_root, judge_llm)
     guards: list[str] = []
 
     proposal: dict[str, Any] = {"decision": "keep_current", "rationale": "", "absorbed_sections": [], "merged_body": None, "version_bump": "minor"}
@@ -184,7 +184,7 @@ def judge(
         else:
             guards.append("judge chose merge but returned no merged body; keeping current")
         if merged_skill is not None and cfg.challenge.get("verify_merge", True) and not cand_eval.error:
-            merged_eval = evaluate_skill(cfg, review_llm, merged_skill, demo_root, judge_llm)
+            merged_eval = evaluate_skill(cfg, review_llm, merged_skill, trials_root, judge_llm)
             best_input = max(base_eval.score, cand_eval.score)
             if merged_eval.error or merged_eval.score < best_input - 0.02:
                 guards.append(
@@ -300,7 +300,7 @@ def decision_markdown(decision: Decision, contributor: str, phase_name: str) -> 
         "| | Current skill | Candidate skill |" + (" Merged result |" if decision.merged_eval else ""),
         "|---|---|---|" + ("---|" if decision.merged_eval else ""),
     ]
-    rows = [("Weighted score", "score"), ("Recall (planted defects found)", "recall"), ("Precision", "precision"), ("Clarity", "clarity"), ("Findings", "findings_count"), ("Spurious findings", "spurious")]
+    rows = [("Weighted score", "score"), ("Coverage", "recall"), ("Precision", "precision"), ("Clarity", "clarity"), ("Findings", "findings_count"), ("Spurious findings", "spurious")]
     for label, key in rows:
         b = decision.baseline_eval.get(key)
         c = decision.candidate_eval.get(key)
@@ -308,7 +308,6 @@ def decision_markdown(decision: Decision, contributor: str, phase_name: str) -> 
         fmt = lambda v: (f"{v:.3f}" if isinstance(v, float) else str(v)) if v is not None else "-"
         L.append(f"| {label} | {fmt(b)} | {fmt(c)} |" + (f" {fmt(m)} |" if decision.merged_eval else ""))
     L.append("")
-    L.append("**Missed defects** — current: " + (", ".join(decision.baseline_eval.get("missed") or []) or "none") + " · candidate: " + (", ".join(decision.candidate_eval.get("missed") or []) or "none"))
     L.append("")
     L.append("### Arbiter rationale")
     L.append(decision.rationale)
@@ -324,5 +323,5 @@ def decision_markdown(decision: Decision, contributor: str, phase_name: str) -> 
     if decision.uses_candidate:
         L.append(f"The skill has been updated to version **{decision.resolved_version}** on this branch and @{contributor} has been added to CREDITS.md. This pull request will be merged automatically once required checks pass.")
     else:
-        L.append("The current skill remains in place. Thank you for the challenge — the evaluation above shows exactly which planted defects each version caught; improve on the missed ones and challenge again.")
+        L.append("The current skill remains in place. Thank you for the challenge — the scores above show how each version performed on the validation suite; strengthen the weaker areas and challenge again.")
     return "\n".join(L)

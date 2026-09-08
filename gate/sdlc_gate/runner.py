@@ -9,6 +9,7 @@ from typing import Any
 
 from .changes import ChangeSet, chunk_changeset, render_changeset
 from .config import Config, normalize_severity, severity_rank
+from .identity import parse_attestations
 from .intent import IntentDecision
 from .llm import LLMError
 from .prechecks import run_prechecks
@@ -287,6 +288,14 @@ def run_gate(
 
     verdict = "fail" if fail_reasons else "pass"
     usage = dict(getattr(llm, "total_usage", {}) or {})
+    attestations = parse_attestations(cs.commit_messages)
+    verified = [a["email"] for a in attestations if a.get("email") and a["email"] != "anonymous"]
+    identity_ctx = {
+        "attestations": len(attestations),
+        "client_attested": bool(attestations),
+        "developer_email": (verified[0] if verified else (cs.author_email or "")).lower(),
+        "email_verified": bool(verified),
+    }
     return GateReport(
         intent=intent,
         phases=results,
@@ -305,6 +314,6 @@ def run_gate(
             "head": cs.head,
             "branch": cs.branch,
         },
-        context={**(context or {}), "author_name": cs.author_name, "author_email": cs.author_email},
+        context={**(context or {}), "author_name": cs.author_name, "author_email": cs.author_email, **identity_ctx},
         llm_usage=usage,
     )

@@ -17,21 +17,31 @@ Windows PowerShell:
 irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 | iex
 ```
 
-The installer asks for your LiteLLM key (get it from the platform team; never commit it), stores it in
-`~/.sdlc-gate/env` readable only by you, installs the `sdlc-gate` CLI, syncs the skills and policy to
-`~/.sdlc-gate/repo`, and sets `git config --global core.hooksPath ~/.sdlc-gate/hooks`.
+The installer installs the `sdlc-gate` CLI, syncs the skills and policy to `~/.sdlc-gate/repo`, sets
+`git config --global core.hooksPath ~/.sdlc-gate/hooks`, and then runs two one-time steps:
+
+- `sdlc-gate identity login` — a Microsoft sign-in opens in your browser (usually one click because you are
+  already signed in for Outlook/Teams). Your verified corporate e-mail becomes your gate identity and your git
+  `user.email`. Nothing is read from Outlook, Teams or the browser; only what Microsoft returns after you sign in.
+- `sdlc-gate configure` — stores your LiteLLM key (from the platform team; never commit it) in
+  `~/.sdlc-gate/env`, readable only by you.
+
+On company-managed devices IT installs the gate system-wide (see [enforcement.md](enforcement.md)); you still run
+the two one-time steps above.
 
 Requirements: git and Python 3.10+. Corporate proxies: set `HTTPS_PROXY` in your shell profile.
 
 ## What happens on your machine
 
 - `git commit` → the `commit-msg` hook reviews the staged change with the intent and skip trailers from your
-  message. Blocked commits print the report; fix or add trailers and commit again.
+  message. Blocked commits print the report; fix or add trailers and commit again. Passing commits get an
+  `SDLC-Gate-Client` trailer that records the local check and your verified e-mail.
 - `git push` → the `pre-push` hook reviews the commits new to the remote for each branch, with the intent
   derived from the branch name.
 - Skills and policy refresh from the central repository at most once a day.
-- If the model is unreachable the local hook lets the commit through with a warning (set
-  `SDLC_GATE_LOCAL_FAIL_CLOSED=1` to block instead). The server-side gate always fails closed.
+- If the model is unreachable the per-user hook lets the commit through with a warning (set
+  `SDLC_GATE_LOCAL_FAIL_CLOSED=1` to block instead); the managed client blocks. The server-side gate always
+  fails closed.
 - Existing repository-local hooks in `.git/hooks/` still run; the global hooks chain to them.
 
 ## Working with findings

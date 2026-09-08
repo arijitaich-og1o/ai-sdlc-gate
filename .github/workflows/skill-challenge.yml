@@ -2,7 +2,7 @@
 #
 # Any developer may open a pull request that changes one or more of the seven skills. This workflow:
 #   1. refuses PRs from forks and PRs that touch anything other than skills/** (those need code-owner review);
-#   2. runs the CURRENT skill (base branch) and the CANDIDATE skill (PR head) against demo_codebase/;
+#   2. validates the CURRENT skill (base branch) and the CANDIDATE skill (PR head) against the benchmark;
 #   3. asks the arbiter model to keep / replace / merge, with deterministic guards on top;
 #   4. writes the resolved skill and CREDITS.md back to the PR branch, comments the full comparison,
 #   5. closes rejected challenges and enables auto-merge for accepted ones.
@@ -113,7 +113,7 @@ jobs:
             sdlc-gate challenge --config gate.config.yaml \
               --baseline "$OUT_DIR/baseline-$SLUG.md" \
               --candidate "skills/$SLUG/SKILL.md" \
-              --demo demo_codebase \
+              --trials trials \
               --skill-path "skills/$SLUG/SKILL.md" \
               --credits CREDITS.md \
               --contributor "$PR_AUTHOR" --pr-number "$PR_NUMBER" --pr-url "$PR_URL" \

@@ -83,6 +83,14 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "dispatch_event": "sdlc-gate-result",
         "branch": "metrics",
     },
+    "identity": {
+        "provider": "entra",
+        "authority": "https://login.microsoftonline.com",
+        "tenant": "",
+        "client_id": "",
+        "allowed_domains": [],
+        "required": False,
+    },
     "challenge": {
         "min_improvement": 0.02,
         "verify_merge": True,
@@ -164,6 +172,10 @@ class Config:
     @property
     def intent_detection(self) -> dict[str, Any]:
         return self.data["intent_detection"]
+
+    @property
+    def identity(self) -> dict[str, Any]:
+        return self.data.get("identity", {})
 
     def phase_slug(self, phase: int) -> str:
         return self.phases[int(phase)]["slug"]

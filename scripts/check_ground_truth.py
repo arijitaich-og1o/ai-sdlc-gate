@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate demo_codebase/*/GROUND_TRUTH.yaml files: structure, referenced files exist, ids unique."""
+"""Validate trials/*/GROUND_TRUTH.yaml files: structure, referenced files exist, ids unique."""
 from __future__ import annotations
 
 import sys
@@ -11,7 +11,7 @@ SEVERITIES = {"info", "low", "medium", "high", "blocker"}
 
 
 def main(argv: list[str]) -> int:
-    root = Path(argv[1]) if len(argv) > 1 else Path("demo_codebase")
+    root = Path(argv[1]) if len(argv) > 1 else Path("trials")
     errors: list[str] = []
     seen_phases: set[int] = set()
     for gt in sorted(root.glob("*/GROUND_TRUTH.yaml")):

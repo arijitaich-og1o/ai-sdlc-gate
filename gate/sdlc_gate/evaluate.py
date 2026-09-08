@@ -1,6 +1,6 @@
-"""Evaluate a phase skill against the demo codebase with planted defects.
+"""Evaluate a phase skill against the trials with planted defects.
 
-Each `demo_codebase/<NN-slug>/` directory carries a `GROUND_TRUTH.yaml`:
+Each `trials/<NN-slug>/` directory carries a `GROUND_TRUTH.yaml`:
 
     phase: 4
     defects:
@@ -65,8 +65,8 @@ class Evaluation:
         return asdict(self)
 
 
-def load_ground_truth(demo_phase_dir: Path) -> dict[str, Any]:
-    gt_path = demo_phase_dir / "GROUND_TRUTH.yaml"
+def load_ground_truth(trial_phase_dir: Path) -> dict[str, Any]:
+    gt_path = trial_phase_dir / "GROUND_TRUTH.yaml"
     if not gt_path.is_file():
         raise FileNotFoundError(f"missing {gt_path}")
     data = yaml.safe_load(gt_path.read_text(encoding="utf-8")) or {}
@@ -94,22 +94,22 @@ def _match(finding: dict[str, Any], defect: dict[str, Any]) -> bool:
     return True
 
 
-def demo_changeset(cfg: Config, demo_root: Path, slug: str) -> ChangeSet:
-    # `slug` is relative to demo_root; collect_paths resolves it against the (absolute) root.
-    cs = collect_paths(cfg, [slug], root=demo_root.resolve())
+def trials_changeset(cfg: Config, trials_root: Path, slug: str) -> ChangeSet:
+    # `slug` is relative to trials_root; collect_paths resolves it against the (absolute) root.
+    cs = collect_paths(cfg, [slug], root=trials_root.resolve())
     cs.files = [f for f in cs.files if not f.path.endswith("GROUND_TRUTH.yaml") and not f.path.endswith("README.md")]
-    cs.branch = f"demo/{slug}"
-    cs.mode = "demo"
+    cs.branch = f"trials/{slug}"
+    cs.mode = "trials"
     return cs
 
 
-def evaluate_skill(cfg: Config, llm: Any, skill: Skill, demo_root: Path, judge_llm: Any | None = None) -> Evaluation:
+def evaluate_skill(cfg: Config, llm: Any, skill: Skill, trials_root: Path, judge_llm: Any | None = None) -> Evaluation:
     slug = cfg.phase_slug(skill.phase)
     ev = Evaluation(phase=skill.phase, skill_name=skill.name, skill_version=skill.version)
-    gt = load_ground_truth(demo_root / slug)
-    cs = demo_changeset(cfg, demo_root, slug)
+    gt = load_ground_truth(trials_root / slug)
+    cs = trials_changeset(cfg, trials_root, slug)
     if not cs.files:
-        ev.error = f"no reviewable files found under {demo_root / slug}"
+        ev.error = f"no reviewable files found under {trials_root / slug}"
         return ev
     intent = IntentDecision(intent="evaluation", phases=[skill.phase], source="explicit")
     result = review_phase(cfg, llm, skill, cs, intent)

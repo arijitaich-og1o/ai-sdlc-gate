@@ -10,8 +10,8 @@ from sdlc_gate.llm import StaticLLM
 from sdlc_gate.skills import load_skills, parse_skill
 
 
-def _gt_findings(demo_root: Path, slug: str, fraction: float = 1.0):
-    gt = load_ground_truth(demo_root / slug)
+def _gt_findings(trials_root: Path, slug: str, fraction: float = 1.0):
+    gt = load_ground_truth(trials_root / slug)
     defects = gt["defects"]
     n = max(1, int(len(defects) * fraction))
     return [
@@ -30,38 +30,38 @@ def _llm_for(findings):
     return StaticLLM(responder)
 
 
-def test_ground_truth_files_load_for_all_phases(cfg, demo_root):
+def test_ground_truth_files_load_for_all_phases(cfg, trials_root):
     for phase in range(1, 8):
-        gt = load_ground_truth(demo_root / cfg.phase_slug(phase))
+        gt = load_ground_truth(trials_root / cfg.phase_slug(phase))
         assert gt["phase"] == phase and len(gt["defects"]) >= 5
         for d in gt["defects"]:
-            assert (demo_root / d["file"]).is_file(), d["file"]
+            assert (trials_root / d["file"]).is_file(), d["file"]
 
 
-def test_evaluate_scores_recall_and_precision(cfg, skills_dir, demo_root):
+def test_evaluate_scores_recall_and_precision(cfg, skills_dir, trials_root):
     skills = load_skills(skills_dir, cfg)
     skill = skills[4]
-    full = evaluate_skill(cfg, _llm_for(_gt_findings(demo_root, "04-development")), skill, demo_root)
+    full = evaluate_skill(cfg, _llm_for(_gt_findings(trials_root, "04-development")), skill, trials_root)
     assert full.recall == 1.0 and full.precision == 1.0 and full.missed == []
     assert full.score > 0.9
 
-    half = evaluate_skill(cfg, _llm_for(_gt_findings(demo_root, "04-development", 0.5)), skill, demo_root)
+    half = evaluate_skill(cfg, _llm_for(_gt_findings(trials_root, "04-development", 0.5)), skill, trials_root)
     assert 0.4 <= half.recall <= 0.6 and half.score < full.score
 
-    empty = evaluate_skill(cfg, StaticLLM(), skill, demo_root)
+    empty = evaluate_skill(cfg, StaticLLM(), skill, trials_root)
     assert empty.recall == 0.0 and empty.score == 0.0
 
 
-def test_evaluate_excludes_ground_truth_from_reviewed_content(cfg, skills_dir, demo_root, monkeypatch):
+def test_evaluate_excludes_ground_truth_from_reviewed_content(cfg, skills_dir, trials_root, monkeypatch):
     llm = _llm_for([])
-    evaluate_skill(cfg, llm, load_skills(skills_dir, cfg)[4], demo_root)
+    evaluate_skill(cfg, llm, load_skills(skills_dir, cfg)[4], trials_root)
     system, user = llm.calls[0]
     assert "GROUND_TRUTH" not in user and 'path="04-development/app.py"' in user
 
-    # A relative demo root (as passed by the CLI from the repository root) must collect the same files.
-    monkeypatch.chdir(demo_root.parent)
+    # A relative trials root (as passed by the CLI from the repository root) must collect the same files.
+    monkeypatch.chdir(trials_root.parent)
     rel = _llm_for([])
-    ev = evaluate_skill(cfg, rel, load_skills(skills_dir, cfg)[4], Path("demo_codebase"))
+    ev = evaluate_skill(cfg, rel, load_skills(skills_dir, cfg)[4], Path("trials"))
     assert ev.error is None and 'path="04-development/app.py"' in rel.calls[0][1]
 
     import pytest
@@ -78,22 +78,22 @@ def _candidate_from(skill, extra="\n\n## Extra section\nAlso check for hard-code
     return parse_skill(render_skill(fm, skill.body + extra), slug=skill.slug)
 
 
-def test_judge_keeps_current_when_candidate_is_not_better(cfg, skills_dir, demo_root):
+def test_judge_keeps_current_when_candidate_is_not_better(cfg, skills_dir, trials_root):
     base = load_skills(skills_dir, cfg)[4]
     cand = _candidate_from(base)
-    review = _llm_for(_gt_findings(demo_root, "04-development"))  # both score identically
+    review = _llm_for(_gt_findings(trials_root, "04-development"))  # both score identically
     arbiter = StaticLLM(lambda s, u: {"decision": "replace", "rationale": "shiny", "absorbed_sections": [], "merged_body": None, "version_bump": "minor"})
-    d = judge(cfg, review, arbiter, base, cand, demo_root)
+    d = judge(cfg, review, arbiter, base, cand, trials_root)
     assert d.decision == "keep_current"
     assert any("replace requires" in g for g in d.guards)
     assert d.resolved_markdown == base.markdown
 
 
-def test_judge_replaces_when_candidate_clearly_better(cfg, skills_dir, demo_root):
+def test_judge_replaces_when_candidate_clearly_better(cfg, skills_dir, trials_root):
     base = load_skills(skills_dir, cfg)[4]
     cand = _candidate_from(base)
     calls = {"n": 0}
-    full = _gt_findings(demo_root, "04-development")
+    full = _gt_findings(trials_root, "04-development")
 
     def responder(system, user):
         if "<extra_findings>" in user:
@@ -103,42 +103,42 @@ def test_judge_replaces_when_candidate_clearly_better(cfg, skills_dir, demo_root
         return {"summary": "s", "findings": full[:3] if calls["n"] == 1 else full}
 
     arbiter = StaticLLM(lambda s, u: {"decision": "replace", "rationale": "candidate finds far more planted defects", "absorbed_sections": [], "merged_body": None, "version_bump": "minor"})
-    d = judge(cfg, StaticLLM(responder), arbiter, base, cand, demo_root)
+    d = judge(cfg, StaticLLM(responder), arbiter, base, cand, trials_root)
     assert d.decision == "replace" and d.candidate_score > d.baseline_score
     assert d.resolved_version == "1.1.0" and "Extra section" in d.resolved_markdown
     resolved = parse_skill(d.resolved_markdown)
     assert resolved.phase == 4 and resolved.name == base.name
 
 
-def test_judge_merge_is_validated_and_verified(cfg, skills_dir, demo_root):
+def test_judge_merge_is_validated_and_verified(cfg, skills_dir, trials_root):
     base = load_skills(skills_dir, cfg)[4]
     cand = _candidate_from(base)
-    full = _gt_findings(demo_root, "04-development")
+    full = _gt_findings(trials_root, "04-development")
     review = _llm_for(full)
     merged_body = base.body + "\n\n## Absorbed\nCheck tenant identifiers too.\n"
     arbiter = StaticLLM(lambda s, u: {"decision": "merge", "rationale": "absorb one section", "absorbed_sections": ["tenant identifier check"], "merged_body": merged_body, "version_bump": "minor"})
-    d = judge(cfg, review, arbiter, base, cand, demo_root)
+    d = judge(cfg, review, arbiter, base, cand, trials_root)
     assert d.decision == "merge" and d.merged_eval is not None
     assert d.resolved_version == "1.1.0" and "## Absorbed" in d.resolved_markdown
     assert parse_skill(d.resolved_markdown).phase == 4
 
     # A merged body that fails validation (too short) falls back safely.
     bad_arbiter = StaticLLM(lambda s, u: {"decision": "merge", "rationale": "r", "absorbed_sections": [], "merged_body": "tiny", "version_bump": "minor"})
-    d2 = judge(cfg, review, bad_arbiter, base, cand, demo_root)
+    d2 = judge(cfg, review, bad_arbiter, base, cand, trials_root)
     assert d2.decision == "keep_current" and any("failed validation" in g for g in d2.guards)
 
 
-def test_judge_without_arbiter_uses_scores_only(cfg, skills_dir, demo_root):
+def test_judge_without_arbiter_uses_scores_only(cfg, skills_dir, trials_root):
     base = load_skills(skills_dir, cfg)[4]
     cand = _candidate_from(base)
-    d = judge(cfg, _llm_for(_gt_findings(demo_root, "04-development")), None, base, cand, demo_root)
+    d = judge(cfg, _llm_for(_gt_findings(trials_root, "04-development")), None, base, cand, trials_root)
     assert d.decision == "keep_current" and any("judge model unavailable" in g for g in d.guards)
 
 
-def test_apply_decision_writes_skill_and_credits(cfg, skills_dir, demo_root, tmp_path):
+def test_apply_decision_writes_skill_and_credits(cfg, skills_dir, trials_root, tmp_path):
     base = load_skills(skills_dir, cfg)[4]
     cand = _candidate_from(base)
-    full = _gt_findings(demo_root, "04-development")
+    full = _gt_findings(trials_root, "04-development")
     n = {"i": 0}
 
     def responder(system, user):
@@ -148,7 +148,7 @@ def test_apply_decision_writes_skill_and_credits(cfg, skills_dir, demo_root, tmp
         return {"summary": "s", "findings": full[:2] if n["i"] == 1 else full}
 
     arbiter = StaticLLM(lambda s, u: {"decision": "replace", "rationale": "better", "absorbed_sections": [], "merged_body": None, "version_bump": "minor"})
-    d = judge(cfg, StaticLLM(responder), arbiter, base, cand, demo_root)
+    d = judge(cfg, StaticLLM(responder), arbiter, base, cand, trials_root)
     skill_path = tmp_path / "SKILL.md"
     skill_path.write_text(cand.markdown, encoding="utf-8")
     credits = tmp_path / "CREDITS.md"

@@ -19,7 +19,7 @@
 
 ## Residual risks
 
-- A sufficiently subtle defect can pass a model review. Skills improve continuously through challenges; the demo
+- A sufficiently subtle defect can pass a model review. Skills improve continuously through challenges; the trials
   codebase is the regression suite.
 - Repository admins can still push directly if the ruleset is misconfigured; audit ruleset changes.
 - The LiteLLM proxy sees the code under review. Keep it inside the organisation's boundary and apply its

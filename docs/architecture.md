@@ -10,7 +10,8 @@
 | Reusable gate | `.github/workflows/sdlc-gate.yml` | the enforcement point every repository calls |
 | Arbiter | `.github/workflows/skill-challenge.yml` + `judge.py` | resolves skill challenges |
 | Metrics store | `metrics` branch (`events/`, `dashboard/`) | append-only events + generated dashboard |
-| Client | `client/` | installers + global git hooks for local feedback |
+| Client | `client/` | per-user and managed (admin) installers, global git hooks |
+| Identity | `gate/sdlc_gate/identity.py` | Entra device-code sign-in, verified e-mail, commit attestation trailer |
 
 ## Engine modules
 
@@ -26,8 +27,9 @@ report.py     Markdown rendering (PR comment, step summary)
 skip.py       SDLC-Skip / SDLC-Skip-Reason parsing and policy
 llm.py        OpenAI-compatible client for LiteLLM: retries, fallbacks, JSON extraction; StaticLLM for tests
 metrics.py    compact event, repository_dispatch, JSONL ingest with dedupe, dashboard build
-evaluate.py   run a skill on demo_codebase, match GROUND_TRUTH, recall/precision/clarity
+evaluate.py   run a skill on trials, match GROUND_TRUTH, recall/precision/clarity
 judge.py      arbiter prompt, deterministic guards, apply decision, CREDITS.md
+identity.py   Entra ID device-code login, identity storage, SDLC-Gate-Client attestation trailer
 ```
 
 ## Data flow for one gate run
@@ -70,3 +72,4 @@ See [skill-challenge.md](skill-challenge.md).
 - **Objective scoring for challenges.** Skills compete on planted defects with keyword+file matching before the
   arbiter model gives an opinion, and deterministic guards can override the model.
 - **Fail closed.** An unavailable model is a failed check, never a silent pass.
+- **No workflow engine.** See [decisions/0001-orchestration-without-temporal.md](decisions/0001-orchestration-without-temporal.md).
