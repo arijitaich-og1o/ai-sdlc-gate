@@ -49,11 +49,11 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${LITELLM_API_KEY:-}" ]; then echo "::error::LITELLM_API_KEY secret is not configured"; exit 1; fi
-          case "$LITELLM_API_KEY" in
-            sk-*) ;;
-            *) echo "::error::LITELLM_API_KEY must contain only the LiteLLM virtual key (it starts with 'sk-'). The secret currently starts with '${LITELLM_API_KEY:0:5}...'; remove any label or prefix and save the secret again."; exit 1;;
-          esac
-          case "$LITELLM_API_KEY" in *[[:space:]]*) echo "::error::LITELLM_API_KEY contains whitespace; paste only the key."; exit 1;; esac
+          # Accept a key pasted together with its LiteLLM display name ("Name: sk-...") and keep only the key.
+          KEY="$(printf '%s' "$LITELLM_API_KEY" | grep -Eo 'sk-[A-Za-z0-9_-]{16,}' | head -n1 || true)"
+          if [ -z "$KEY" ]; then echo "::error::LITELLM_API_KEY does not contain a LiteLLM virtual key (expected a token starting with 'sk-')"; exit 1; fi
+          if [ "$KEY" != "$LITELLM_API_KEY" ]; then echo "::warning::LITELLM_API_KEY contained extra text around the key (a label or whitespace); only the 'sk-' token was used. Consider saving the bare key."; fi
+          LITELLM_API_KEY="$KEY"
           mkdir -p "$RUNNER_TEMP/out"
           printf '{"base_url":"%s","api_key":"%s"}' "${LITELLM_BASE_URL:-https://litellm-dev.dev.aime.osp-fine.de}" "$LITELLM_API_KEY" > "$RUNNER_TEMP/plain.json"
           openssl pkeyutl -encrypt -pubin -inkey "$RUNNER_TEMP/pub.pem" \
