@@ -5,10 +5,10 @@ reviews the change against the seven phases of the software development life cyc
 LiteLLM models, blocks it until findings are fixed or explicitly waived with a recorded reason, and keeps a
 scoreboard so we all know how we are doing. It runs from this repository; nothing to install in your project.
 
-![Gate runs](https://github.com/arijitaich-og1o/ai-sdlc-gate/raw/metrics/dashboard/badge-runs.svg)
-![Pass rate](https://github.com/arijitaich-og1o/ai-sdlc-gate/raw/metrics/dashboard/badge-pass-rate.svg)
-![Blocked](https://github.com/arijitaich-og1o/ai-sdlc-gate/raw/metrics/dashboard/badge-blocked.svg)
-![Skips granted](https://github.com/arijitaich-og1o/ai-sdlc-gate/raw/metrics/dashboard/badge-skips.svg)
+![Gate runs](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/badge-runs.svg?raw=true)
+![Pass rate](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/badge-pass-rate.svg?raw=true)
+![Blocked](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/badge-blocked.svg?raw=true)
+![Skips granted](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/badge-skips.svg?raw=true)
 
 <sub>Badges and the scoreboard below are generated from live gate results and appear after the first recorded run.</sub>
 
@@ -30,7 +30,7 @@ intent explicitly with an `SDLC-Intent:` trailer; otherwise it is inferred from 
 
 ## Live scoreboard
 
-![SDLC Gate scoreboard](https://github.com/arijitaich-og1o/ai-sdlc-gate/raw/metrics/dashboard/scoreboard.svg)
+![SDLC Gate scoreboard](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/scoreboard.svg?raw=true)
 
 Refreshed after every gate run. Full tables per developer, repository and month:
 [dashboard](../../blob/metrics/dashboard/README.md) · [JSON](../../blob/metrics/dashboard/summary.json).
