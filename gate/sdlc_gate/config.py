@@ -83,6 +83,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "dispatch_event": "sdlc-gate-result",
         "branch": "metrics",
     },
+    "org_gate": {
+        "owners": [],
+        "exclude_repos": [],
+        "extra_branches": ["develop"],
+        "since_minutes": 120,
+        "max_candidates": 25,
+        "max_pending_minutes": 45,
+        "status_context": "SDLC Gate",
+    },
     "identity": {
         "provider": "entra",
         "authority": "https://login.microsoftonline.com",
@@ -176,6 +185,10 @@ class Config:
     @property
     def identity(self) -> dict[str, Any]:
         return self.data.get("identity", {})
+
+    @property
+    def org_gate(self) -> dict[str, Any]:
+        return self.data.get("org_gate", {})
 
     def phase_slug(self, phase: int) -> str:
         return self.phases[int(phase)]["slug"]
