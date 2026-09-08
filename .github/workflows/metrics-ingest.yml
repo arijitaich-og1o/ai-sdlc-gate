@@ -70,12 +70,12 @@ jobs:
           git add -A
           if git diff --cached --quiet; then echo "Duplicate event; nothing to commit."; exit 0; fi
           git commit --quiet -m "metrics: ingest gate result"
-          for attempt in 1 2 3 4 5; do
+          for attempt in 1 2 3 4 5 6 7 8; do
             if git push --quiet origin HEAD:refs/heads/metrics; then exit 0; fi
-            echo "push rejected (attempt $attempt); rebasing"
+            echo "push rejected (attempt $attempt); rebasing and retrying"
             git fetch --quiet origin metrics && git rebase --quiet origin/metrics || { git rebase --abort || true; }
             sdlc-gate metrics build --events-dir events --out dashboard
             git add -A && git commit --quiet --amend --no-edit
-            sleep $((attempt * 3))
+            sleep $((attempt * attempt * 2))
           done
-          echo "::error::Could not push metrics after 5 attempts"; exit 1
+          echo "::error::Could not push metrics after 8 attempts (GitHub rejected the ref update repeatedly)"; exit 1
