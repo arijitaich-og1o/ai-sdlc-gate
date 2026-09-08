@@ -38,8 +38,8 @@ class LLMError(RuntimeError):
     pass
 
 
-# Used only when neither the LITELLM_MODELS secret nor the stored client configuration names any model.
-_BUILTIN_MODELS = ["gpt-4.1", "gpt-5", "gpt-4o", "stackit-gpt-oss-120B"]
+# Default model for review and arbitration when neither LITELLM_MODELS nor the stored client configuration names one.
+_BUILTIN_MODELS = ["claude-opus-4-8", "claude-opus-4-8"]
 
 
 def resolve_models(cfg: Config, stored_models: list[str] | None = None) -> tuple[str, str, list[str]]:
