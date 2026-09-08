@@ -56,6 +56,9 @@ def check_file(path: Path) -> list[str]:
             errors.append(f"{path}: job `{name}` uses `permissions: write-all`")
         if "permissions" not in job and "permissions" not in data:
             errors.append(f"{path}: job `{name}` has no `permissions:` block")
+        for key, val in (job.get("env") or {}).items():
+            if isinstance(val, str) and re.search(r"\$\{\{[^}]*(runner|steps|job)\.", val):
+                errors.append(f"{path}: job `{name}` env `{key}` uses a context that is only available inside steps")
         for step in job.get("steps") or []:
             run = step.get("run") if isinstance(step, dict) else None
             if run and INJECTION_RE.search(str(run)):
