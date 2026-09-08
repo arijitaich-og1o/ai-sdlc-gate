@@ -135,6 +135,17 @@ skip:
   require_approval_for_phases: [6, 7]
   approval_label: sdlc-skip-approved
 
+# Organisation-wide gate: this repository discovers and gates every repository of these owners on a schedule and
+# posts the `SDLC Gate` commit status. No file is needed in the target repositories. See docs/enforcement.md.
+org_gate:
+  owners: [arijitaich-og1o]      # organisations (or user accounts) whose repositories are gated
+  exclude_repos: [arijitaich-og1o/ai-sdlc-gate]
+  extra_branches: [develop]      # long-lived branches gated on direct push, in addition to each repo's default branch
+  since_minutes: 120             # how far back to look for ungated pushes
+  max_candidates: 25             # per scheduled run
+  max_pending_minutes: 45        # re-gate if a pending status is older than this
+  status_context: SDLC Gate
+
 # Verified developer identity (Microsoft Entra ID device-code sign-in). See docs/enforcement.md.
 identity:
   provider: entra

@@ -1,0 +1,193 @@
+# Organisation gate. Nothing is required inside any project repository.
+#
+# Every few minutes this workflow discovers pull-request heads and pushes to default/long-lived branches across
+# the organisation that have not been gated yet, runs the SDLC Gate on each of them from here, posts the
+# result as the commit status "SDLC Gate" (required by the organisation ruleset), comments on pull requests,
+# and records metrics. Repositories that additionally call the reusable workflow get instant results and are
+# skipped here.
+name: Organisation Gate
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "Gate one repository (owner/name) immediately; empty = discover across the organisation"
+        type: string
+        default: ""
+      sha:
+        description: "Commit to gate (with repo); empty = newest ungated commit / open PRs"
+        type: string
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: org-gate
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    name: Discover ungated changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.find.outputs.matrix }}
+      count: ${{ steps.find.outputs.count }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install the gate engine
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet ./gate
+      - name: Find changes without a gate result
+        id: find
+        env:
+          SDLC_GATE_TOKEN: ${{ secrets.SDLC_GATE_TOKEN }}
+          ONLY_REPO: ${{ inputs.repo }}
+          ONLY_SHA: ${{ inputs.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SDLC_GATE_TOKEN:-}" ]; then
+            echo "::error::SDLC_GATE_TOKEN is not configured; the organisation gate cannot run."; exit 1
+          fi
+          ARGS=(org discover --config gate.config.yaml --output "$RUNNER_TEMP/candidates.json")
+          [ -n "$ONLY_REPO" ] && ARGS+=(--repo "$ONLY_REPO")
+          [ -n "$ONLY_SHA" ] && ARGS+=(--sha "$ONLY_SHA")
+          sdlc-gate "${ARGS[@]}"
+          COUNT="$(python -c 'import json,sys; print(len(json.load(open(sys.argv[1]))))' "$RUNNER_TEMP/candidates.json")"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(python -c 'import json,sys; print(json.dumps({"include": json.load(open(sys.argv[1]))}))' "$RUNNER_TEMP/candidates.json")" >> "$GITHUB_OUTPUT"
+          echo "Found $COUNT change(s) to gate"
+
+  gate:
+    name: Gate ${{ matrix.repo }}@${{ matrix.sha }}
+    needs: discover
+    if: needs.discover.outputs.count != '0'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    env:
+      SDLC_GATE_TOKEN: ${{ secrets.SDLC_GATE_TOKEN }}
+      TARGET_REPO: ${{ matrix.repo }}
+      TARGET_SHA: ${{ matrix.sha }}
+      TARGET_BASE: ${{ matrix.base }}
+      TARGET_REF: ${{ matrix.ref }}
+      TARGET_EVENT: ${{ matrix.event }}
+      TARGET_ACTOR: ${{ matrix.actor }}
+      TARGET_PR: ${{ matrix.pr_number }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      REPORT_DIR: ${{ runner.temp }}/sdlc-gate
+    steps:
+      - name: Check out the gate engine, skills and policy
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: .sdlc-gate
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install the gate engine
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet ./.sdlc-gate/gate
+          mkdir -p "$REPORT_DIR"
+      - name: Mark the commit as pending
+        run: sdlc-gate org status --repo "$TARGET_REPO" --sha "$TARGET_SHA" --state pending --description "SDLC Gate is reviewing this change" --target-url "$RUN_URL"
+      - name: Check out the change under review
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ matrix.repo }}
+          ref: ${{ matrix.sha }}
+          token: ${{ secrets.SDLC_GATE_TOKEN }}
+          fetch-depth: 0
+          path: target
+          persist-credentials: false
+      - name: Collect pull request body
+        if: matrix.event == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.SDLC_GATE_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$TARGET_REPO/pulls/$TARGET_PR" --jq '.body // ""' > "$REPORT_DIR/pr_body.txt"
+          LABELS="$(gh api "repos/$TARGET_REPO/issues/$TARGET_PR/labels" --jq '[.[].name] | join(",")')"
+          if printf '%s' ",$LABELS," | grep -q ",sdlc-skip-approved,"; then echo "APPROVED=1,2,3,4,5,6,7" >> "$GITHUB_ENV"; fi
+      - name: Run the SDLC Gate
+        id: gate
+        working-directory: target
+        env:
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+          SDLC_GATE_CONFIG: ${{ github.workspace }}/.sdlc-gate/gate.config.yaml
+        run: |
+          set -uo pipefail
+          ARGS=(run --config "$SDLC_GATE_CONFIG" --skills-dir "$GITHUB_WORKSPACE/.sdlc-gate/skills" --head "$TARGET_SHA" --quiet
+                --repo "$TARGET_REPO" --actor "$TARGET_ACTOR" --ref "$TARGET_REF" --sha "$TARGET_SHA"
+                --run-id "$GITHUB_RUN_ID" --run-url "$RUN_URL" --event-name "org-$TARGET_EVENT"
+                --output-json "$REPORT_DIR/report.json" --output-md "$REPORT_DIR/report.md")
+          [ -n "$TARGET_BASE" ] && ARGS+=(--base "$TARGET_BASE")
+          [ -n "${APPROVED:-}" ] && ARGS+=(--approved-skip-phases "$APPROVED")
+          [ -n "$TARGET_PR" ] && [ "$TARGET_PR" != "null" ] && ARGS+=(--pr-number "$TARGET_PR")
+          [ -f "$REPORT_DIR/pr_body.txt" ] && ARGS+=(--pr-body-file "$REPORT_DIR/pr_body.txt")
+          sdlc-gate "${ARGS[@]}"
+          RC=$?
+          echo "exit_code=$RC" >> "$GITHUB_OUTPUT"
+          [ -f "$REPORT_DIR/report.md" ] && cat "$REPORT_DIR/report.md" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+      - name: Publish the report on the pull request
+        if: always() && matrix.event == 'pull_request' && hashFiles(format('{0}/report.md', env.REPORT_DIR)) != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.SDLC_GATE_TOKEN }}
+        run: |
+          set -euo pipefail
+          BODY_FILE="$REPORT_DIR/report.md"
+          if [ "$(wc -c < "$BODY_FILE")" -gt 60000 ]; then
+            head -c 59000 "$BODY_FILE" > "$REPORT_DIR/report.trunc.md"
+            printf '\n\n_Report truncated; the full report is attached to the workflow run._\n' >> "$REPORT_DIR/report.trunc.md"
+            BODY_FILE="$REPORT_DIR/report.trunc.md"
+          fi
+          EXISTING="$(gh api "repos/$TARGET_REPO/issues/$TARGET_PR/comments" --paginate --jq '.[] | select(.body | contains("<!-- sdlc-gate-report -->")) | .id' | head -n1 || true)"
+          if [ -n "$EXISTING" ]; then
+            gh api --method PATCH "repos/$TARGET_REPO/issues/comments/$EXISTING" -F body=@"$BODY_FILE" > /dev/null
+          else
+            gh api --method POST "repos/$TARGET_REPO/issues/$TARGET_PR/comments" -F body=@"$BODY_FILE" > /dev/null
+          fi
+      - name: Record the verdict on the commit
+        if: always()
+        env:
+          RC: ${{ steps.gate.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          case "${RC:-2}" in
+            0) STATE=success; DESC="SDLC Gate passed";;
+            1) STATE=failure; DESC="$(python -c 'import json,sys; r=json.load(open(sys.argv[1])); print("; ".join(r["fail_reasons"])[:130] or "findings block this change")' "$REPORT_DIR/report.json" 2>/dev/null || echo "findings block this change")";;
+            *) STATE=error; DESC="SDLC Gate could not complete; fails closed";;
+          esac
+          sdlc-gate org status --repo "$TARGET_REPO" --sha "$TARGET_SHA" --state "$STATE" --description "$DESC" --target-url "$RUN_URL"
+      - name: Record metrics
+        if: always() && hashFiles(format('{0}/report.json', env.REPORT_DIR)) != ''
+        continue-on-error: true
+        env:
+          SDLC_GATE_CONFIG: ${{ github.workspace }}/.sdlc-gate/gate.config.yaml
+        run: sdlc-gate emit-metrics --config "$SDLC_GATE_CONFIG" --report "$REPORT_DIR/report.json" --output "$REPORT_DIR/metrics-event.json" --dispatch --token-env SDLC_GATE_TOKEN
+      - name: Upload the report
+        if: always() && hashFiles(format('{0}/report.json', env.REPORT_DIR)) != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sdlc-gate-${{ strategy.job-index }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/sdlc-gate/report.*
+          retention-days: 90

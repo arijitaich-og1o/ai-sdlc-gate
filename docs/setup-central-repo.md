@@ -9,11 +9,11 @@ Actions → New organization secret), or per repository if preferred:
 |---|---|
 | `LITELLM_BASE_URL` | `https://litellm-dev.dev.aime.osp-fine.de` |
 | `LITELLM_API_KEY` | the LiteLLM virtual key for this gate (create a dedicated key with a spend limit) |
-| `SDLC_GATE_TOKEN` | a fine-grained personal access token or GitHub App token with **Contents: read & write** and **Pull requests: read & write** on `arijitaich-og1o/ai-sdlc-gate` only |
+| `SDLC_GATE_TOKEN` | a fine-grained personal access token or GitHub App token for **all repositories of the organisation** with **Contents: read**, **Pull requests: read & write**, **Commit statuses: read & write**, **Metadata: read**, and additionally **Contents: read & write** on `arijitaich-og1o/ai-sdlc-gate` (metrics branch, arbiter pushes) |
 
-`SDLC_GATE_TOKEN` is used for three things: recording metrics (`repository_dispatch` into this repository),
-reading this repository from callers if it is private, and letting the arbiter push resolution commits that
-re-trigger checks. A GitHub App installation token is preferred over a personal token for auditability.
+`SDLC_GATE_TOKEN` powers the organisation gate: it lists repositories and pull requests, checks out the code under
+review, posts the `SDLC Gate` commit status and PR comments, records metrics, and lets the arbiter push resolution
+commits. A GitHub App installation token is preferred over a personal token for auditability.
 
 Never put these values in files. The engine reads them from the environment at run time.
 
@@ -33,9 +33,11 @@ Import [templates/org-ruleset.json](../templates/org-ruleset.json) as an **organ
 - `repository_id` under the `workflows` rule to this repository's numeric id
   (`gh api repos/arijitaich-og1o/ai-sdlc-gate --jq .id`). This makes GitHub itself require
   `.github/workflows/sdlc-gate.yml` to pass on every repository, even one that has not added the caller.
-  Note: *required workflows* rulesets require GitHub Enterprise; on Team plans use the
-  `required_status_checks` rule plus the caller template in every repository.
-- The required status check context is `SDLC Gate / SDLC Gate` (workflow name / job name).
+  Note: the `workflows` rule (GitHub Enterprise) is optional. On any plan the `required_status_checks` rule plus the
+  organisation gate in this repository is sufficient and needs nothing in the target repositories.
+- The required status check context is `SDLC Gate` (the commit status posted by the organisation gate). Repositories
+  that also use the optional caller produce a check named `SDLC Gate / SDLC Gate`; the organisation gate recognises it
+  and skips the duplicate review.
 - Keep `bypass_actors` empty. If an emergency bypass role is needed, add a single admin team and audit its use.
 
 For this repository additionally require the checks `Validate Repository / Validate (3.10)`,
@@ -54,11 +56,13 @@ Intune / Jamf / Ansible as administrator. Standard users then cannot disable or 
 
 ## 6. First run
 
-1. Push this repository. `Validate Repository` and `Self Gate` run on `main`.
+1. Push this repository. `Validate Repository` and `Self Gate` run on `main`; `Organisation Gate` starts on its
+   five-minute schedule (trigger it once manually from the Actions tab to verify the token).
+   Set `org_gate.owners` in `gate.config.yaml` to the organisation(s) to cover.
 2. Trigger `Metrics Weekly Report` manually once (Actions → workflow_dispatch) to confirm the token works; the
    `metrics` branch is created on the first ingested event.
-3. Onboard one pilot repository with the caller template and open a PR containing a fake `AKIA…` string to
-   confirm blocking, then a PR with `SDLC-Skip` trailers to confirm waivers and metrics.
+3. In any repository open a PR containing a fake `AKIA…` string and confirm the `SDLC Gate` status turns red within
+   five minutes, then a PR with `SDLC-Skip` trailers to confirm waivers and metrics.
 
 ## 7. Operating
 

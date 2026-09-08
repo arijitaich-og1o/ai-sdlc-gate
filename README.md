@@ -3,7 +3,9 @@
 Every change a developer commits, pushes or releases in the organisation passes through one gate. The gate
 reviews the change against the seven phases of the software development life cycle with the organisation's own
 LiteLLM models, blocks it until findings are fixed or explicitly waived with a recorded reason, and keeps a
-scoreboard so we all know how we are doing. It runs from this repository; nothing to install in your project.
+scoreboard so we all know how we are doing. It runs from this repository and covers every repository in the
+organisation automatically. There is nothing to add to any project. Developers install the client once on
+their machine and then simply commit and push as usual.
 
 ![Gate runs](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/badge-runs.svg?raw=true)
 ![Pass rate](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/badge-pass-rate.svg?raw=true)
@@ -36,10 +38,11 @@ Refreshed after every gate run. Full tables per developer, repository and month:
 [dashboard](../../blob/metrics/dashboard/README.md) · [JSON](../../blob/metrics/dashboard/summary.json).
 Developers are identified by their verified corporate e-mail. See [docs/metrics.md](docs/metrics.md).
 
-## For developers
+## Install once, then just work
 
-Your machine runs the same gate before a commit leaves it, so you see findings early, in any IDE or terminal.
-IT installs the managed client on company devices; on any other machine install it yourself:
+The gate runs centrally on every pull request and push, whether or not you install anything. Installing the client
+on your machine gives you the same findings before the code leaves your laptop, in any IDE or terminal, and ties
+your work to your verified identity. On company devices IT installs it for you; anywhere else:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash
@@ -68,11 +71,12 @@ Leaked secrets, hard-coded credentials and known-vulnerable dependencies can nev
 deployment or maintenance phases needs a code owner's `sdlc-skip-approved` label. Details:
 [developer guide](docs/onboarding-developers.md) · [skip policy](docs/skip-policy.md).
 
-## For repository owners
+## How enforcement works
 
-The gate is required on every repository by the organisation ruleset. If your repository predates the ruleset,
-add the caller from [templates/caller-workflow.yml](templates/caller-workflow.yml) as
-`.github/workflows/sdlc-gate.yml`. See [docs/onboarding-repositories.md](docs/onboarding-repositories.md).
+This repository watches the whole organisation. Every open pull request and every push to a main or long-lived
+branch gets an `SDLC Gate` status on its commit within minutes, and the organisation ruleset refuses to merge
+without a passing status. No repository can opt out, and there is no file to add or remove in a project. Details in
+[docs/enforcement.md](docs/enforcement.md).
 
 ## Challenging a skill
 
@@ -87,6 +91,6 @@ challenge.
 ## Documentation
 
 - [Developer guide](docs/onboarding-developers.md) · [Skip policy](docs/skip-policy.md)
-- [Repository onboarding](docs/onboarding-repositories.md) · [Central set-up](docs/setup-central-repo.md)
+- [Central set-up](docs/setup-central-repo.md) · [Repositories](docs/onboarding-repositories.md)
 - [Enforcement and identity](docs/enforcement.md) · [Security](SECURITY.md)
 - [Metrics](docs/metrics.md) · [Skill challenge](docs/skill-challenge.md) · [Contributing](CONTRIBUTING.md)

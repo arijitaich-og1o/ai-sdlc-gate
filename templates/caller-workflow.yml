@@ -1,5 +1,5 @@
-# Copy this file to .github/workflows/sdlc-gate.yml in any repository of Otto Group One.O India.
-# Nothing else is needed: the engine, skills and policy come from the central repository at run time.
+# OPTIONAL fast path. Every repository is already gated centrally by the Organisation Gate; this caller only makes
+# results appear seconds after a push instead of minutes. Copy to .github/workflows/sdlc-gate.yml if wanted.
 #
 # Requirements
 #   - Organisation secrets LITELLM_API_KEY, LITELLM_BASE_URL and SDLC_GATE_TOKEN shared with the repository
