@@ -534,9 +534,34 @@ def cmd_configure(args: argparse.Namespace) -> int:
     except keybroker.KeyBrokerError as exc:
         _eprint(f"configure: {exc}")
         return EXIT_FAIL
-    path = _store_env(llm.base_url or args.base_url or default_url, llm.api_key)
-    print(f"LiteLLM configuration obtained from {repo} and stored in {path}")
+    base_url = llm.base_url or args.base_url or default_url
+    problem = _verify_litellm_key(base_url, llm.api_key)
+    if problem:
+        _eprint(f"configure: the configuration was received but does not work: {problem}")
+        _eprint("Ask the platform team to check the LITELLM_API_KEY / LITELLM_BASE_URL secrets in the central repository, then run `sdlc-gate configure` again.")
+        return EXIT_FAIL
+    path = _store_env(base_url, llm.api_key)
+    print(f"LiteLLM configuration obtained from {repo}, verified against {base_url}, and stored in {path}")
     return EXIT_PASS
+
+
+def _verify_litellm_key(base_url: str, api_key: str) -> str | None:
+    """Return a human-readable problem description, or None when the key works."""
+    import httpx
+
+    if not api_key.startswith("sk-"):
+        return f"the API key must start with 'sk-' but starts with '{api_key[:5]}...' (the secret probably includes a label or prefix)"
+    url = base_url.rstrip("/")
+    url = f"{url}/models" if url.endswith("/v1") else f"{url}/v1/models"
+    try:
+        resp = httpx.get(url, headers={"Authorization": f"Bearer {api_key}"}, timeout=20)
+    except httpx.HTTPError as exc:
+        return f"could not reach {base_url}: {exc}"
+    if resp.status_code in (401, 403):
+        return f"LiteLLM rejected the key (HTTP {resp.status_code}): {resp.text[:160]}"
+    if resp.status_code >= 400:
+        return f"LiteLLM returned HTTP {resp.status_code} for {url}"
+    return None
 
 
 def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
