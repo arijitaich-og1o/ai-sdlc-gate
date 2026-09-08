@@ -51,12 +51,12 @@ jobs:
         if: env.skip != 'true'
         run: |
           set -euo pipefail
-          sdlc-gate metrics build --events-dir "$STORE/events" --out "$STORE/dashboard"
+          ai-sdlc-gate metrics build --events-dir "$STORE/events" --out "$STORE/dashboard"
           mkdir -p "$STORE/dashboard/weekly"
           cp "$STORE/dashboard/README.md" "$STORE/dashboard/weekly/$(date -u +%G-W%V).md"
           cd "$STORE"
-          git config user.name "sdlc-gate-bot"
-          git config user.email "sdlc-gate-bot@users.noreply.github.com"
+          git config user.name "ai-sdlc-gate-bot"
+          git config user.email "ai-sdlc-gate-bot@users.noreply.github.com"
           git add -A
           git diff --cached --quiet || { git commit --quiet -m "metrics: weekly snapshot $(date -u +%G-W%V)"; git push --quiet origin HEAD:refs/heads/metrics; }
 
@@ -66,7 +66,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TITLE="SDLC Gate — Weekly Report"
+          TITLE="AI SDLC Gate — Weekly Report"
           BODY="$STORE/dashboard/README.md"
           NUM="$(gh issue list --repo "$REPO" --state open --search "\"$TITLE\" in:title" --json number,title --jq ".[] | select(.title == \"$TITLE\") | .number" | head -n1 || true)"
           if [ -n "$NUM" ]; then

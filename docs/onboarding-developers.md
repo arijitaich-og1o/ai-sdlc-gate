@@ -11,13 +11,13 @@ you use. On company devices IT installs it; otherwise install it yourself.
   `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash`
 - **Linux / WSL:** `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash`
 
-The installer installs the `sdlc-gate` CLI, syncs the skills and policy to `~/.sdlc-gate/repo`, sets
-`git config --global core.hooksPath ~/.sdlc-gate/hooks`, and then runs two one-time steps:
+The installer installs the `ai-sdlc-gate` CLI, syncs the skills and policy to `~/.ai-sdlc-gate/repo`, sets
+`git config --global core.hooksPath ~/.ai-sdlc-gate/hooks`, and then runs two one-time steps:
 
-- `sdlc-gate identity login` — a Microsoft sign-in opens in your browser (usually one click because you are
+- `ai-sdlc-gate identity login` — a Microsoft sign-in opens in your browser (usually one click because you are
   already signed in for Outlook/Teams). Your verified corporate e-mail becomes your gate identity and your git
   `user.email`. Nothing is read from Outlook, Teams or the browser; only what Microsoft returns after you sign in.
-- `sdlc-gate configure` — obtains the review configuration from the central repository using your existing GitHub
+- `ai-sdlc-gate configure` — obtains the review configuration from the central repository using your existing GitHub
   sign-in and keeps it in your operating system's credential store (Windows Credential Manager, macOS Keychain,
   Linux Secret Service). Nothing to type, nothing readable on disk.
 
@@ -31,12 +31,12 @@ helper that stores your login when you push). Corporate proxies: set `HTTPS_PROX
 
 - `git commit` → the `commit-msg` hook reviews the staged change with the intent and skip trailers from your
   message. Blocked commits print the report; fix or add trailers and commit again. Passing commits get an
-  `SDLC-Gate-Client` trailer that records the local check and your verified e-mail.
+  `AI-SDLC-Gate-Client` trailer that records the local check and your verified e-mail.
 - `git push` → the `pre-push` hook reviews the commits new to the remote for each branch, with the intent
   derived from the branch name.
 - Skills and policy refresh from the central repository at most once a day.
 - If the model is unreachable the commit is blocked (fail closed). For genuinely offline work on a self-installed
-  client, `SDLC_GATE_LOCAL_FAIL_OPEN=1` lets commits through with a warning; managed installs ignore it.
+  client, `AI_SDLC_GATE_LOCAL_FAIL_OPEN=1` lets commits through with a warning; managed installs ignore it.
 - Every run is recorded on the organisation scoreboard using your existing GitHub credential (GitHub CLI or the
   git credential helper). If none is available the run still completes and you see a note.
 - Existing repository-local hooks in `.git/hooks/` still run; the global hooks chain to them.
@@ -62,10 +62,9 @@ Rules are in [skip-policy.md](skip-policy.md). Skips are visible to management o
 - **VS Code / IntelliJ / any IDE:** commits made from the IDE go through git and therefore through the hooks.
   IntelliJ shows hook output in the commit dialog; VS Code shows it in the Git output panel.
 - **GUI clients that ship their own git** (GitHub Desktop, SourceTree) respect `core.hooksPath` as well.
-- To run a review on demand: `sdlc-gate run --base origin/main --head HEAD` inside the repository.
+- To run a review on demand: `ai-sdlc-gate run --base origin/main --head HEAD` inside the repository.
 
 ## Uninstall
 
-```bash
-git config --global --unset core.hooksPath && rm -rf ~/.sdlc-gate && pip uninstall sdlc-gate
-```
+Windows: run `client/uninstall.ps1`. macOS, Linux, WSL: `bash client/uninstall.sh`. Both remove the hooks, the
+installation folder, the package and the credential-store entry.

@@ -32,7 +32,7 @@ from .llm import LLMError
 from .runner import review_phase
 from .skills import Skill
 
-JUDGE_SYSTEM = """You are an impartial evaluator of code-review findings for the SDLC Gate of Otto Group One.O India.
+JUDGE_SYSTEM = """You are an impartial evaluator of code-review findings for the AI SDLC Gate of Otto Group One.O India.
 You receive the reviewed content, the list of KNOWN planted defects, and a list of EXTRA findings that did
 not match any planted defect. Decide for each extra finding whether it is a legitimate, real issue in the
 content (true) or spurious/incorrect/irrelevant (false). Then rate the overall clarity and actionability of

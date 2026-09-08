@@ -1,4 +1,4 @@
-# SDLC Gate policy for Otto Group One.O India.
+# AI SDLC Gate policy for Otto Group One.O India.
 # This file is the single source of truth for how the gate behaves. Changes require code-owner review.
 version: 1
 
@@ -115,7 +115,7 @@ prechecks:
   enabled: true
   max_file_size_bytes: 5000000
   # Regexes for lines that are known false positives for secret detection (kept deliberately empty; prefer inline
-  # `# sdlc-gate: allow-secret` comments so exceptions are visible in review).
+  # `# ai-sdlc-gate: allow-secret` comments so exceptions are visible in review).
   secret_allow_regexes: []
 
 skip:
@@ -139,8 +139,10 @@ skip:
 identity:
   provider: entra
   authority: https://login.microsoftonline.com
-  tenant: ""            # Directory (tenant) ID of the organisation
-  client_id: ""         # Application (client) ID of the "SDLC Gate client" public app registration
+  # Until the platform team registers a dedicated "AI SDLC Gate client" application, the sign-in uses Microsoft's public
+  # Azure CLI client id against the developer's home tenant; only accounts in allowed_domains are accepted.
+  tenant: organizations
+  client_id: 04b07795-8ddb-461a-bbee-02f9e1bf7b46
   allowed_domains: [og1o.in]
   # When true, the hooks refuse to commit until the developer has signed in once. Only enforced once tenant and
   # client_id above are set; managed installs always require it once configured.
@@ -148,7 +150,7 @@ identity:
 
 metrics:
   central_repo: arijitaich-og1o/ai-sdlc-gate
-  dispatch_event: sdlc-gate-result
+  dispatch_event: ai-sdlc-gate-result
   branch: metrics
 
 challenge:

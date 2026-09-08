@@ -4,10 +4,10 @@ from pathlib import Path
 
 import yaml
 
-from sdlc_gate.evaluate import evaluate_skill, load_ground_truth
-from sdlc_gate.judge import apply_decision, bump_version, decision_markdown, judge
-from sdlc_gate.llm import StaticLLM
-from sdlc_gate.skills import load_skills, parse_skill
+from ai_sdlc_gate.evaluate import evaluate_skill, load_ground_truth
+from ai_sdlc_gate.judge import apply_decision, bump_version, decision_markdown, judge
+from ai_sdlc_gate.llm import StaticLLM
+from ai_sdlc_gate.skills import load_skills, parse_skill
 
 
 def _gt_findings(trials_root: Path, slug: str, fraction: float = 1.0):
@@ -73,7 +73,7 @@ def test_evaluate_excludes_ground_truth_from_reviewed_content(cfg, skills_dir, t
 def _candidate_from(skill, extra="\n\n## Extra section\nAlso check for hard-coded tenant identifiers.\n", version="1.1.0"):
     fm = dict(skill.frontmatter)
     fm["version"] = version
-    from sdlc_gate.skills import render_skill
+    from ai_sdlc_gate.skills import render_skill
 
     return parse_skill(render_skill(fm, skill.body + extra), slug=skill.slug)
 

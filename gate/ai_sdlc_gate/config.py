@@ -81,15 +81,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "metrics": {
         "central_repo": "arijitaich-og1o/ai-sdlc-gate",
-        "dispatch_event": "sdlc-gate-result",
+        "dispatch_event": "ai-sdlc-gate-result",
         "branch": "metrics",
     },
     "identity": {
         "provider": "entra",
         "authority": "https://login.microsoftonline.com",
-        "tenant": "",
-        "client_id": "",
-        "allowed_domains": [],
+        "tenant": "organizations",
+        "client_id": "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+        "allowed_domains": ["og1o.in"],
         "required": False,
     },
     "challenge": {
@@ -120,7 +120,7 @@ class Config:
         candidates: list[Path] = []
         if path:
             candidates.append(Path(path))
-        env_path = os.environ.get("SDLC_GATE_CONFIG")
+        env_path = os.environ.get("AI_SDLC_GATE_CONFIG")
         if env_path:
             candidates.append(Path(env_path))
         candidates.append(Path.cwd() / "gate.config.yaml")

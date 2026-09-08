@@ -13,7 +13,7 @@ dashboard/badge-*.svg    badges embedded in the main README
 dashboard/weekly/        Monday snapshots
 ```
 
-A pinned issue **"SDLC Gate — Weekly Report"** mirrors the dashboard every Monday 09:00 IST.
+A pinned issue **"AI SDLC Gate — Weekly Report"** mirrors the dashboard every Monday 09:00 IST.
 
 Events are sent from developer machines by the installed gate after every commit and push, using the developer's own
 GitHub credential; this repository's own pull requests are recorded by the Self Gate workflow.
@@ -38,7 +38,7 @@ token usage and duration.
 | Waived findings | findings neutralised by granted skips |
 | Findings per run | total findings (all severities) ÷ runs |
 | Top categories | most frequent finding categories |
-| Client attested | share of runs whose commits carry the gate's `SDLC-Gate-Client` trailer |
+| Client attested | share of runs whose commits carry the gate's `AI-SDLC-Gate-Client` trailer |
 
 `Flagged − Blocked` is the number of runs that passed only because of a skip.
 
@@ -58,7 +58,7 @@ conclusions; a developer working on a legacy module will be flagged more often t
 
 Anyone with read access to this repository can read the `metrics` branch. To restrict management data,
 make the repository internal and grant read access to leads only; callers still work because they use the
-`SDLC_GATE_TOKEN` to reach the repository.
+`AI_SDLC_GATE_TOKEN` to reach the repository.
 
 ## Exporting
 

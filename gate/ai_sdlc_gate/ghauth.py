@@ -4,7 +4,7 @@ Developers already authenticate to GitHub to push code. We reuse that credential
 it for one call: `repository_dispatch` to the central repository (which requires write access there, the same
 access needed to open a skill challenge). Order of precedence:
 
-1. `SDLC_GATE_TOKEN` environment variable (CI and power users)
+1. `AI_SDLC_GATE_TOKEN` environment variable (CI and power users)
 2. `gh auth token` (GitHub CLI)
 3. the git credential helper (`git credential fill`), e.g. Git Credential Manager on Windows/macOS
 """
@@ -31,7 +31,7 @@ def _run(cmd: list[str], stdin: str | None = None, timeout: int = 15) -> str:
     return proc.stdout if proc.returncode == 0 else ""
 
 
-def find_credential(host: str = "github.com", token_env: str = "SDLC_GATE_TOKEN") -> GitHubCredential | None:
+def find_credential(host: str = "github.com", token_env: str = "AI_SDLC_GATE_TOKEN") -> GitHubCredential | None:
     env_token = os.environ.get(token_env, "").strip()
     if env_token:
         return GitHubCredential(token=env_token, username=os.environ.get("GITHUB_ACTOR", ""), source="env")

@@ -28,7 +28,7 @@ from .skills import Skill, parse_skill, render_skill
 
 DECISIONS = ("keep_current", "replace", "merge")
 
-JUDGE_SYSTEM = """You are the skill arbiter for the SDLC Gate of Otto Group One.O India.
+JUDGE_SYSTEM = """You are the skill arbiter for the AI SDLC Gate of Otto Group One.O India.
 
 Two versions of the SAME phase skill are presented: the CURRENT skill in the repository and a CANDIDATE
 proposed by a contributor. Each has been evaluated objectively against a validation suite with planted
@@ -250,7 +250,7 @@ def _eval_brief(ev: Evaluation) -> dict[str, Any]:
 
 CREDITS_HEADER = """# Credits
 
-Every developer whose skill contribution was adopted, fully or partially, by the SDLC Gate arbiter is
+Every developer whose skill contribution was adopted, fully or partially, by the AI SDLC Gate arbiter is
 recorded here automatically. The repository always contains exactly seven skills (one per SDLC phase);
 this file is the history of who shaped them.
 
@@ -292,7 +292,7 @@ def apply_decision(
 def decision_markdown(decision: Decision, contributor: str, phase_name: str) -> str:
     icon = {"keep_current": "🛡️", "replace": "🔁", "merge": "🧩"}[decision.decision]
     L = [
-        "<!-- sdlc-gate-challenge -->",
+        "<!-- ai-sdlc-gate-challenge -->",
         f"## {icon} Skill challenge result — phase {decision.phase} · {phase_name}: **{decision.decision.replace('_', ' ')}**",
         "",
         f"Contributor: @{contributor}",

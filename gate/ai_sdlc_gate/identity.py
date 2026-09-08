@@ -5,10 +5,10 @@ signed in to the organisation's Microsoft account (Outlook / Teams on the web us
 step is a single confirmation click; nothing is read from Outlook, Teams or the browser itself. The ID token
 returned by Microsoft carries the verified corporate e-mail (UPN), which is:
 
-- stored locally in `~/.sdlc-gate/identity.json` (user-only permissions),
+- stored locally in `~/.ai-sdlc-gate/identity.json` (user-only permissions),
 - written to the developer's global git identity (`user.email`, `user.name`) so every commit is authored with
   the verified address,
-- attached by the local hooks as a `SDLC-Gate-Client` trailer so the server-side gate and the metrics can
+- attached by the local hooks as a `AI-SDLC-Gate-Client` trailer so the server-side gate and the metrics can
   attribute each run to a verified person.
 
 Set-up (platform team): register a public client application in Entra ID, enable "Allow public client flows",
@@ -64,7 +64,7 @@ class Identity:
 
 
 def sdlc_home() -> Path:
-    return Path(os.environ.get("SDLC_GATE_HOME") or (Path.home() / ".sdlc-gate"))
+    return Path(os.environ.get("AI_SDLC_GATE_HOME") or (Path.home() / ".ai-sdlc-gate"))
 
 
 def identity_path(home: Path | None = None) -> Path:
@@ -202,7 +202,7 @@ def configure_git_identity(identity: Identity) -> None:
 
 # ---------------------------------------------------------------------------- attestation
 
-ATTEST_TRAILER = "SDLC-Gate-Client"
+ATTEST_TRAILER = "AI-SDLC-Gate-Client"
 ATTEST_RE = re.compile(rf"^[ \t]*{ATTEST_TRAILER}[ \t]*:[ \t]*(?P<result>pass|waived)[ \t]+v(?P<version>[0-9.]+)[ \t]+(?P<email>[^\s]+@[^\s]+|anonymous)[ \t]+(?P<ts>\S+)", re.I | re.M)
 
 

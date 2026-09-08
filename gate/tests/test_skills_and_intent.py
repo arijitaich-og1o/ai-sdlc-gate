@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from sdlc_gate.intent import detect_intent
-from sdlc_gate.skills import parse_skill, validate_skills_dir
+from ai_sdlc_gate.intent import detect_intent
+from ai_sdlc_gate.skills import parse_skill, validate_skills_dir
 
 
 def test_repo_has_exactly_seven_valid_skills(cfg, skills_dir):

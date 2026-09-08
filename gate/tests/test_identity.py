@@ -8,7 +8,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from sdlc_gate import identity as idm
+from ai_sdlc_gate import identity as idm
 
 TENANT = "11111111-2222-3333-4444-555555555555"
 CLIENT = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
@@ -55,7 +55,7 @@ def test_device_code_login_returns_verified_identity(tmp_path, monkeypatch):
     client = httpx.Client(transport=_transport(_claims()))
     ident = idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, sleep=lambda s: None, open_browser=False, client=client)
     assert ident.email == "arijit.aich@og1o.in" and ident.name == "Arijit Aich" and ident.tid == TENANT
-    monkeypatch.setenv("SDLC_GATE_HOME", str(tmp_path))
+    monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
     path = idm.save_identity(ident)
     assert path == tmp_path / "identity.json"
     loaded = idm.load_identity()
@@ -99,13 +99,13 @@ def test_attestation_roundtrip(tmp_path):
 
 
 def test_attestation_flows_into_gate_context_and_event(cfg, skills_dir):
-    from sdlc_gate.changes import ChangeSet, ChangedFile
-    from sdlc_gate.intent import detect_intent
-    from sdlc_gate.llm import StaticLLM
-    from sdlc_gate.metrics import build_event, developer_key, summarize, validate_event
-    from sdlc_gate.runner import run_gate
-    from sdlc_gate.skills import load_skills
-    from sdlc_gate.skip import parse_skip
+    from ai_sdlc_gate.changes import ChangeSet, ChangedFile
+    from ai_sdlc_gate.intent import detect_intent
+    from ai_sdlc_gate.llm import StaticLLM
+    from ai_sdlc_gate.metrics import build_event, developer_key, summarize, validate_event
+    from ai_sdlc_gate.runner import run_gate
+    from ai_sdlc_gate.skills import load_skills
+    from ai_sdlc_gate.skip import parse_skip
 
     skills = load_skills(skills_dir, cfg)
     msg = "feat: x\n\n" + idm.attestation_line("pass", "1.0.0", idm.Identity(email="priya.r@og1o.in", name="Priya", oid="o", tid=TENANT))
@@ -126,7 +126,7 @@ def test_attestation_flows_into_gate_context_and_event(cfg, skills_dir):
 
 
 def test_dashboard_writes_scoreboard_and_badges(tmp_path):
-    from sdlc_gate.metrics import build_dashboard
+    from ai_sdlc_gate.metrics import build_dashboard
 
     summary = build_dashboard(tmp_path / "events", tmp_path / "dash")
     assert summary["events"] == 0
@@ -137,9 +137,9 @@ def test_dashboard_writes_scoreboard_and_badges(tmp_path):
 
 
 def test_identity_check_command_respects_configuration(tmp_path, monkeypatch, cfg):
-    from sdlc_gate.cli import main
+    from ai_sdlc_gate.cli import main
 
-    monkeypatch.setenv("SDLC_GATE_HOME", str(tmp_path))
+    monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
     # Provider not configured (repository default): nothing is required.
     cfg_path = tmp_path / "gate.config.yaml"
     cfg_path.write_text("identity:\n  tenant: ''\n  client_id: ''\n  required: true\n", encoding="utf-8")

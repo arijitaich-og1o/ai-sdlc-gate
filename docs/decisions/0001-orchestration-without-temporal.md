@@ -8,7 +8,7 @@ Temporal is a durable-execution platform: workflows written in code run on worke
 infrastructure failures, and get retries, timers, signals and long-lived state for free. It is excellent for
 multi-step business processes that run for hours to months and must never lose their place.
 
-The SDLC Gate has these properties:
+The AI SDLC Gate has these properties:
 
 - each run is short (one to a few minutes), stateless and idempotent (re-run the check, get the same result);
 - the run must happen exactly where GitHub decides whether a merge is allowed, because a required status check

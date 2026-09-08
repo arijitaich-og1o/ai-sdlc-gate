@@ -51,8 +51,8 @@ def resolve_models(cfg: Config, stored_models: list[str] | None = None) -> tuple
         names = [m for m in (llm.get("review_model"), llm.get("judge_model"), *(llm.get("fallback_models") or [])) if m]
     if not names:
         names = list(_BUILTIN_MODELS)
-    review = os.environ.get("SDLC_GATE_MODEL") or names[0]
-    judge = os.environ.get("SDLC_JUDGE_MODEL") or (names[1] if len(names) > 1 else names[0])
+    review = os.environ.get("AI_SDLC_GATE_MODEL") or names[0]
+    judge = os.environ.get("AI_SDLC_JUDGE_MODEL") or (names[1] if len(names) > 1 else names[0])
     fallbacks = [m for m in names[2:] if m not in (review, judge)] if len(names) > 2 else [m for m in names if m not in (review,)]
     return review, judge, fallbacks
 
@@ -154,7 +154,7 @@ class LLMClient:
             headers={
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
-                "User-Agent": "sdlc-gate/1.0",
+                "User-Agent": "ai-sdlc-gate/1.0",
             },
             json=payload,
         )

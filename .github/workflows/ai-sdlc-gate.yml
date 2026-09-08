@@ -1,6 +1,6 @@
-# Reusable SDLC Gate workflow. Used by this repository to gate its own pull requests (self-gate.yml). Other
+# Reusable AI SDLC Gate workflow. Used by this repository to gate its own pull requests (self-gate.yml). Other
 # repositories may call it as an optional server-side backstop; the organisation's gate is the installed client.
-name: SDLC Gate
+name: AI SDLC Gate
 
 on:
   workflow_call:
@@ -28,7 +28,7 @@ on:
       LITELLM_MODELS:
         description: "Comma separated model names: review, judge, fallbacks (kept out of the repository)."
         required: false
-      SDLC_GATE_TOKEN:
+      AI_SDLC_GATE_TOKEN:
         description: "Token with contents:write on the central repository, used to record metrics (and to read a private central repo)."
         required: false
     outputs:
@@ -40,7 +40,7 @@ permissions: {}
 
 jobs:
   gate:
-    name: SDLC Gate
+    name: AI SDLC Gate
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -49,8 +49,8 @@ jobs:
     outputs:
       verdict: ${{ steps.gate.outputs.verdict }}
     env:
-      GATE_DIR: ${{ github.workspace }}/.sdlc-gate
-      REPORT_DIR: ${{ github.workspace }}/.sdlc-gate-reports
+      GATE_DIR: ${{ github.workspace }}/.ai-sdlc-gate
+      REPORT_DIR: ${{ github.workspace }}/.ai-sdlc-gate-reports
 
     steps:
       - name: Check out the change under review
@@ -59,14 +59,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Check out the SDLC Gate engine and skills
+      - name: Check out the AI SDLC Gate engine and skills
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: arijitaich-og1o/ai-sdlc-gate
           ref: ${{ inputs.gate-ref }}
-          path: .sdlc-gate
+          path: .ai-sdlc-gate
           persist-credentials: false
-          token: ${{ secrets.SDLC_GATE_TOKEN != '' && secrets.SDLC_GATE_TOKEN || github.token }}
+          token: ${{ secrets.AI_SDLC_GATE_TOKEN != '' && secrets.AI_SDLC_GATE_TOKEN || github.token }}
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -77,7 +77,7 @@ jobs:
         run: |
           python -m pip install --quiet --upgrade pip
           python -m pip install --quiet "$GATE_DIR/gate"
-          sdlc-gate --version
+          ai-sdlc-gate --version
           mkdir -p "$REPORT_DIR"
 
       - name: Resolve the revision range
@@ -125,13 +125,13 @@ jobs:
             echo "approved_phases=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run the SDLC Gate
+      - name: Run the AI SDLC Gate
         id: gate
         env:
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
           LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
           LITELLM_MODELS: ${{ secrets.LITELLM_MODELS }}
-          SDLC_GATE_CONFIG: ${{ github.workspace }}/.sdlc-gate/gate.config.yaml
+          AI_SDLC_GATE_CONFIG: ${{ github.workspace }}/.ai-sdlc-gate/gate.config.yaml
           INTENT: ${{ inputs.intent }}
           FAIL_ON: ${{ inputs.fail-on }}
           BASE: ${{ steps.range.outputs.base }}
@@ -143,7 +143,7 @@ jobs:
         run: |
           set +e
           set -uo pipefail
-          ARGS=(run --config "$SDLC_GATE_CONFIG" --skills-dir "$GATE_DIR/skills" --head "$HEAD" --quiet
+          ARGS=(run --config "$AI_SDLC_GATE_CONFIG" --skills-dir "$GATE_DIR/skills" --head "$HEAD" --quiet
                 --repo "$GITHUB_REPOSITORY" --actor "$GITHUB_ACTOR" --ref "$REF_NAME" --sha "$HEAD"
                 --run-id "$GITHUB_RUN_ID" --run-url "$RUN_URL" --event-name "$GITHUB_EVENT_NAME"
                 --output-json "$REPORT_DIR/report.json" --output-md "$REPORT_DIR/report.md")
@@ -154,7 +154,7 @@ jobs:
           [ -n "$PR_NUMBER" ] && ARGS+=(--pr-number "$PR_NUMBER")
           [ -f "$REPORT_DIR/pr_body.txt" ] && ARGS+=(--pr-body-file "$REPORT_DIR/pr_body.txt")
           RC=0
-          sdlc-gate "${ARGS[@]}" || RC=$?
+          ai-sdlc-gate "${ARGS[@]}" || RC=$?
           echo "exit_code=$RC" >> "$GITHUB_OUTPUT"
           if [ -f "$REPORT_DIR/report.md" ]; then
             echo "report_exists=true" >> "$GITHUB_OUTPUT"
@@ -165,7 +165,7 @@ jobs:
           case "$RC" in
             0) echo "verdict=pass" >> "$GITHUB_OUTPUT" ;;
             1) echo "verdict=fail" >> "$GITHUB_OUTPUT" ;;
-            *) echo "verdict=fail" >> "$GITHUB_OUTPUT"; echo "::error::SDLC Gate could not complete (exit $RC). The gate fails closed." ;;
+            *) echo "verdict=fail" >> "$GITHUB_OUTPUT"; echo "::error::AI SDLC Gate could not complete (exit $RC). The gate fails closed." ;;
           esac
           exit 0
 
@@ -185,7 +185,7 @@ jobs:
             printf '\n\n_Report truncated; the full report is attached to the workflow run as an artifact._\n' >> "$REPORT_DIR/report.trunc.md"
             BODY_FILE="$REPORT_DIR/report.trunc.md"
           fi
-          EXISTING="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | contains("<!-- sdlc-gate-report -->")) | .id' | head -n1 || true)"
+          EXISTING="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | contains("<!-- ai-sdlc-gate-report -->")) | .id' | head -n1 || true)"
           if [ -n "$EXISTING" ]; then
             gh api --method PATCH "repos/$REPO/issues/comments/$EXISTING" -F body=@"$BODY_FILE" > /dev/null
           else
@@ -196,24 +196,24 @@ jobs:
         if: always() && steps.gate.outputs.report_exists == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: sdlc-gate-report-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ github.workspace }}/.sdlc-gate-reports/report.*
+          name: ai-sdlc-gate-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ github.workspace }}/.ai-sdlc-gate-reports/report.*
           retention-days: 90
 
       - name: Record metrics in the central repository
         if: always() && steps.gate.outputs.report_exists == 'true'
         continue-on-error: true
         env:
-          SDLC_GATE_TOKEN: ${{ secrets.SDLC_GATE_TOKEN }}
-          SDLC_GATE_CONFIG: ${{ github.workspace }}/.sdlc-gate/gate.config.yaml
+          AI_SDLC_GATE_TOKEN: ${{ secrets.AI_SDLC_GATE_TOKEN }}
+          AI_SDLC_GATE_CONFIG: ${{ github.workspace }}/.ai-sdlc-gate/gate.config.yaml
         run: |
           set -euo pipefail
-          if [ -z "${SDLC_GATE_TOKEN:-}" ]; then
-            echo "::notice::SDLC_GATE_TOKEN is not configured; this run is not recorded in the organisation metrics."
+          if [ -z "${AI_SDLC_GATE_TOKEN:-}" ]; then
+            echo "::notice::AI_SDLC_GATE_TOKEN is not configured; this run is not recorded in the organisation metrics."
             exit 0
           fi
-          sdlc-gate emit-metrics --config "$SDLC_GATE_CONFIG" --report "$REPORT_DIR/report.json" \
-            --output "$REPORT_DIR/metrics-event.json" --dispatch --token-env SDLC_GATE_TOKEN
+          ai-sdlc-gate emit-metrics --config "$AI_SDLC_GATE_CONFIG" --report "$REPORT_DIR/report.json" \
+            --output "$REPORT_DIR/metrics-event.json" --dispatch --token-env AI_SDLC_GATE_TOKEN
 
       - name: Enforce the verdict
         if: always()
@@ -221,8 +221,8 @@ jobs:
           RC: ${{ steps.gate.outputs.exit_code }}
         run: |
           if [ "${RC:-2}" = "0" ]; then
-            echo "SDLC Gate passed."
+            echo "AI SDLC Gate passed."
           else
-            echo "::error::SDLC Gate did not pass (exit ${RC:-2}). See the job summary or the pull request comment for findings."
+            echo "::error::AI SDLC Gate did not pass (exit ${RC:-2}). See the job summary or the pull request comment for findings."
             exit 1
           fi

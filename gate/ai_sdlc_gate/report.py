@@ -4,7 +4,7 @@ from __future__ import annotations
 from .config import SEVERITIES, severity_rank
 from .runner import GateReport
 
-MARKER = "<!-- sdlc-gate-report -->"
+MARKER = "<!-- ai-sdlc-gate-report -->"
 SEV_ICON = {"blocker": "🟥", "high": "🟧", "medium": "🟨", "low": "🟦", "info": "⬜"}
 VERDICT_ICON = {"pass": "✅", "fail": "❌", "waived": "⚠️", "error": "💥"}
 
@@ -31,7 +31,7 @@ def _finding_line(f: dict) -> str:
 
 def to_markdown(report: GateReport, cfg=None, compact: bool = False) -> str:
     icon = VERDICT_ICON.get(report.verdict, "")
-    lines: list[str] = [MARKER, f"## {icon} SDLC Gate: {report.verdict.upper()}", ""]
+    lines: list[str] = [MARKER, f"## {icon} AI SDLC Gate: {report.verdict.upper()}", ""]
     it = report.intent
     lines.append(
         f"**Intent:** `{it.intent}` (detected via {it.source}) · **Phases checked:** "

@@ -3,7 +3,7 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sdlc-gate"
+name = "ai-sdlc-gate"
 version = "1.0.0"
 description = "Otto Group One.O India - AI SDLC standardization gate "
 readme = "README.md"
@@ -21,11 +21,11 @@ dependencies = [
 dev = ["pytest>=8.0", "pytest-cov>=5.0"]
 
 [project.scripts]
-sdlc-gate = "sdlc_gate.cli:main"
+ai-sdlc-gate = "ai_sdlc_gate.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["sdlc_gate*"]
+include = ["ai_sdlc_gate*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

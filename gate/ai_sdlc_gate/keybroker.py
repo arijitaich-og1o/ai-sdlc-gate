@@ -46,7 +46,7 @@ def _headers(token: str) -> dict[str, str]:
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "sdlc-gate/1.0",
+        "User-Agent": "ai-sdlc-gate/1.0",
     }
 
 

@@ -1,5 +1,5 @@
 <!--
-The SDLC Gate reviews this pull request automatically. Two optional trailers control it; put them on their own
+The AI SDLC Gate reviews this pull request automatically. Two optional trailers control it; put them on their own
 lines here or in a commit message:
 
 SDLC-Intent: deploy
@@ -16,7 +16,7 @@ SDLC-Skip-Reason: <at least 40 characters explaining why, with a ticket referenc
 
 ## How was it verified
 
-## SDLC Gate
+## AI SDLC Gate
 
 <!-- SDLC-Intent: -->
 <!-- SDLC-Skip: -->

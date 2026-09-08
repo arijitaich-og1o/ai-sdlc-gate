@@ -32,5 +32,5 @@ command and input that reproduces the problem.
 
 ## Rotation
 
-Rotate `LITELLM_API_KEY` and `SDLC_GATE_TOKEN` on a schedule and immediately if they appear anywhere outside
+Rotate `LITELLM_API_KEY` and `AI_SDLC_GATE_TOKEN` on a schedule and immediately if they appear anywhere outside
 GitHub secrets. Keys are read at run time, so rotation needs no code change.

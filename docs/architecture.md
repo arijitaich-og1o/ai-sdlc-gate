@@ -6,12 +6,12 @@
 |---|---|---|
 | Policy | `gate.config.yaml` | phases, intent→phase mapping, detection rules, thresholds, skip rules, models |
 | Skills | `skills/NN-*/SKILL.md` | the review checklist and taxonomy the model applies for one phase |
-| Engine | `gate/sdlc_gate/` | change collection, intent detection, pre-checks, model calls, waivers, reports, metrics, arbiter |
+| Engine | `gate/ai_sdlc_gate/` | change collection, intent detection, pre-checks, model calls, waivers, reports, metrics, arbiter |
 | Client | `client/` | the gate as deployed: installers (self-service and managed), global git hooks, shim |
-| Reusable workflow | `.github/workflows/sdlc-gate.yml` | gates this repository's own pull requests; optional backstop for others |
+| Reusable workflow | `.github/workflows/ai-sdlc-gate.yml` | gates this repository's own pull requests; optional backstop for others |
 | Arbiter | `.github/workflows/skill-challenge.yml` + `judge.py` | resolves skill challenges |
 | Metrics store | `metrics` branch (`events/`, `dashboard/`) | append-only events + generated dashboard |
-| Identity | `gate/sdlc_gate/identity.py` | Entra device-code sign-in, verified e-mail, commit attestation trailer |
+| Identity | `gate/ai_sdlc_gate/identity.py` | Entra device-code sign-in, verified e-mail, commit attestation trailer |
 
 ## Engine modules
 
@@ -29,7 +29,7 @@ llm.py        OpenAI-compatible client for the model gateway: retries, fallbacks
 metrics.py    compact event, repository_dispatch, JSONL ingest with dedupe, dashboard build
 evaluate.py   run a skill on trials, match GROUND_TRUTH, recall/precision/clarity
 judge.py      arbiter prompt, deterministic guards, apply decision, CREDITS.md
-identity.py   Entra ID device-code login, identity storage, SDLC-Gate-Client attestation trailer
+identity.py   Entra ID device-code login, identity storage, AI-SDLC-Gate-Client attestation trailer
 ghauth.py     locate the developer's existing GitHub credential for sending metrics
 ```
 
@@ -38,7 +38,7 @@ ghauth.py     locate the developer's existing GitHub credential for sending metr
 1. `git commit` triggers the global `commit-msg` hook (`git push` the `pre-push` hook); managed installs route
    through a shim that removes `--no-verify` and hook-path overrides.
 2. The hook refreshes skills/policy from this repository (daily) and checks the verified identity.
-3. `sdlc-gate run --staged` (or `--base/--head` for pushes) builds a `ChangeSet` (per-file diff + post-change content,
+3. `ai-sdlc-gate run --staged` (or `--base/--head` for pushes) builds a `ChangeSet` (per-file diff + post-change content,
    generated/binary files excluded, large files truncated, change set chunked to the budget).
 4. Intent is resolved. Pre-checks run. For each phase in scope the skill body, review context and fenced change
    set are sent to the model gateway with a JSON-only system prompt. Findings are normalised (severity aliases, ids,
@@ -47,12 +47,12 @@ ghauth.py     locate the developer's existing GitHub credential for sending metr
    their category is non-skippable.
 6. `GateReport` → Markdown printed to the developer, JSON report → compact metrics event dispatched to this
    repository via `repository_dispatch` with the developer's own GitHub credential.
-7. Exit code 0 lets the commit/push proceed (and the `SDLC-Gate-Client` trailer is appended); 1 blocks it;
+7. Exit code 0 lets the commit/push proceed (and the `AI-SDLC-Gate-Client` trailer is appended); 1 blocks it;
    2 (engine/LLM error) blocks it too (fail closed).
 
 ## Metrics flow
 
-`sdlc-gate emit-metrics --dispatch` → `repository_dispatch(sdlc-gate-result)` → `metrics-ingest.yml` validates the
+`ai-sdlc-gate emit-metrics --dispatch` → `repository_dispatch(ai-sdlc-gate-result)` → `metrics-ingest.yml` validates the
 event, appends it to `events/YYYY/MM.jsonl` (idempotent by UUID) on the `metrics` branch, regenerates
 `dashboard/README.md` + `summary.json`, pushes with rebase-retry. `metrics-weekly.yml` snapshots the dashboard
 and updates a pinned issue every Monday.
