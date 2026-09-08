@@ -1,0 +1,185 @@
+# Skill challenge arbiter.
+#
+# Any developer may open a pull request that changes one or more of the seven skills. This workflow:
+#   1. refuses PRs from forks and PRs that touch anything other than skills/** (those need code-owner review);
+#   2. runs the CURRENT skill (base branch) and the CANDIDATE skill (PR head) against demo_codebase/;
+#   3. asks the arbiter model to keep / replace / merge, with deterministic guards on top;
+#   4. writes the resolved skill and CREDITS.md back to the PR branch, comments the full comparison,
+#   5. closes rejected challenges and enables auto-merge for accepted ones.
+#
+# The bot's own resolution commit is prefixed "skill-challenge:"; a re-run on that commit only verifies and
+# enables auto-merge, so the loop terminates.
+name: Skill Challenge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "skills/**"
+
+permissions: {}
+
+concurrency:
+  group: skill-challenge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  arbitrate:
+    name: Arbitrate
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      REPO: ${{ github.repository }}
+      OUT_DIR: ${{ runner.temp }}/challenge
+    steps:
+      - name: Refuse pull requests from forks
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error::Skill challenges must be opened from a branch in this repository by an organisation member."
+          exit 1
+
+      - name: Check out the challenge branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Only skills may change in a challenge
+        run: |
+          set -euo pipefail
+          CHANGED="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          echo "$CHANGED"
+          if [ -z "$CHANGED" ]; then echo "::notice::No changes."; exit 0; fi
+          OUTSIDE="$(printf '%s\n' "$CHANGED" | grep -Ev '^(skills/[0-9]{2}-[a-z]+/SKILL\.md|CREDITS\.md)$' || true)"
+          if [ -n "$OUTSIDE" ]; then
+            echo "::error::A skill challenge may only modify skills/<phase>/SKILL.md. Other files changed:"
+            printf '%s\n' "$OUTSIDE"
+            exit 1
+          fi
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install the gate engine
+        run: |
+          python -m pip install --quiet --upgrade pip
+          python -m pip install --quiet ./gate
+          mkdir -p "$OUT_DIR"
+
+      - name: Candidate skills must be structurally valid (still exactly seven)
+        run: sdlc-gate validate-skills --config gate.config.yaml
+
+      - name: Detect resolution state
+        id: state
+        run: |
+          set -euo pipefail
+          MSG="$(git log -1 --format=%s "$HEAD_SHA")"
+          if printf '%s' "$MSG" | grep -q '^skill-challenge: '; then
+            echo "resolved=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Head commit is an arbiter resolution; verifying only."
+          else
+            echo "resolved=false" >> "$GITHUB_OUTPUT"
+          fi
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- 'skills/*/SKILL.md' | sed -E 's#^skills/([^/]+)/SKILL\.md$#\1#' | sort -u > "$OUT_DIR/slugs.txt"
+          echo "Changed skills:"; cat "$OUT_DIR/slugs.txt"
+
+      - name: Arbitrate each challenged skill
+        if: steps.state.outputs.resolved == 'false'
+        env:
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+        run: |
+          set -euo pipefail
+          : > "$OUT_DIR/comment.md"
+          : > "$OUT_DIR/decisions.txt"
+          while IFS= read -r SLUG; do
+            [ -z "$SLUG" ] && continue
+            if ! git show "$BASE_SHA:skills/$SLUG/SKILL.md" > "$OUT_DIR/baseline-$SLUG.md" 2>/dev/null; then
+              echo "::error::skills/$SLUG did not exist on the base branch; new skill directories are not permitted."
+              exit 1
+            fi
+            sdlc-gate challenge --config gate.config.yaml \
+              --baseline "$OUT_DIR/baseline-$SLUG.md" \
+              --candidate "skills/$SLUG/SKILL.md" \
+              --demo demo_codebase \
+              --skill-path "skills/$SLUG/SKILL.md" \
+              --credits CREDITS.md \
+              --contributor "$PR_AUTHOR" --pr-number "$PR_NUMBER" --pr-url "$PR_URL" \
+              --output-json "$OUT_DIR/decision-$SLUG.json" \
+              --output-md "$OUT_DIR/decision-$SLUG.md" > /dev/null
+            cat "$OUT_DIR/decision-$SLUG.md" >> "$OUT_DIR/comment.md"
+            printf '\n\n' >> "$OUT_DIR/comment.md"
+            python -c 'import json,sys; print(json.load(open(sys.argv[1]))["decision"])' "$OUT_DIR/decision-$SLUG.json" >> "$OUT_DIR/decisions.txt"
+          done < "$OUT_DIR/slugs.txt"
+          echo "Decisions:"; cat "$OUT_DIR/decisions.txt"
+
+      - name: The repository must still hold exactly seven valid skills
+        run: sdlc-gate validate-skills --config gate.config.yaml
+
+      - name: Commit the resolution to the challenge branch
+        id: commit
+        if: steps.state.outputs.resolved == 'false'
+        env:
+          PUSH_TOKEN: ${{ secrets.SDLC_GATE_TOKEN != '' && secrets.SDLC_GATE_TOKEN || github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "sdlc-gate-bot"
+          git config user.email "sdlc-gate-bot@users.noreply.github.com"
+          git add skills CREDITS.md
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Candidate accepted verbatim; nothing to rewrite."
+            exit 0
+          fi
+          SUMMARY="$(paste -sd, "$OUT_DIR/decisions.txt")"
+          git commit -m "skill-challenge: resolve #$PR_NUMBER ($SUMMARY)" \
+                     -m "Arbiter resolution for the skill challenge opened by @$PR_AUTHOR. Objective scores and rationale are in the pull request comment."
+          git push "https://x-access-token:${PUSH_TOKEN}@github.com/${REPO}.git" "HEAD:refs/heads/${HEAD_REF}"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the comparison on the pull request
+        if: steps.state.outputs.resolved == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          EXISTING="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | contains("<!-- sdlc-gate-challenge -->")) | .id' | head -n1 || true)"
+          if [ -n "$EXISTING" ]; then
+            gh api --method PATCH "repos/$REPO/issues/comments/$EXISTING" -F body=@"$OUT_DIR/comment.md" > /dev/null
+          else
+            gh api --method POST "repos/$REPO/issues/$PR_NUMBER/comments" -F body=@"$OUT_DIR/comment.md" > /dev/null
+          fi
+
+      - name: Close rejected challenges, auto-merge accepted ones
+        env:
+          GH_TOKEN: ${{ secrets.SDLC_GATE_TOKEN != '' && secrets.SDLC_GATE_TOKEN || github.token }}
+          RESOLVED: ${{ steps.state.outputs.resolved }}
+        run: |
+          set -euo pipefail
+          if [ "$RESOLVED" = "true" ]; then
+            ACCEPTED=true
+            if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- skills; then ACCEPTED=false; fi
+          else
+            ACCEPTED=false
+            grep -Eq '^(replace|merge)$' "$OUT_DIR/decisions.txt" && ACCEPTED=true
+          fi
+          if [ "$ACCEPTED" = "true" ]; then
+            gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "challenge:accepted" --remove-label "challenge:rejected" 2>/dev/null || gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "challenge:accepted" || true
+            gh pr merge "$PR_NUMBER" --repo "$REPO" --auto --squash \
+              || echo "::warning::Auto-merge could not be enabled (enable 'Allow auto-merge' in repository settings). A code owner can merge this accepted challenge."
+          else
+            gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "challenge:rejected" || true
+            gh pr close "$PR_NUMBER" --repo "$REPO" --comment "The arbiter kept the current skill (see the comparison above). The challenge is closed automatically; improve on the missed defects and open a new one any time." || true
+          fi

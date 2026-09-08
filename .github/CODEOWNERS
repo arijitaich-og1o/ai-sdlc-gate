@@ -1,0 +1,10 @@
+# Code owners review everything that can change how the gate enforces policy.
+# Skill challenges (skills/**) are resolved by the arbiter workflow; everything else needs a human owner.
+*                         @arijitaich-og1o
+/.github/                 @arijitaich-og1o
+/gate/                    @arijitaich-og1o
+/gate.config.yaml         @arijitaich-og1o
+/demo_codebase/           @arijitaich-og1o
+/scripts/                 @arijitaich-og1o
+/client/                  @arijitaich-og1o
+/templates/               @arijitaich-og1o

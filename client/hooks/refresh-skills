@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Keep the local copy of the central repository (skills + policy) fresh, at most once per 24h.
+set -u
+SDLC_HOME="${SDLC_GATE_HOME:-$HOME/.sdlc-gate}"
+REPO_DIR="$SDLC_HOME/repo"
+STAMP="$SDLC_HOME/.last-refresh"
+MAX_AGE_SECONDS="${SDLC_GATE_REFRESH_SECONDS:-86400}"
+
+[ -d "$REPO_DIR/.git" ] || exit 0
+if [ -f "$STAMP" ]; then
+  NOW="$(date +%s)"
+  LAST="$(cat "$STAMP" 2>/dev/null || echo 0)"
+  [ $((NOW - LAST)) -lt "$MAX_AGE_SECONDS" ] && exit 0
+fi
+REF="$(cat "$SDLC_HOME/ref" 2>/dev/null || echo main)"
+if git -C "$REPO_DIR" fetch --quiet --depth 1 origin "$REF" 2>/dev/null && git -C "$REPO_DIR" reset --quiet --hard FETCH_HEAD; then
+  if [ -f "$REPO_DIR/gate/pyproject.toml" ]; then
+    python3 -m pip install --quiet --user --upgrade "$REPO_DIR/gate" >/dev/null 2>&1 || python -m pip install --quiet --user --upgrade "$REPO_DIR/gate" >/dev/null 2>&1 || true
+  fi
+  date +%s > "$STAMP"
+fi
+exit 0

@@ -1,0 +1,52 @@
+phase: 1
+defects:
+  - id: credentials-in-charter
+    title: Database password and partner API key written into the planning document
+    file: 01-planning/project_charter.md
+    severity: blocker
+    keywords: [sensitive-data-in-doc, password, credential, api key, secret]
+  - id: no-success-metric
+    title: Goals are unmeasurable ("better", "happiness") with no KPI or target
+    file: 01-planning/project_charter.md
+    severity: high
+    keywords: [missing-problem-statement, success metric, kpi, measurable, quantif]
+  - id: unbounded-scope
+    title: Scope is "everything related to loyalty" with no out-of-scope list
+    file: 01-planning/project_charter.md
+    severity: high
+    keywords: [unclear-scope, scope, out-of-scope, out of scope]
+  - id: no-accountable-owner
+    title: No named accountable owner or decision maker
+    file: 01-planning/project_charter.md
+    severity: high
+    keywords: [no-owner, owner, accountable, decision maker, decision-maker]
+  - id: pii-export-no-compliance
+    title: Bulk export of PII including Aadhaar to a shared bucket with no compliance or privacy consideration
+    file: 01-planning/project_charter.md
+    severity: high
+    keywords: [compliance-not-considered, aadhaar, pii, personal data, dpdp, gdpr, privacy, dpia]
+  - id: no-risk-analysis
+    title: No risks, mitigations or contingency identified
+    file: 01-planning/project_charter.md
+    severity: high
+    keywords: [missing-risk-analysis, risk]
+  - id: unrealistic-timeline
+    title: Fixed external launch date, big-bang migration and integration in the final week with no buffer
+    file: 01-planning/project_charter.md
+    severity: medium
+    keywords: [unrealistic-timeline, timeline, buffer, big-bang, big bang, contingency, integration in the final week, cannot move]
+  - id: estimate-without-assumptions
+    title: Budget "6 engineers for about a month" with no assumptions or basis
+    file: 01-planning/project_charter.md
+    severity: medium
+    keywords: [estimate-without-assumptions, estimate, assumption, budget]
+  - id: no-alternatives
+    title: No alternatives (including do-nothing or phased rollout) considered
+    file: 01-planning/project_charter.md
+    severity: medium
+    keywords: [no-alternatives, alternative]
+  - id: no-exit-criteria
+    title: No definition of done, exit criteria or rollback/kill criteria for launch
+    file: 01-planning/project_charter.md
+    severity: medium
+    keywords: [no-exit-criteria, exit criteria, definition of done, rollback, kill criteria, success criteria]

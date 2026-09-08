@@ -1,0 +1,42 @@
+# GitHub Actions workflow (lives at .github/workflows/deploy.yml in the target repository)
+name: Build and deploy
+
+on:
+  push:
+  pull_request_target:
+
+permissions: write-all
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-python@v5
+
+      - name: Show context
+        run: echo "Building ${{ github.event.pull_request.title }} by ${{ github.event.pull_request.user.login }}"
+
+      - name: Install tooling
+        run: curl -s https://raw.githubusercontent.com/some-org/some-tool/master/install.sh | sudo bash
+
+      - name: Build image
+        run: docker build --build-arg PARTNER_API_KEY=${{ secrets.PARTNER_API_KEY }} -t registry.internal/accounts:latest .
+
+      - name: Debug secrets
+        run: echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig && cat kubeconfig
+
+      - name: Push
+        run: docker push registry.internal/accounts:latest
+
+      - name: Deploy to production
+        run: kubectl --kubeconfig kubeconfig apply -f k8s/
+
+      - name: Upload kubeconfig for debugging
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubeconfig
+          path: kubeconfig

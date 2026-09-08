@@ -1,0 +1,77 @@
+phase: 5
+defects:
+  - id: credentials-in-tests
+    title: Production admin credentials hard-coded in the test module
+    file: 05-testing/test_orders.py
+    severity: blocker
+    keywords: [credentials-in-tests, hardcoded-credential, credential, password, admin_password, secret]
+  - id: real-pii-fixture
+    title: Realistic personal data (name, email, phone, Aadhaar) used as a fixture
+    file: 05-testing/test_orders.py
+    severity: blocker
+    keywords: [real-data-in-fixtures, personal data, pii, aadhaar, real customer, fixture, faker, synthetic]
+  - id: no-assertion-tests
+    title: Tests without assertions or with assert True (test_create_order, test_refund_works, test_refund_random_amount)
+    file: 05-testing/test_orders.py
+    severity: high
+    keywords: [no-assertion, weak-assertion, no assertion, assert true, without assert, does not assert, no assertions]
+  - id: swallowed-exception-in-test
+    title: test_refund_full_amount catches Exception and passes, so it can never fail
+    file: 05-testing/test_orders.py
+    severity: high
+    keywords: [weak-assertion, except, pass, swallow, never fail, cannot fail, try/except]
+  - id: skipped-security-test
+    title: The only cross-tenant authorisation test is skipped
+    file: 05-testing/test_orders.py
+    severity: high
+    keywords: [focused-or-skipped-test, missing-security-tests, skip, skipped, cross-tenant, authoris, authoriz]
+  - id: test-order-dependency
+    title: Tests share module-level state (created_orders) and depend on execution order
+    file: 05-testing/test_orders.py
+    severity: medium
+    keywords: [test-isolation, shared state, global state, module-level, execution order, order-dependent, created_orders]
+  - id: nondeterministic-date
+    title: test_refund_window_uses_today depends on the real current date
+    file: 05-testing/test_orders.py
+    severity: medium
+    keywords: [nondeterministic-test, date.today, current date, wall-clock, wall clock, time-dependent, freeze]
+  - id: nondeterministic-random
+    title: Random refund amount makes the test flaky
+    file: 05-testing/test_orders.py
+    severity: medium
+    keywords: [nondeterministic-test, flaky-pattern, random, randint, flaky, seed]
+  - id: mock-asserting-on-itself
+    title: test_refund_calls_gateway calls the mock directly and asserts on the mock, testing nothing
+    file: 05-testing/test_orders.py
+    severity: medium
+    keywords: [weak-assertion, mock, asserts on the mock, tests nothing, itself, post.called]
+  - id: real-network-call
+    title: Test hits a live production endpoint over the network
+    file: 05-testing/test_orders.py
+    severity: high
+    keywords: [test-isolation, ci-unfriendly-test, nondeterministic-test, network, live, real http, production endpoint, external service]
+  - id: sleep-based-sync
+    title: time.sleep(2) in a synchronous test
+    file: 05-testing/test_orders.py
+    severity: low
+    keywords: [flaky-pattern, sleep, time.sleep]
+  - id: missing-negative-tests-refund
+    title: No tests for refund rules - over-refund, cancelled order, closed window, zero/negative amount, refunded status transition
+    file: 05-testing/orders.py
+    severity: high
+    keywords: [missing-negative-tests, missing-tests, negative, edge case, over-refund, exceed, cancelled, window, boundary, uncovered, not covered, no test]
+  - id: focused-test-js
+    title: it.only leaves only one JS test running
+    file: 05-testing/orders.test.js
+    severity: high
+    keywords: [focused-or-skipped-test, it.only, .only, focused]
+  - id: skipped-authz-suite-js
+    title: describe.skip disables the authorization suite
+    file: 05-testing/orders.test.js
+    severity: high
+    keywords: [focused-or-skipped-test, describe.skip, .skip, skipped, authoriz]
+  - id: timing-assertion-js
+    title: Wall-clock timing assertion (< 5 ms) is inherently flaky
+    file: 05-testing/orders.test.js
+    severity: medium
+    keywords: [flaky-pattern, nondeterministic-test, timing, date.now, 5 ms, wall-clock, flaky]

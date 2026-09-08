@@ -1,0 +1,17 @@
+groups:
+  - name: accounts
+    rules:
+      - alert: AccountsHighCPU
+        expr: avg(rate(container_cpu_usage_seconds_total{app="accounts"}[1m])) > 0.5
+        for: 1m
+        labels:
+          severity: page
+      - alert: AccountsAnyError
+        expr: increase(http_requests_total{app="accounts",status=~"5.."}[1m]) > 0
+        for: 0m
+        labels:
+          severity: page
+      - alert: AccountsDiskFull
+        expr: disk_used_percent{app="accounts"} > 99
+        labels:
+          severity: page

@@ -1,0 +1,20 @@
+# Normalise line endings: everything text is stored and checked out as LF so that the bash hooks and
+# workflow scripts behave identically on Windows, WSL, macOS and Linux.
+* text=auto eol=lf
+
+*.sh              text eol=lf
+client/hooks/*    text eol=lf
+*.py              text eol=lf
+*.yml             text eol=lf
+*.yaml            text eol=lf
+*.md              text eol=lf
+*.json            text eol=lf
+*.toml            text eol=lf
+
+# PowerShell tolerates LF but Windows editors expect CRLF.
+*.ps1             text eol=crlf
+
+# Binaries (none expected, listed for safety)
+*.png             binary
+*.jpg             binary
+*.pdf             binary

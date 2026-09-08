@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, maintenance]
+    commit-message:
+      prefix: "chore(actions)"
+  - package-ecosystem: pip
+    directory: /gate
+    schedule:
+      interval: weekly
+    labels: [dependencies, maintenance]
+    commit-message:
+      prefix: "chore(deps)"

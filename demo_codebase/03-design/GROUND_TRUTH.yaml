@@ -1,0 +1,77 @@
+phase: 3
+defects:
+  - id: breaking-api-same-version
+    title: Fields renamed/retyped and endpoint removed under the same /v1 path with no versioning or deprecation
+    file: 03-design/architecture.md
+    severity: high
+    keywords: [breaking-api-change, breaking, backwards compat, backward compat, version, deprecat, renamed]
+  - id: money-as-formatted-string
+    title: Monetary total modelled as a formatted string with currency symbol
+    file: 03-design/openapi.yaml
+    severity: high
+    keywords: [inconsistent-api-contract, string, currency, money, decimal, total, minor units, numeric]
+  - id: unbounded-list-no-pagination
+    title: GET /v1/orders returns all orders with no pagination, filtering or limits
+    file: 03-design/openapi.yaml
+    severity: medium
+    keywords: [pagination, paginat, unbounded, all orders, limit, scalability-risk]
+  - id: no-validation-in-contract
+    title: Request schema has no required fields, formats, enums or size limits; error format is plain text
+    file: 03-design/openapi.yaml
+    severity: high
+    keywords: [missing-input-validation-design, validation, required, enum, maxlength, size limit, error format, problem]
+  - id: destructive-migration-no-rollback
+    title: Migration drops columns and the invoices table irreversibly while old service is still running
+    file: 03-design/migrations/0007_orders_v2.sql
+    severity: blocker
+    keywords: [irreversible-migration, schema-incompatibility, drop, irreversible, rollback, expand/contract, expand-contract, backwards]
+  - id: card-data-stored-with-cvv
+    title: Full card number and CVV stored in the database (PCI DSS forbids CVV storage)
+    file: 03-design/migrations/0007_orders_v2.sql
+    severity: blocker
+    keywords: [data-protection-design-gap, cvv, card number, pci, tokeni, pan]
+  - id: custom-xor-crypto
+    title: XOR "encryption" with a key in source used to protect card data
+    file: 03-design/architecture.md
+    severity: blocker
+    keywords: [weak-crypto-design, insecure-design, xor, custom crypto, custom encryption, aes, kms]
+  - id: tenant-isolation-by-convention
+    title: Multi-tenant isolation relies on developers remembering a WHERE clause
+    file: 03-design/architecture.md
+    severity: blocker
+    keywords: [authz-design-gap, insecure-design, tenant, isolation, row level security, row-level, where tenant_id]
+  - id: per-route-authz
+    title: Authorisation implemented ad hoc in each route handler instead of centrally
+    file: 03-design/architecture.md
+    severity: high
+    keywords: [authz-design-gap, authoris, authoriz, middleware, centrali, per-route, each route]
+  - id: redis-single-point-of-failure
+    title: Single Redis instance is a single point of failure for the API
+    file: 03-design/architecture.md
+    severity: high
+    keywords: [single-point-of-failure, single point, spof, redis, high availability, replica, degrad]
+  - id: payment-call-no-timeout
+    title: Synchronous payment gateway call with no timeout, retry, or circuit breaker
+    file: 03-design/architecture.md
+    severity: high
+    keywords: [missing-resilience, timeout, retry, circuit breaker, resilien]
+  - id: sql-in-route-handlers
+    title: Business rules and SQL embedded in HTTP route handlers
+    file: 03-design/architecture.md
+    severity: medium
+    keywords: [tight-coupling, coupling, separation, layer, route handler, repository, business logic]
+  - id: missing-indexes
+    title: No primary keys, foreign keys or indexes on order_items/payments (order_id, tenant_id)
+    file: 03-design/migrations/0007_orders_v2.sql
+    severity: high
+    keywords: [missing-index, index, primary key, foreign key, constraint]
+  - id: hardcoded-config-and-creds
+    title: Production URLs and DB credentials hard-coded as constants in source
+    file: 03-design/architecture.md
+    severity: high
+    keywords: [hardcoded-configuration, hard-coded, hardcoded, config, credential, connection string, secret]
+  - id: no-adr-alternatives
+    title: Decision note lacks alternatives considered, consequences and requirement traceability
+    file: 03-design/architecture.md
+    severity: medium
+    keywords: [undocumented-decision, alternative, consequence, adr, traceab]

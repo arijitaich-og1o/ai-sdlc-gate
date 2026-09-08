@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# SDLC Gate — local commit gate (advisory fast feedback).
+#
+# Runs the same engine and skills as the server-side gate against the staged change, using the commit
+# message for intent and skip trailers. The authoritative, non-bypassable gate is the GitHub Actions
+# check; this hook exists so developers see findings before they push.
+#
+# Installed globally via core.hooksPath by client/install.sh / install.ps1. Chains to the repository's
+# own .git/hooks/commit-msg if one exists.
+set -u
+
+SDLC_HOME="${SDLC_GATE_HOME:-$HOME/.sdlc-gate}"
+MSG_FILE="$1"
+
+# Chain any repository-local hook first.
+LOCAL_HOOK="$(git rev-parse --git-path hooks 2>/dev/null)/commit-msg"
+if [ -x "$LOCAL_HOOK" ] && [ "$LOCAL_HOOK" != "$0" ]; then
+  "$LOCAL_HOOK" "$@" || exit $?
+fi
+
+[ -f "$SDLC_HOME/env" ] && . "$SDLC_HOME/env"
+[ -x "$SDLC_HOME/hooks/refresh-skills" ] && "$SDLC_HOME/hooks/refresh-skills" >/dev/null 2>&1
+
+if ! command -v sdlc-gate >/dev/null 2>&1; then
+  echo "sdlc-gate: CLI not found on PATH; skipping local gate (the server-side gate still applies)." >&2
+  exit 0
+fi
+if [ ! -f "$SDLC_HOME/repo/gate.config.yaml" ]; then
+  echo "sdlc-gate: central repository not synced at $SDLC_HOME/repo; run the installer again." >&2
+  exit 0
+fi
+
+REPORT="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/sdlc-gate-$$.md")"
+sdlc-gate run --staged \
+  --config "$SDLC_HOME/repo/gate.config.yaml" \
+  --skills-dir "$SDLC_HOME/repo/skills" \
+  --pr-body-file "$MSG_FILE" \
+  --event-name local-commit \
+  --output-md "$REPORT" --quiet
+RC=$?
+
+case "$RC" in
+  0)
+    echo "sdlc-gate: PASS" >&2
+    ;;
+  1)
+    cat "$REPORT" >&2
+    echo "" >&2
+    echo "sdlc-gate: commit blocked. Fix the findings above, or add SDLC-Skip / SDLC-Skip-Reason trailers to your message (skips are recorded)." >&2
+    ;;
+  *)
+    echo "sdlc-gate: the local gate could not run (exit $RC)." >&2
+    if [ "${SDLC_GATE_LOCAL_FAIL_CLOSED:-0}" = "1" ]; then
+      echo "sdlc-gate: SDLC_GATE_LOCAL_FAIL_CLOSED=1, blocking the commit." >&2
+    else
+      echo "sdlc-gate: continuing; the server-side gate will still enforce the policy." >&2
+      RC=0
+    fi
+    ;;
+esac
+rm -f "$REPORT"
+exit $RC

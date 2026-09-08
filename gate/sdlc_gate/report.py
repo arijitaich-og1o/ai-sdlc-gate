@@ -1,0 +1,128 @@
+"""Render gate reports as Markdown (PR comments, step summaries, terminal)."""
+from __future__ import annotations
+
+from .config import SEVERITIES, severity_rank
+from .runner import GateReport
+
+MARKER = "<!-- sdlc-gate-report -->"
+SEV_ICON = {"blocker": "🟥", "high": "🟧", "medium": "🟨", "low": "🟦", "info": "⬜"}
+VERDICT_ICON = {"pass": "✅", "fail": "❌", "waived": "⚠️", "error": "💥"}
+
+
+def _loc(f: dict) -> str:
+    if not f.get("file"):
+        return ""
+    return f"`{f['file']}`" + (f":{f['line']}" if f.get("line") else "")
+
+
+def _finding_line(f: dict) -> str:
+    waived = " _(waived)_" if f.get("waived") else ""
+    loc = _loc(f)
+    head = f"- {SEV_ICON.get(f['severity'], '')} **{f['severity'].upper()}** `{f['category']}` {f['title']}{waived}"
+    if loc:
+        head += f" — {loc}"
+    body = []
+    if f.get("description"):
+        body.append(f"  {f['description']}")
+    if f.get("recommendation"):
+        body.append(f"  **Fix:** {f['recommendation']}")
+    return "\n".join([head, *body])
+
+
+def to_markdown(report: GateReport, cfg=None, compact: bool = False) -> str:
+    icon = VERDICT_ICON.get(report.verdict, "")
+    lines: list[str] = [MARKER, f"## {icon} SDLC Gate: {report.verdict.upper()}", ""]
+    it = report.intent
+    lines.append(
+        f"**Intent:** `{it.intent}` (detected via {it.source}) · **Phases checked:** "
+        + ", ".join(f"{p}" for p in it.phases)
+        + f" · **Blocking threshold:** `{report.threshold}`"
+    )
+    ctx = report.context or {}
+    who = ctx.get("actor") or ctx.get("author_name") or ""
+    if who:
+        lines.append(f"**Developer:** @{who}" if ctx.get("actor") else f"**Developer:** {who}")
+    st = report.stats or {}
+    lines.append(f"**Change set:** {st.get('files', 0)} file(s), {st.get('commits', 0)} commit(s), {st.get('excluded', 0)} excluded as generated/binary")
+    lines.append("")
+
+    if report.fail_reasons:
+        lines.append("### Why the gate failed")
+        lines.extend(f"- {r}" for r in report.fail_reasons)
+        lines.append("")
+
+    lines.append("### Phase results")
+    lines.append("| Phase | Skill | Verdict | 🟥 | 🟧 | 🟨 | 🟦 | ⬜ |")
+    lines.append("|---|---|---|---|---|---|---|---|")
+    if report.prechecks:
+        c = {s: 0 for s in SEVERITIES}
+        for f in report.prechecks:
+            c[f["severity"]] += 1
+        v = "fail" if any(severity_rank(f["severity"]) >= severity_rank(report.threshold) for f in report.prechecks) else "pass"
+        lines.append(f"| pre-checks | secrets & credentials | {VERDICT_ICON[v]} {v} | {c['blocker']} | {c['high']} | {c['medium']} | {c['low']} | {c['info']} |")
+    for p in report.phases:
+        c = p.counts()
+        lines.append(
+            f"| {p.phase} · {p.phase_name} | {p.skill_name} v{p.skill_version} | {VERDICT_ICON.get(p.verdict, '')} {p.verdict} "
+            f"| {c['blocker']} | {c['high']} | {c['medium']} | {c['low']} | {c['info']} |"
+        )
+    lines.append("")
+
+    if report.skip.requested:
+        lines.append("### Skip request")
+        if report.skip.valid:
+            lines.append(f"Phases **{', '.join(map(str, report.skip.valid_phases))}** were waived with justification:")
+            lines.append(f"> {report.skip.reason}")
+            lines.append("")
+            lines.append("_Waived findings are still recorded in the organisation metrics._")
+        else:
+            lines.append("The skip request was **rejected**:")
+            lines.extend(f"- {e}" for e in report.skip.errors)
+        lines.append("")
+
+    if not compact:
+        if report.prechecks:
+            lines.append("### Pre-check findings (never skippable)")
+            lines.extend(_finding_line(f) for f in report.prechecks)
+            lines.append("")
+        for p in report.phases:
+            if p.error:
+                lines.append(f"### Phase {p.phase} · {p.phase_name}: review error")
+                lines.append(f"```\n{p.error[:1500]}\n```")
+                lines.append("")
+                continue
+            active = [f for f in p.findings if not f.get("waived")]
+            waived = [f for f in p.findings if f.get("waived")]
+            if not p.findings:
+                continue
+            lines.append(f"### Phase {p.phase} · {p.phase_name}")
+            if p.summary:
+                lines.append(f"_{p.summary}_")
+                lines.append("")
+            lines.extend(_finding_line(f) for f in active)
+            if waived:
+                lines.append("")
+                lines.append("<details><summary>Waived findings</summary>")
+                lines.append("")
+                lines.extend(_finding_line(f) for f in waived)
+                lines.append("")
+                lines.append("</details>")
+            lines.append("")
+
+    lines.append("---")
+    if report.verdict == "fail":
+        lines.append(
+            "**How to proceed:** fix the findings above and push again. If a phase genuinely cannot be satisfied "
+            "right now, add the following trailers to your commit message (or PR description) and push again:"
+        )
+        lines.append("")
+        lines.append("```")
+        lines.append("SDLC-Skip: <phase numbers, e.g. 5>")
+        lines.append("SDLC-Skip-Reason: <at least 40 characters explaining why, with a ticket reference>")
+        lines.append("```")
+        lines.append("")
+        lines.append("Secrets, hard-coded credentials and known-vulnerable dependencies can never be skipped. "
+                     "Skipping deployment or maintenance phases additionally requires the `sdlc-skip-approved` label from a code owner.")
+    else:
+        lines.append("_All required phases satisfied. Findings below the blocking threshold are advisory._")
+    return "\n".join(lines)

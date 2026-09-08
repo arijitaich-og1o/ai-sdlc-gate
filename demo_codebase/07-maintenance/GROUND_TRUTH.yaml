@@ -1,0 +1,72 @@
+phase: 7
+defects:
+  - id: eol-django-and-python
+    title: Django 1.11 and Python 3.6 are end-of-life and unsupported
+    file: 07-maintenance/requirements.txt
+    severity: high
+    keywords: [eol-runtime, known-vulnerable-dependency, outdated-dependency, end-of-life, end of life, eol, django 1.11, django==1.11, unsupported, python 3.6, python-3.6]
+  - id: vulnerable-pinned-deps
+    title: cryptography 2.1.4, urllib3 1.24.1, Pillow 6.2.0 and Celery 3.1 have known vulnerabilities
+    file: 07-maintenance/requirements.txt
+    severity: high
+    keywords: [known-vulnerable-dependency, cve, vulnerab, cryptography, urllib3, pillow, celery]
+  - id: unpinned-requests
+    title: requests is unpinned in a production manifest
+    file: 07-maintenance/requirements.txt
+    severity: medium
+    keywords: [outdated-dependency, lockfile-drift, unpinned, pin, requests]
+  - id: eol-python-runtime
+    title: runtime.txt pins Python 3.6.15 (end-of-life)
+    file: 07-maintenance/runtime.txt
+    severity: high
+    keywords: [eol-runtime, end-of-life, end of life, eol, 3.6, unsupported]
+  - id: breaking-change-in-patch-release
+    title: Endpoint and field removed and config option renamed in a patch release (1.4.1) with no deprecation or migration note
+    file: 07-maintenance/CHANGELOG.md
+    severity: high
+    keywords: [semver-violation, undocumented-deprecation, semver, semantic version, patch release, breaking, major version, deprecat, migration note]
+  - id: vague-changelog-entries
+    title: Vague entries (Upgraded Django, Misc fixes) give operators no actionable information
+    file: 07-maintenance/CHANGELOG.md
+    severity: medium
+    keywords: [missing-changelog, vague, misc fixes, upgraded django, version, actionable, specific]
+  - id: no-owner-oncall
+    title: Runbook has no owner, on-call rotation or escalation path
+    file: 07-maintenance/runbook.md
+    severity: high
+    keywords: [ownership-gap, missing-runbook, owner, on-call, on call, escalation]
+  - id: non-actionable-alerts
+    title: Alerts say have a look with no remediation steps; CPU>50% and any 5xx page on noise
+    file: 07-maintenance/runbook.md
+    severity: medium
+    keywords: [non-actionable-alert, actionable, have a look, remediation, noise, noisy, page]
+  - id: alert-thresholds-noisy
+    title: Alert rules page on any single 5xx and CPU above 50% for one minute; disk alert has no `for`
+    file: 07-maintenance/alerts.yaml
+    severity: medium
+    keywords: [non-actionable-alert, missing-slo, threshold, noisy, noise, any 5xx, "50%", "for:", runbook link, annotation]
+  - id: no-rollback-path
+    title: No rollback procedure and image tags are not tracked
+    file: 07-maintenance/runbook.md
+    severity: high
+    keywords: [no-rollback, rollback, previous image, tag]
+  - id: backups-untested
+    title: Backups are only probably configured and a restore has never been tested
+    file: 07-maintenance/runbook.md
+    severity: high
+    keywords: [missing-backup, untested-restore, backup, restore]
+  - id: logs-forever-with-passwords
+    title: Logs retained forever and include request bodies with passwords
+    file: 07-maintenance/runbook.md
+    severity: blocker
+    keywords: [retention-policy-gap, retention, forever, password, request body, pii, sensitive]
+  - id: cleanup-job-not-idempotent
+    title: Cleanup job deletes without dry-run, batching, logging or safety limits and the runbook says just re-run it
+    file: 07-maintenance/cron/cleanup.py
+    severity: high
+    keywords: [non-idempotent-job, idempoten, batch, dry-run, dry run, safety limit, logging, unbounded, delete]
+  - id: no-slo
+    title: No SLO or error budget defined for the user-facing service
+    file: 07-maintenance/runbook.md
+    severity: medium
+    keywords: [missing-slo, slo, error budget, service level]
