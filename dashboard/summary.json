@@ -15,22 +15,22 @@
         "high": 0,
         "info": 0,
         "low": 0,
-        "medium": 1
+        "medium": 2
       },
-      "findings_per_run": 0.5,
+      "findings_per_run": 0.67,
       "first_seen": "2026-09-08T23:06:43+00:00",
       "flag_rate": 0.0,
       "flagged": 0,
       "intents": {
-        "commit": 2
+        "commit": 3
       },
-      "last_seen": "2026-09-08T23:23:42+00:00",
+      "last_seen": "2026-09-08T23:35:15+00:00",
       "pass_rate": 1.0,
-      "passed": 2,
+      "passed": 3,
       "repos": [
         "arijitaich-og1o/hook-demo"
       ],
-      "runs": 2,
+      "runs": 3,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -80,8 +80,8 @@
       "waived_findings": 0
     }
   },
-  "events": 3,
-  "generated_at": "2026-09-08T23:24:18+00:00",
+  "events": 4,
+  "generated_at": "2026-09-08T23:35:36+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -90,7 +90,7 @@
       "actors_count": 1,
       "attested": 0,
       "attested_rate": 0.0,
-      "block_rate": 0.333,
+      "block_rate": 0.25,
       "blocked": 1,
       "developers_count": 2,
       "findings": {
@@ -98,29 +98,29 @@
         "high": 0,
         "info": 0,
         "low": 0,
-        "medium": 1
+        "medium": 2
       },
-      "findings_per_run": 1.67,
+      "findings_per_run": 1.5,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.333,
+      "flag_rate": 0.25,
       "flagged": 1,
       "intents": {
-        "commit": 3
+        "commit": 4
       },
-      "last_seen": "2026-09-08T23:23:42+00:00",
-      "pass_rate": 0.667,
-      "passed": 2,
+      "last_seen": "2026-09-08T23:35:15+00:00",
+      "pass_rate": 0.75,
+      "passed": 3,
       "repos": [
         "arijitaich-og1o/hook-demo"
       ],
-      "runs": 3,
+      "runs": 4,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
+        "missing-negative-tests",
         "hardcoded-credential",
-        "hardcoded-configuration",
-        "missing-negative-tests"
+        "hardcoded-configuration"
       ],
       "waived_findings": 0
     }
@@ -132,7 +132,7 @@
     "actors_count": 1,
     "attested": 0,
     "attested_rate": 0.0,
-    "block_rate": 0.333,
+    "block_rate": 0.25,
     "blocked": 1,
     "developers_count": 2,
     "findings": {
@@ -140,29 +140,29 @@
       "high": 0,
       "info": 0,
       "low": 0,
-      "medium": 1
+      "medium": 2
     },
-    "findings_per_run": 1.67,
+    "findings_per_run": 1.5,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.333,
+    "flag_rate": 0.25,
     "flagged": 1,
     "intents": {
-      "commit": 3
+      "commit": 4
     },
-    "last_seen": "2026-09-08T23:23:42+00:00",
-    "pass_rate": 0.667,
-    "passed": 2,
+    "last_seen": "2026-09-08T23:35:15+00:00",
+    "pass_rate": 0.75,
+    "passed": 3,
     "repos": [
       "arijitaich-og1o/hook-demo"
     ],
-    "runs": 3,
+    "runs": 4,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
     "top_categories": [
+      "missing-negative-tests",
       "hardcoded-credential",
-      "hardcoded-configuration",
-      "missing-negative-tests"
+      "hardcoded-configuration"
     ],
     "waived_findings": 0
   },
@@ -174,7 +174,7 @@
       "actors_count": 1,
       "attested": 0,
       "attested_rate": 0.0,
-      "block_rate": 0.333,
+      "block_rate": 0.25,
       "blocked": 1,
       "developers_count": 2,
       "findings": {
@@ -182,29 +182,29 @@
         "high": 0,
         "info": 0,
         "low": 0,
-        "medium": 1
+        "medium": 2
       },
-      "findings_per_run": 1.67,
+      "findings_per_run": 1.5,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.333,
+      "flag_rate": 0.25,
       "flagged": 1,
       "intents": {
-        "commit": 3
+        "commit": 4
       },
-      "last_seen": "2026-09-08T23:23:42+00:00",
-      "pass_rate": 0.667,
-      "passed": 2,
+      "last_seen": "2026-09-08T23:35:15+00:00",
+      "pass_rate": 0.75,
+      "passed": 3,
       "repos": [
         "arijitaich-og1o/hook-demo"
       ],
-      "runs": 3,
+      "runs": 4,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
+        "missing-negative-tests",
         "hardcoded-credential",
-        "hardcoded-configuration",
-        "missing-negative-tests"
+        "hardcoded-configuration"
       ],
       "waived_findings": 0
     }
