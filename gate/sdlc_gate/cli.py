@@ -15,7 +15,7 @@ from .config import Config
 from .evaluate import evaluate_skill
 from .gitutil import GitError, repo_root
 from . import identity as identity_mod
-from . import orggate
+from . import ghauth
 from .intent import detect_intent
 from .judge import apply_decision, decision_markdown, judge
 from .llm import LLMClient, LLMError, StaticLLM
@@ -292,18 +292,23 @@ def cmd_emit_metrics(args: argparse.Namespace) -> int:
         fail_reasons=data.get("fail_reasons", []), threshold=data.get("threshold", "high"), stats=data.get("stats", {}),
         context=data.get("context", {}), llm_usage=data.get("llm_usage", {}), generated_at=data.get("generated_at"),
     )
+    cred = ghauth.find_credential(token_env=args.token_env) if args.dispatch else None
+    if cred and cred.username and not report.context.get("actor"):
+        report.context["actor"] = cred.username
     event = metrics_mod.build_event(report)
     _write(args.output, json.dumps(event, indent=2))
     if args.dispatch:
         cfg = Config.load(args.config)
         repo = args.repo or cfg.metrics["central_repo"]
-        token = os.environ.get(args.token_env, "")
+        if cred is None:
+            _eprint("metrics: no GitHub credential found (gh auth login, or push once so the git credential helper stores one); run not recorded")
+            return EXIT_FAIL
         try:
-            metrics_mod.dispatch_event(event, repo, token, cfg.metrics["dispatch_event"])
+            metrics_mod.dispatch_event(event, repo, cred.token, cfg.metrics["dispatch_event"])
         except (ValueError, RuntimeError) as exc:
             _eprint(f"metrics dispatch failed: {exc}")
             return EXIT_FAIL
-        print(f"metrics event {event['id']} dispatched to {repo}")
+        print(f"metrics event {event['id']} recorded ({cred.source})")
     else:
         print(json.dumps(event, indent=2))
     return EXIT_PASS
@@ -407,7 +412,6 @@ def build_parser() -> argparse.ArgumentParser:
     mb.add_argument("--events-dir", required=True), mb.add_argument("--out", required=True)
     mb.set_defaults(func=cmd_metrics_build)
     _add_client_parsers(sub)
-    _add_org_parsers(sub)
     return p
 
 
@@ -514,64 +518,6 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     cf = sub.add_parser("configure", help="store your LiteLLM key for the local hooks")
     cf.add_argument("--base-url"), cf.add_argument("--api-key")
     cf.set_defaults(func=cmd_configure)
-
-
-# ----------------------------------------------------------------------------- organisation gate
-
-def cmd_org_discover(args: argparse.Namespace) -> int:
-    cfg = Config.load(args.config)
-    og = cfg.org_gate
-    token = os.environ.get(args.token_env, "")
-    try:
-        gh = orggate.GitHub(token)
-        if args.repo and args.sha:
-            cands = [orggate.Candidate(repo=args.repo, sha=args.sha, base=args.base or "", ref=args.ref or "", event="push", actor=args.actor or "unknown")]
-        else:
-            owners = [args.repo.split("/")[0]] if args.repo else (og.get("owners") or [cfg.metrics["central_repo"].split("/")[0]])
-            exclude = set(og.get("exclude_repos") or []) | {cfg.metrics["central_repo"]}
-            cands = orggate.discover(
-                gh, owners, exclude_repos=exclude, since_minutes=int(og.get("since_minutes", 120)),
-                max_candidates=int(og.get("max_candidates", 25)), max_pending_minutes=int(og.get("max_pending_minutes", 45)),
-                context=og.get("status_context") or orggate.STATUS_CONTEXT, extra_branches=og.get("extra_branches") or (),
-            )
-            if args.repo:
-                cands = [c for c in cands if c.repo.lower() == args.repo.lower()]
-    except orggate.GitHubError as exc:
-        _eprint(f"organisation gate: {exc}")
-        return EXIT_ERROR
-    out = json.dumps([c.to_dict() for c in cands], indent=2)
-    _write(args.output, out)
-    print(out)
-    return EXIT_PASS
-
-
-def cmd_org_status(args: argparse.Namespace) -> int:
-    cfg = Config.load(args.config)
-    try:
-        gh = orggate.GitHub(os.environ.get(args.token_env, ""))
-        orggate.set_status(gh, args.repo, args.sha, args.state, args.description, args.target_url or "",
-                           context=cfg.org_gate.get("status_context") or orggate.STATUS_CONTEXT)
-    except orggate.GitHubError as exc:
-        _eprint(f"organisation gate: {exc}")
-        return EXIT_ERROR
-    print(f"status {args.state} set on {args.repo}@{args.sha[:12]}")
-    return EXIT_PASS
-
-
-def _add_org_parsers(sub: argparse._SubParsersAction) -> None:
-    org = sub.add_parser("org", help="organisation-wide gate (no files needed in target repositories)")
-    osub = org.add_subparsers(dest="ocmd", required=True)
-    d = osub.add_parser("discover", help="list pull-request heads and pushes that have no gate result yet")
-    d.add_argument("--config"), d.add_argument("--output"), d.add_argument("--token-env", default="SDLC_GATE_TOKEN")
-    d.add_argument("--repo", help="restrict to one repository"), d.add_argument("--sha", help="gate exactly this commit (with --repo)")
-    d.add_argument("--base"), d.add_argument("--ref"), d.add_argument("--actor")
-    d.set_defaults(func=cmd_org_discover)
-    st = osub.add_parser("status", help="post the SDLC Gate commit status")
-    st.add_argument("--config"), st.add_argument("--token-env", default="SDLC_GATE_TOKEN")
-    st.add_argument("--repo", required=True), st.add_argument("--sha", required=True)
-    st.add_argument("--state", required=True, choices=["pending", "success", "failure", "error"])
-    st.add_argument("--description", required=True), st.add_argument("--target-url")
-    st.set_defaults(func=cmd_org_status)
 
 
 def _utf8_console() -> None:

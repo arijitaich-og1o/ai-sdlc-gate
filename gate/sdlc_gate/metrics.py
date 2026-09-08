@@ -33,6 +33,11 @@ REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
+def _login(value: Any) -> str:
+    v = str(value or "").strip()
+    return v if LOGIN_RE.match(v) else "unknown"
+
+
 def build_event(report: GateReport) -> dict[str, Any]:
     ctx = report.context or {}
     findings = report.all_findings()
@@ -62,7 +67,7 @@ def build_event(report: GateReport) -> dict[str, Any]:
         "id": str(uuid.uuid4()),
         "ts": report.generated_at,
         "repo": str(ctx.get("repo") or "unknown/unknown"),
-        "actor": str(ctx.get("actor") or ctx.get("author_name") or "unknown"),
+        "actor": _login(ctx.get("actor")),
         "author_email": str(ctx.get("author_email") or "")[:200],
         "developer_email": dev_email if EMAIL_RE.match(dev_email) else "",
         "email_verified": bool(ctx.get("email_verified")),

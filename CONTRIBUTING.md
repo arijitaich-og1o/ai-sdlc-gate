@@ -16,7 +16,7 @@ Tips: precision matters as much as coverage; a skill that floods reviewers loses
 
 1. Branch, change, add tests under `gate/tests`.
 2. `pip install -e "./gate[dev]" && pytest gate/tests` and run the hygiene scripts:
-   `python scripts/check_pinned_actions.py .github/workflows templates` and
+   `python scripts/check_pinned_actions.py .github/workflows` and
    `python scripts/check_ground_truth.py trials`.
 3. Open a PR. `Validate Repository` and `Self Gate` must pass and a code owner must approve.
 

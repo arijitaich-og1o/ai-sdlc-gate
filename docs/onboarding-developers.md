@@ -1,21 +1,15 @@
 # Onboarding a developer
 
-The server-side gate protects every repository whether or not you install anything. Installing the local hooks
-gives you the same findings **before** you push, in any IDE, because they hook into git itself.
+The gate is installed on your machine and hooks into git itself, so it applies to every repository and every IDE
+you use. On company devices IT installs it; otherwise install it yourself.
 
 ## Install
 
-Linux, macOS, WSL, Git Bash:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash
-```
-
-Windows PowerShell:
-
-```powershell
-irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 | iex
-```
+- **Windows:** download and double-click [`client/install.cmd`](../client/install.cmd), or in PowerShell:
+  `irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 | iex`
+- **macOS:** download and double-click [`client/install.command`](../client/install.command), or in Terminal:
+  `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash`
+- **Linux / WSL:** `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash`
 
 The installer installs the `sdlc-gate` CLI, syncs the skills and policy to `~/.sdlc-gate/repo`, sets
 `git config --global core.hooksPath ~/.sdlc-gate/hooks`, and then runs two one-time steps:
@@ -39,9 +33,10 @@ Requirements: git and Python 3.10+. Corporate proxies: set `HTTPS_PROXY` in your
 - `git push` → the `pre-push` hook reviews the commits new to the remote for each branch, with the intent
   derived from the branch name.
 - Skills and policy refresh from the central repository at most once a day.
-- If the model is unreachable the per-user hook lets the commit through with a warning (set
-  `SDLC_GATE_LOCAL_FAIL_CLOSED=1` to block instead); the managed client blocks. The server-side gate always
-  fails closed.
+- If the model is unreachable the commit is blocked (fail closed). For genuinely offline work on a self-installed
+  client, `SDLC_GATE_LOCAL_FAIL_OPEN=1` lets commits through with a warning; managed installs ignore it.
+- Every run is recorded on the organisation scoreboard using your existing GitHub credential (GitHub CLI or the
+  git credential helper). If none is available the run still completes and you see a note.
 - Existing repository-local hooks in `.git/hooks/` still run; the global hooks chain to them.
 
 ## Working with findings
@@ -58,7 +53,7 @@ SDLC-Skip: 5
 SDLC-Skip-Reason: Tests are being rewritten in PAY-1432; this commit only moves files and adds no logic.
 ```
 
-Rules are in [skip-policy.md](skip-policy.md). Skips are visible to management.
+Rules are in [skip-policy.md](skip-policy.md). Skips are visible to management on the scoreboard.
 
 ## IDE notes
 

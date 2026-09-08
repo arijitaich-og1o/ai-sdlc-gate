@@ -7,11 +7,10 @@
 | Policy | `gate.config.yaml` | phases, intent→phase mapping, detection rules, thresholds, skip rules, models |
 | Skills | `skills/NN-*/SKILL.md` | the review checklist and taxonomy the model applies for one phase |
 | Engine | `gate/sdlc_gate/` | change collection, intent detection, pre-checks, model calls, waivers, reports, metrics, arbiter |
-| Organisation gate | `.github/workflows/org-gate.yml` + `orggate.py` | discovers ungated PR heads/pushes org-wide, reviews them, posts the `SDLC Gate` commit status |
-| Reusable gate | `.github/workflows/sdlc-gate.yml` | optional fast path a repository may call directly |
+| Client | `client/` | the gate as deployed: installers (self-service and managed), global git hooks, shim |
+| Reusable workflow | `.github/workflows/sdlc-gate.yml` | gates this repository's own pull requests; optional backstop for others |
 | Arbiter | `.github/workflows/skill-challenge.yml` + `judge.py` | resolves skill challenges |
 | Metrics store | `metrics` branch (`events/`, `dashboard/`) | append-only events + generated dashboard |
-| Client | `client/` | per-user and managed (admin) installers, global git hooks |
 | Identity | `gate/sdlc_gate/identity.py` | Entra device-code sign-in, verified e-mail, commit attestation trailer |
 
 ## Engine modules
@@ -31,23 +30,25 @@ metrics.py    compact event, repository_dispatch, JSONL ingest with dedupe, dash
 evaluate.py   run a skill on trials, match GROUND_TRUTH, recall/precision/clarity
 judge.py      arbiter prompt, deterministic guards, apply decision, CREDITS.md
 identity.py   Entra ID device-code login, identity storage, SDLC-Gate-Client attestation trailer
-orggate.py    GitHub API client, org-wide discovery of ungated commits, commit status posting
+ghauth.py     locate the developer's existing GitHub credential for sending metrics
 ```
 
-## Data flow for one gate run
+## Data flow for one gate run (developer machine)
 
-1. The caller workflow (in the developer's repository) invokes the reusable workflow with the org secrets.
-2. The reusable workflow checks out the change and, separately, this repository at `gate-ref`.
-3. `sdlc-gate run --base <sha> --head <sha>` builds a `ChangeSet` (per-file diff + post-change content,
+1. `git commit` triggers the global `commit-msg` hook (`git push` the `pre-push` hook); managed installs route
+   through a shim that removes `--no-verify` and hook-path overrides.
+2. The hook refreshes skills/policy from this repository (daily) and checks the verified identity.
+3. `sdlc-gate run --staged` (or `--base/--head` for pushes) builds a `ChangeSet` (per-file diff + post-change content,
    generated/binary files excluded, large files truncated, change set chunked to the budget).
 4. Intent is resolved. Pre-checks run. For each phase in scope the skill body, review context and fenced change
    set are sent to LiteLLM with a JSON-only system prompt. Findings are normalised (severity aliases, ids,
    categories) and sorted.
-5. Skip trailers are parsed from commit messages and the PR body; approved-label state comes from the workflow.
-   Findings in validly skipped phases are marked `waived` unless their category is non-skippable.
-6. `GateReport` → Markdown (PR comment upsert, job summary), JSON artifact, compact metrics event dispatched to
-   this repository via `repository_dispatch` with the org token.
-7. Exit code 0/1 decides the required status check. Exit 2 (engine/LLM error) is also a failure.
+5. Skip trailers are parsed from the commit message. Findings in validly skipped phases are marked `waived` unless
+   their category is non-skippable.
+6. `GateReport` → Markdown printed to the developer, JSON report → compact metrics event dispatched to this
+   repository via `repository_dispatch` with the developer's own GitHub credential.
+7. Exit code 0 lets the commit/push proceed (and the `SDLC-Gate-Client` trailer is appended); 1 blocks it;
+   2 (engine/LLM error) blocks it too (fail closed).
 
 ## Metrics flow
 
@@ -62,11 +63,10 @@ See [skill-challenge.md](skill-challenge.md).
 
 ## Design decisions
 
-- **Server-side authority, local convenience.** Git hooks cannot be made tamper-proof on a developer machine;
-  GitHub rulesets can. Both use the same engine so results agree.
-- **Central discovery instead of per-repository files.** The organisation gate finds and reviews changes from
-  here, so adoption is not a developer decision and a policy change lands everywhere at once. The reusable
-  workflow remains as an optional fast path.
+- **The installed client is the gate.** It is deployed by IT in a location standard users cannot change and applies
+  to every repository and tool on the machine. Attestation trailers and per-developer metrics make any bypass visible.
+- **No per-repository files.** Nothing is added to projects; policy and skills are pulled by the clients from this
+  repository, so a change lands everywhere within a day.
 - **Skips are cheap to request, impossible to hide.** A skip needs a real reason and is stored with the developer,
   phases and reason. Management sees skip rates next to pass rates.
 - **Run skipped phases anyway.** Waived findings are still produced and recorded, so a skip never hides a leaked

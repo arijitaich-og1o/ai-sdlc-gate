@@ -1,28 +1,56 @@
 # Enforcement and identity
 
-## The honest model: three layers
+The gate lives on the developer's machine. It is installed once, by IT on company devices or by the developer
+with the installer for their operating system, and from then on every `git commit` and `git push` on that machine
+passes through it, from any IDE or terminal.
 
-| Layer | What it does | Can a developer bypass it? |
-|---|---|---|
-| **1. Organisation gate + ruleset** ([org-gate.yml](../.github/workflows/org-gate.yml), [org-ruleset.json](../templates/org-ruleset.json)) | This repository discovers every open pull request and push across the organisation, reviews it here and posts the `SDLC Gate` commit status. The ruleset requires that status with no bypass actors. Nothing lives in the target repositories, so there is nothing to delete or edit. | **No.** Not by editing files, not by removing workflows (there are none to remove), not by force-pushing. This is the guarantee. |
-| **2. Managed client** (`client/managed/`) | Installed by IT as administrator: system-level `core.hooksPath`, a `git` shim that strips `--no-verify` and hook-path overrides, root/Administrator-owned hooks, daily refresh, fail-closed mode, identity required. | Not without administrator rights. Standard users cannot edit the config, hooks, shim or PATH entry. Local administrators can. |
-| **3. Attestation + metrics** | The local hook stamps every commit with `SDLC-Gate-Client: pass v1.0.0 <verified e-mail> <time>`. The server-side gate records whether a commit carries a valid attestation and who made it. | Bypassing layer 2 leaves commits without an attestation, which shows up per developer on the scoreboard. Forging the trailer is possible but is itself a policy violation that the gate flags as `gate-manipulation` when detected. |
+## How the installed gate enforces
 
-### Why not "the kernel"
+| Mechanism | What it does |
+|---|---|
+| Global git hooks (`core.hooksPath`) | `commit-msg` reviews the staged change with the intent and skip trailers from the message; `pre-push` reviews the commits new to the remote for each branch. Repository-local hooks still run; the gate chains to them. |
+| Fail closed | If the engine, policy or model is unavailable the commit is blocked (set `SDLC_GATE_LOCAL_FAIL_OPEN=1` only for temporary offline work; managed installs ignore it). |
+| Verified identity required | The hooks refuse to commit until the developer has signed in once with the Microsoft work account (`sdlc-gate identity login`). |
+| Attestation | Every commit that passed gets an `SDLC-Gate-Client: pass v<version> <verified e-mail> <time>` trailer, so the history shows who was gated and when. Commits without it were made outside the gate. |
+| Metrics | Every run (pass, fail, skip) is sent to the central repository from the developer's machine with their own GitHub credential and appears on the scoreboard under their verified e-mail. |
+| Skills and policy refresh | The client pulls the current skills and `gate.config.yaml` from this repository at most once a day, so a policy change reaches everyone without reinstalling. |
 
-A kernel module cannot understand git; git hooks are a userland convention and any process with the user's
-privileges can invoke git in a way that ignores them (a different git binary, a container, a different machine).
-The only place where every path converges and where the developer has no privileges is the server: GitHub
-accepts the merge or it does not. That is why layer 1 exists and why it is the only layer described as
-non-bypassable. Layers 2 and 3 make bypass inconvenient and visible, which is what client-side controls can
-realistically do.
+## Managed install (recommended for company devices)
+
+`client/managed/install-managed.ps1` (Windows) and `client/managed/install-managed.sh` (macOS, Linux, WSL) are
+run once as administrator by IT (Intune, Jamf, SCCM, Ansible). They install the engine, hooks and policy in a
+location standard users cannot modify, set the hooks path in the **system** git configuration, install a `git`
+shim that removes `--no-verify` and any attempt to override the hooks path, refresh daily as root/SYSTEM, and
+switch the hooks to managed mode (fail closed, identity required). Developers then run only:
+
+```bash
+sdlc-gate identity login     # one-time Microsoft sign-in
+sdlc-gate configure          # one-time: store the LiteLLM key from the platform team
+```
+
+## Self-service install (any machine)
+
+`client/install.cmd` (Windows), `client/install.command` (macOS) or `client/install.sh` (Linux, WSL) install the
+same gate for the current user and run the two one-time steps interactively.
+
+## What this does and does not guarantee
+
+- A standard user on a managed device cannot disable the gate: the files, the git configuration, the shim and
+  the PATH entry are administrator-owned.
+- A local administrator, or a developer on an unmanaged personal machine, can uninstall it. Their commits will
+  then carry no attestation trailer and their runs will stop appearing in the metrics, which is visible to
+  management per developer on the scoreboard ("client attested" share).
+- Anything that is not a git commit or push on a gated machine (web edits on GitHub, a CI bot, a container
+  without the client) is not reviewed. If the organisation later wants a server-side backstop, this repository's
+  reusable workflow (`.github/workflows/sdlc-gate.yml`) can be required on selected repositories; that is a
+  separate decision and not part of the roll-out.
 
 ## Verified identity
 
 ### What we need
 
 Every gate run should be attributable to a real person by their corporate e-mail (`firstname.lastname@og1o.in`),
-not to whatever `git config user.email` says or to a GitHub handle that may not map to a person.
+not to whatever `git config user.email` happens to say.
 
 ### How it works
 
@@ -35,15 +63,11 @@ not to whatever `git config user.email` says or to a GitHub handle that may not 
    (user-only permissions).
 3. The verified e-mail and display name are written to the developer's global git identity, so all commits are
    authored with the corporate address.
-4. Every local gate run appends the `SDLC-Gate-Client` trailer with that e-mail. The server-side gate records
-   `developer_email` and `client_attested` in the metrics event; the dashboard and README scoreboard group by it.
-5. In managed mode (`sdlc-gate.managed=true` in the system gitconfig) the hooks refuse to run a commit until an
-   identity exists and fail closed if the model is unreachable.
+4. Every gate run appends the `SDLC-Gate-Client` trailer with that e-mail and sends a metrics event carrying it.
 
-Nothing is read from Outlook, Teams or the browser. The gate does not touch other applications' sessions or
-data; it only receives what Microsoft's identity service returns after the developer signs in. That is the
-same mechanism the Azure CLI, GitHub CLI and VS Code use, it works with MFA and Conditional Access, and it is
-auditable in Entra sign-in logs.
+Nothing is read from Outlook, Teams or the browser. The gate only receives what Microsoft's identity service
+returns after the developer signs in. That is the same mechanism the Azure CLI, GitHub CLI and VS Code use, it
+works with MFA and Conditional Access, and it is auditable in Entra sign-in logs.
 
 ### Platform set-up
 
@@ -57,31 +81,13 @@ auditable in Entra sign-in logs.
      tenant: <tenant-guid>
      client_id: <application-guid>
      allowed_domains: [og1o.in]
-     required: true      # local hooks refuse commits without a verified identity (managed mode always requires it)
+     required: true
    ```
 
-3. Optionally enforce that GitHub accounts are SSO-linked (GitHub Enterprise SAML) so `actor` and
-   `developer_email` can be cross-checked.
+## Metrics from the client
 
-## Rolling out the managed client
-
-- **Windows** (Intune/SCCM, runs as SYSTEM or Administrator):
-  `powershell -ExecutionPolicy Bypass -File install-managed.ps1`
-- **macOS** (Jamf, as root): `sudo bash install-managed.sh`
-- **Linux / WSL** (Ansible, as root): `sudo bash install-managed.sh`
-
-After installation every developer runs, once:
-
-```bash
-sdlc-gate identity login          # Entra sign-in, sets git user.email to the verified address
-sdlc-gate configure               # stores the developer's LiteLLM key in ~/.sdlc-gate/env (0600)
-```
-
-The per-user installer (`client/install.sh` / `install.ps1`) does the same without administrator rights and is
-suitable for contractors' unmanaged machines; there the server-side gate is the only enforcement.
-
-## What the scoreboard shows about bypass
-
-`Client attested` per developer: the share of their gate runs whose commits carried a valid local attestation.
-A developer at 0 % has removed or never installed the local gate. That is not a failure of the gate (the server
-still enforced), but it is a conversation.
+After each run the hook calls `sdlc-gate emit-metrics --dispatch`, which sends a compact event to this
+repository using the developer's existing GitHub credential (the GitHub CLI token or the git credential helper,
+the same credential used to push code). Developers need write access to this repository, which they need anyway
+to open skill challenges. Nothing is stored by the gate. If no credential is available the run still completes
+and a warning is printed; the attestation trailer remains in the commit.

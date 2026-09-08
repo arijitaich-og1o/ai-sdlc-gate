@@ -1,6 +1,5 @@
-# Reusable SDLC Gate. Called by every repository in the organisation (see templates/caller-workflow.yml)
-# and by this repository itself (self-gate.yml). This is the authoritative enforcement point: branch
-# protection / rulesets require the "SDLC Gate" check to pass before anything can be merged.
+# Reusable SDLC Gate workflow. Used by this repository to gate its own pull requests (self-gate.yml). Other
+# repositories may call it as an optional server-side backstop; the organisation's gate is the installed client.
 name: SDLC Gate
 
 on:

@@ -19,12 +19,13 @@ command and input that reproduces the problem.
 - **Supply chain.** All third-party actions are pinned to full commit SHAs, verified by
   `scripts/check_pinned_actions.py` on every pull request. Dependabot keeps pins current. No
   `pull_request_target`, no `write-all`, every job declares least-privilege permissions.
-- **Fail closed.** If the model, the proxy or the engine fails, the check fails.
+- **Fail closed.** If the model, the proxy or the engine fails, the commit is blocked.
 
 ## Known limits
 
-- The local hooks are advisory; `git commit --no-verify` bypasses them. Enforcement is server-side.
-- Fork pull requests do not receive secrets and therefore fail the gate; the organisation works from branches.
+- On unmanaged machines, or with local administrator rights, the client can be removed. Such commits carry no
+  attestation and vanish from the metrics, which is visible per developer.
+- Fork pull requests to this repository do not receive secrets and therefore fail the self gate; work from branches.
 - A model review is probabilistic. Deterministic pre-checks cover the highest-impact class (leaked secrets);
   everything else is best effort and improves through skill challenges.
 - Metrics attribute runs to the GitHub account that triggered them, which for pushes is the pusher.
