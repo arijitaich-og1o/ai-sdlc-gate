@@ -6,7 +6,7 @@ GitHub secrets are only readable inside a workflow run, so the client asks a wor
 2. trigger `key-broker.yml` (workflow_dispatch) with a random request id and the public key, using the
    developer's own GitHub credential;
 3. wait for the run named `key-broker <request id>` to finish and download its artifact;
-4. decrypt with the private key and store the configuration in `~/.sdlc-gate/env` (user-only permissions).
+4. decrypt with the private key and keep the configuration in the OS credential store (see secrets_store.py).
 
 The plaintext key exists only on the runner and on the requesting machine. Anyone able to trigger the workflow
 must have write access to the repository, which is the same access needed to open a skill challenge.
@@ -36,6 +36,8 @@ class KeyBrokerError(RuntimeError):
 class LiteLLMConfig:
     base_url: str
     api_key: str
+    mode: str = ""
+    developer: str = ""
 
 
 def _headers(token: str) -> dict[str, str]:
@@ -62,7 +64,7 @@ def decrypt_config(private: rsa.RSAPrivateKey, blob: bytes) -> LiteLLMConfig:
     key = str(data.get("api_key") or "").strip()
     if not key:
         raise KeyBrokerError("key broker returned an empty API key")
-    return LiteLLMConfig(base_url=str(data.get("base_url") or "").strip(), api_key=key)
+    return LiteLLMConfig(base_url=str(data.get("base_url") or "").strip(), api_key=key, mode=str(data.get("mode") or ""), developer=str(data.get("developer") or ""))
 
 
 def fetch_config(

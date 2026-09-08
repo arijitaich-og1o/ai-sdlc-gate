@@ -50,8 +50,9 @@ operating system:
 | Linux / WSL | `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh \| bash` |
 
 Requirements: git and Python 3.10+, and a GitHub sign-in on the machine (the GitHub CLI or the git credential helper
-you already push with). The installer fetches the LiteLLM configuration from this repository's secrets automatically
-and ends with a one-click Microsoft sign-in that ties your commits to your corporate e-mail. Nothing to type.
+you already push with). The installer obtains a personal, budget-capped LiteLLM key for you from this repository,
+keeps it in your operating system's credential store, and ends with a one-click Microsoft sign-in that ties your
+commits to your corporate e-mail. Nothing to type.
 
 When the gate blocks a change, fix the findings and commit again. If a phase genuinely cannot be satisfied right
 now, waive it with a reason. The waiver is recorded and visible to management:

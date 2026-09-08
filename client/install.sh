@@ -7,7 +7,8 @@
 #   1. clones (or refreshes) the central repository to ~/.sdlc-gate/repo
 #   2. installs the `sdlc-gate` CLI for the current user (pipx if available, else pip --user)
 #   3. installs global git hooks (commit-msg, pre-push) via core.hooksPath, chaining to repo-local hooks
-#   4. fetches the LiteLLM configuration from the central repository's secrets (key broker) into ~/.sdlc-gate/env (mode 600)
+#   4. obtains your LiteLLM key from the central repository (key broker) and keeps it in the OS credential store
+#      (macOS Keychain / Linux Secret Service; falls back to ~/.sdlc-gate/env with mode 600 on headless machines)
 #   5. signs the developer in with their Microsoft work account (one-time)
 #
 # Environment overrides: SDLC_GATE_REPO_URL, SDLC_GATE_REF, SDLC_GATE_HOME (LITELLM_API_KEY only for manual set-ups)

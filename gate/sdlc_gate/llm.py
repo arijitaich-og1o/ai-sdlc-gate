@@ -104,6 +104,13 @@ class LLMClient:
         llm = cfg.llm
         base_url = os.environ.get(llm.get("base_url_env", "LITELLM_BASE_URL"), "")
         api_key = normalize_api_key(os.environ.get(llm.get("api_key_env", "LITELLM_API_KEY"), ""))
+        if not api_key or not base_url:
+            from . import secrets_store  # local import: keyring is optional at import time
+
+            stored = secrets_store.load()
+            if stored is not None:
+                api_key = api_key or normalize_api_key(stored.api_key)
+                base_url = base_url or stored.base_url
         return cls(
             base_url=base_url,
             api_key=api_key,

@@ -26,7 +26,6 @@ if [ -x "$LOCAL_HOOK" ] && [ "$LOCAL_HOOK" != "$0" ]; then
   "$LOCAL_HOOK" "$@" || exit $?
 fi
 
-[ -f "$SDLC_HOME/env" ] && . "$SDLC_HOME/env"
 [ "$MANAGED" != "true" ] && [ -x "$SDLC_HOME/hooks/refresh-skills" ] && "$SDLC_HOME/hooks/refresh-skills" >/dev/null 2>&1
 
 if ! command -v "$GATE" >/dev/null 2>&1 || [ ! -f "$REPO_DIR/gate.config.yaml" ]; then
@@ -47,8 +46,8 @@ if ! "$GATE" identity check --config "$CONFIG" $STRICT >/dev/null 2>&1; then
   exit 1
 fi
 
-if [ -z "${LITELLM_API_KEY:-}" ]; then
-  echo "sdlc-gate: LiteLLM configuration missing. Run:  sdlc-gate configure   (fetches it from the central repository)" >&2
+if ! "$GATE" configure --check --config "$CONFIG" >/dev/null 2>&1; then
+  echo "sdlc-gate: LiteLLM configuration missing. Run:  sdlc-gate configure   (fetches your key from the central repository)" >&2
   if [ "$FAIL_CLOSED" = "1" ]; then exit 1; fi
   exit 0
 fi
