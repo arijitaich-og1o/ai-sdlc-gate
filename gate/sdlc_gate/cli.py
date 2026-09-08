@@ -550,7 +550,7 @@ def _verify_litellm_key(base_url: str, api_key: str) -> str | None:
     import httpx
 
     if not api_key.startswith("sk-"):
-        return f"the API key must start with 'sk-' but starts with '{api_key[:5]}...' (the secret probably includes a label or prefix)"
+        return f"the API key must start with 'sk-' but starts with '{api_key[:5]}...' (the secret includes a label or prefix)"
     url = base_url.rstrip("/")
     url = f"{url}/models" if url.endswith("/v1") else f"{url}/v1/models"
     try:
