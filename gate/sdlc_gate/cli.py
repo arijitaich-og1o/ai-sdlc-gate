@@ -63,6 +63,10 @@ def _make_llm(cfg: Config, offline: bool, model: str | None = None) -> Any:
     return LLMClient.from_config(cfg, model=model)
 
 
+def _judge_llm(cfg: Config, offline: bool) -> Any | None:
+    return None if offline else LLMClient.from_config(cfg, model="judge")
+
+
 def _parse_phases(raw: str | None) -> list[int]:
     if not raw:
         return []
@@ -209,7 +213,7 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
         return EXIT_ERROR
     try:
         llm = _make_llm(cfg, args.offline)
-        judge_llm = None if args.offline else _make_llm(cfg, False, model=os.environ.get("SDLC_JUDGE_MODEL") or cfg.llm["judge_model"])
+        judge_llm = _judge_llm(cfg, args.offline)
     except LLMError as exc:
         _eprint(f"LLM configuration error: {exc}")
         return EXIT_ERROR
@@ -236,7 +240,7 @@ def cmd_challenge(args: argparse.Namespace) -> int:
     candidate.slug = baseline.slug
     try:
         review_llm = _make_llm(cfg, args.offline)
-        judge_llm = None if args.offline else _make_llm(cfg, False, model=os.environ.get("SDLC_JUDGE_MODEL") or cfg.llm["judge_model"])
+        judge_llm = _judge_llm(cfg, args.offline)
     except LLMError as exc:
         _eprint(f"LLM configuration error: {exc}")
         return EXIT_ERROR
@@ -497,28 +501,31 @@ def cmd_attest(args: argparse.Namespace) -> int:
 
 
 def cmd_configure(args: argparse.Namespace) -> int:
-    """Obtain the LiteLLM configuration and keep it in the operating system credential store.
+    """Obtain the model-gateway configuration and keep it in the operating system credential store.
 
-    By default the configuration is fetched from the central repository through the key-broker workflow, using the
-    developer's existing GitHub credential; the broker issues a per-developer key when the platform has configured
-    it. `--api-key` stores an explicitly given key instead. `--check` only reports whether a key is available.
+    By default it is fetched from the central repository through the key-broker workflow, using the developer's
+    existing GitHub credential. `--api-key`/`--base-url` store explicit values instead (platform use).
+    `--check` only reports whether a configuration is available; `--clear` removes it.
     """
     cfg = Config.load(args.config)
     if args.check:
         stored = secrets_store.load()
-        if stored is None:
-            _eprint("no LiteLLM configuration stored; run: sdlc-gate configure")
+        if stored is None or not stored.base_url:
+            _eprint("no gateway configuration stored; run: sdlc-gate configure")
             return EXIT_FAIL
-        print(f"LiteLLM configuration present ({stored.backend}, {stored.base_url})")
+        print(f"gateway configuration present ({stored.backend})")
         return EXIT_PASS
     if args.clear:
         secrets_store.clear()
-        print("LiteLLM configuration removed")
+        print("gateway configuration removed")
         return EXIT_PASS
-    default_url = os.environ.get("LITELLM_BASE_URL") or secrets_store.DEFAULT_BASE_URL
     if args.api_key:
-        st = secrets_store.store(args.base_url or default_url, args.api_key, mode="manual")
-        print(f"stored LiteLLM configuration in the {st.backend} store")
+        if not args.base_url:
+            _eprint("--base-url is required together with --api-key")
+            return EXIT_FAIL
+        models = [m.strip() for m in (args.models or "").split(",") if m.strip()]
+        st = secrets_store.store(args.base_url, args.api_key, models=models, mode="manual")
+        print(f"stored gateway configuration in the {st.backend} store")
         return EXIT_PASS
     cred = ghauth.find_credential(token_env="SDLC_GATE_GITHUB_TOKEN")
     if cred is None:
@@ -533,16 +540,17 @@ def cmd_configure(args: argparse.Namespace) -> int:
     except keybroker.KeyBrokerError as exc:
         _eprint(f"configure: {exc}")
         return EXIT_FAIL
-    base_url = llm.base_url or args.base_url or default_url
-    problem = _verify_litellm_key(base_url, llm.api_key)
+    if not llm.base_url:
+        _eprint("configure: the central repository did not provide a gateway endpoint (LITELLM_BASE_URL secret missing)")
+        return EXIT_FAIL
+    problem = _verify_litellm_key(llm.base_url, llm.api_key)
     if problem:
         _eprint(f"configure: the configuration was received but does not work: {problem}")
-        _eprint("Ask the platform team to check the LiteLLM secrets in the central repository, then run `sdlc-gate configure` again.")
+        _eprint("Ask the platform team to check the gateway secrets in the central repository, then run `sdlc-gate configure` again.")
         return EXIT_FAIL
-    st = secrets_store.store(base_url, llm.api_key, mode=llm.mode, developer=llm.developer)
-    kind = "a personal, budget-capped key" if llm.mode == "per-developer" else "the shared key"
-    where = "the operating system credential store" if st.backend == "keyring" else f"{secrets_store.env_path()} (no OS credential store available on this machine; file is user-only)"
-    print(f"Received {kind} from {repo}, verified against {base_url}, stored in {where}.")
+    st = secrets_store.store(llm.base_url, llm.api_key, models=llm.models or [], mode=llm.mode)
+    where = "the operating system credential store" if st.backend == "keyring" else "an encrypted file (no OS credential store is available on this machine)"
+    print(f"Gateway configuration received from {repo}, verified, and stored in {where}.")
     return EXIT_PASS
 
 
@@ -557,11 +565,11 @@ def _verify_litellm_key(base_url: str, api_key: str) -> str | None:
     try:
         resp = httpx.get(url, headers={"Authorization": f"Bearer {api_key}"}, timeout=20)
     except httpx.HTTPError as exc:
-        return f"could not reach {base_url}: {exc}"
+        return f"could not reach the gateway: {type(exc).__name__}"
     if resp.status_code in (401, 403):
-        return f"LiteLLM rejected the key (HTTP {resp.status_code}): {resp.text[:160]}"
+        return f"the gateway rejected the key (HTTP {resp.status_code})"
     if resp.status_code >= 400:
-        return f"LiteLLM returned HTTP {resp.status_code} for {url}"
+        return f"the gateway returned HTTP {resp.status_code}"
     return None
 
 
@@ -587,8 +595,9 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     at.add_argument("--require-identity", action="store_true"), at.add_argument("--quiet", action="store_true")
     at.set_defaults(func=cmd_attest)
 
-    cf = sub.add_parser("configure", help="obtain your LiteLLM key from the central repository and keep it in the OS credential store")
-    cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker")
+    cf = sub.add_parser("configure", help="obtain the model-gateway configuration from the central repository and keep it in the OS credential store")
+    cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker (with --base-url)")
+    cf.add_argument("--models", help="comma separated model names to store with --api-key")
     cf.add_argument("--repo", help="central repository (default from policy)"), cf.add_argument("--ref", help="branch of the central repository (default main)")
     cf.add_argument("--check", action="store_true", help="exit 0 if a key is available, 1 otherwise")
     cf.add_argument("--clear", action="store_true", help="remove the stored key")

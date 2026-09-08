@@ -47,7 +47,7 @@ if ! "$GATE" identity check --config "$CONFIG" $STRICT >/dev/null 2>&1; then
 fi
 
 if ! "$GATE" configure --check --config "$CONFIG" >/dev/null 2>&1; then
-  echo "sdlc-gate: LiteLLM configuration missing. Run:  sdlc-gate configure   (fetches your key from the central repository)" >&2
+  echo "sdlc-gate: review configuration missing. Run:  sdlc-gate configure" >&2
   if [ "$FAIL_CLOSED" = "1" ]; then exit 1; fi
   exit 0
 fi

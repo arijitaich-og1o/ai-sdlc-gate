@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sdlc-gate"
 version = "1.0.0"
-description = "Otto Group One.O India - AI SDLC standardization gate (LiteLLM-backed)"
+description = "Otto Group One.O India - AI SDLC standardization gate "
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Proprietary" }

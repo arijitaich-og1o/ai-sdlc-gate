@@ -26,9 +26,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "llm": {
         "base_url_env": "LITELLM_BASE_URL",
         "api_key_env": "LITELLM_API_KEY",
-        "review_model": "gpt-4.1",
-        "judge_model": "gpt-5",
-        "fallback_models": ["gpt-4o", "stackit-gpt-oss-120B"],
+        # Model names are delivered by the key broker / LITELLM_MODELS and never stored in the repository.
+        "review_model": "",
+        "judge_model": "",
+        "fallback_models": [],
         "timeout_seconds": 180,
         "max_retries": 3,
         "temperature": 0,

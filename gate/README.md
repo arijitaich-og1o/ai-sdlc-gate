@@ -1,7 +1,7 @@
 # sdlc-gate (engine)
 
 Python package that powers the SDLC Gate: intent detection, deterministic pre-checks,
-LiteLLM-backed phase reviews, skip/waiver handling, metrics emission, and the
+gateway-backed phase reviews, skip/waiver handling, metrics emission, and the
 skill-challenge evaluator/judge.
 
 Install from the repository root:

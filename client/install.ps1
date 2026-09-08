@@ -7,7 +7,7 @@
   2. installs the `sdlc-gate` CLI for the current user (pipx if available, else pip --user)
   3. installs global git hooks (commit-msg, pre-push) via core.hooksPath. Git for Windows runs hooks with its
      bundled sh, so the same bash hooks work in PowerShell, cmd, VS Code, IntelliJ and any other IDE.
-  4. obtains your LiteLLM key from the central repository (key broker) and keeps it in Windows Credential Manager
+  4. obtains the review configuration from the central repository (key broker) and keeps it in Windows Credential Manager
   5. signs the developer in with their Microsoft work account (one-time)
 
 .EXAMPLE
@@ -16,8 +16,7 @@
 [CmdletBinding()]
 param(
   [string]$RepoUrl = $(if ($env:SDLC_GATE_REPO_URL) { $env:SDLC_GATE_REPO_URL } else { "https://github.com/arijitaich-og1o/ai-sdlc-gate.git" }),
-  [string]$Ref = $(if ($env:SDLC_GATE_REF) { $env:SDLC_GATE_REF } else { "main" }),
-  [string]$BaseUrl = $(if ($env:LITELLM_BASE_URL) { $env:LITELLM_BASE_URL } else { "https://litellm-dev.dev.aime.osp-fine.de" })
+  [string]$Ref = $(if ($env:SDLC_GATE_REF) { $env:SDLC_GATE_REF } else { "main" })
 )
 
 $ErrorActionPreference = "Stop"
@@ -80,13 +79,9 @@ function Gate { if (Get-Command sdlc-gate -ErrorAction SilentlyContinue) { & sdl
 Say "Verifying"
 Gate validate-skills --config $config
 
-Say "Fetching the LiteLLM configuration from the central repository (uses your GitHub sign-in)"
-if ($env:LITELLM_API_KEY) {
-  Gate configure --config $config --api-key $env:LITELLM_API_KEY --base-url $BaseUrl
-} else {
-  Gate configure --config $config
-  if ($LASTEXITCODE -ne 0) { Say "Could not fetch the LiteLLM configuration yet; run 'sdlc-gate configure' after signing in to GitHub (gh auth login)." }
-}
+Say "Fetching the review configuration from the central repository (uses your GitHub sign-in)"
+Gate configure --config $config
+if ($LASTEXITCODE -ne 0) { Say "Could not fetch the configuration yet; run 'sdlc-gate configure' after signing in to GitHub (gh auth login)." }
 
 Gate identity check --config $config --strict 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) {

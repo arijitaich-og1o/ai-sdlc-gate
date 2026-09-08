@@ -1,7 +1,7 @@
 """Deterministic checks that run before (and independently of) the model review.
 
 These produce findings that are never skippable: leaked credentials, private keys,
-and committed environment files. They are cheap, fast, and do not depend on LiteLLM.
+and committed environment files. They are cheap, fast, and do not depend on model gateway.
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("Slack token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}\b")),
     ("Google API key", re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b")),
     ("Stripe key", re.compile(r"\b(sk|rk)_(live|test)_[0-9a-zA-Z]{20,}\b")),
-    ("OpenAI/LiteLLM style key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
+    ("OpenAI/model gateway style key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
     ("Private key block", re.compile(r"-----BEGIN (RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY( BLOCK)?-----")),
     ("JWT", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b")),
     ("Azure storage key", re.compile(r"AccountKey=[A-Za-z0-9+/=]{60,}")),

@@ -25,6 +25,9 @@ on:
         required: true
       LITELLM_BASE_URL:
         required: true
+      LITELLM_MODELS:
+        description: "Comma separated model names: review, judge, fallbacks (kept out of the repository)."
+        required: false
       SDLC_GATE_TOKEN:
         description: "Token with contents:write on the central repository, used to record metrics (and to read a private central repo)."
         required: false
@@ -127,6 +130,7 @@ jobs:
         env:
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
           LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+          LITELLM_MODELS: ${{ secrets.LITELLM_MODELS }}
           SDLC_GATE_CONFIG: ${{ github.workspace }}/.sdlc-gate/gate.config.yaml
           INTENT: ${{ inputs.intent }}
           FAIL_ON: ${{ inputs.fail-on }}

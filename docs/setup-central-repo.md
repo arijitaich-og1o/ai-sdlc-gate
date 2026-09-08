@@ -4,15 +4,14 @@
 
 | Secret | Used by | Value |
 |---|---|---|
-| `LITELLM_BASE_URL` | key broker (clients), self gate, skill challenge | `https://litellm-dev.dev.aime.osp-fine.de` |
-| `LITELLM_API_KEY` | self gate, skill challenge; broker fallback | a dedicated LiteLLM virtual key with a spend limit |
-| `LITELLM_ADMIN_KEY` | key broker (mints per-developer keys) | a LiteLLM key with the `proxy_admin` role (or the master key). **Strongly recommended**; without it every developer receives the shared key. |
+| `LITELLM_BASE_URL` | key broker, self gate, skill challenge | the model gateway endpoint (kept out of the repository on purpose) |
+| `LITELLM_API_KEY` | key broker, self gate, skill challenge | the gateway key from IT (a display name in front of it is tolerated) |
+| `LITELLM_MODELS` | key broker, self gate, skill challenge | comma separated model names: review model, judge model, fallbacks. Keeps model names out of the repository. |
 | `SDLC_GATE_TOKEN` | skill challenge (pushing resolution commits so checks re-run) | fine-grained PAT or GitHub App token with **Contents: read & write** and **Pull requests: read & write** on this repository |
 
-Installed clients obtain their LiteLLM key through the `Key Broker` workflow: with `LITELLM_ADMIN_KEY` present each
-developer receives an individual, budget-capped, model-restricted, expiring key tagged with their GitHub login and
-stored in their OS credential store (see [enforcement.md](enforcement.md)). `SDLC_GATE_TOKEN` and the admin key are
-never given to clients; metrics are sent with the developer's own GitHub credential.
+Installed clients obtain endpoint, key and model names through the `Key Broker` workflow and keep them in their OS
+credential store (see [enforcement.md](enforcement.md)). `SDLC_GATE_TOKEN` is never given to clients; metrics are sent
+with the developer's own GitHub credential.
 
 ## 2. Repository settings
 
@@ -48,7 +47,7 @@ its tenant id and client id into `gate.config.yaml` under `identity:` (see [enfo
 ## 6. Operating
 
 - Tag releases (`vX.Y.Z`); clients follow `main` by default and can be pinned to a tag with `SDLC_GATE_REF` at install.
-- Watch LiteLLM spend per developer key; a typical commit costs a few thousand tokens per phase.
+- Watch the model gateway spend per developer key; a typical commit costs a few thousand tokens per phase.
 - Review `dashboard/README.md` on the `metrics` branch; the weekly issue mirrors it. Low "client attested" shares point
   at machines where the gate is missing.
-- Rotate the LiteLLM keys and `SDLC_GATE_TOKEN` on a schedule (see SECURITY.md).
+- Rotate the gateway keys and `SDLC_GATE_TOKEN` on a schedule (see SECURITY.md).
