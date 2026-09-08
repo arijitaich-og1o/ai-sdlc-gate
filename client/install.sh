@@ -7,9 +7,10 @@
 #   1. clones (or refreshes) the central repository to ~/.sdlc-gate/repo
 #   2. installs the `sdlc-gate` CLI for the current user (pipx if available, else pip --user)
 #   3. installs global git hooks (commit-msg, pre-push) via core.hooksPath, chaining to repo-local hooks
-#   4. stores the LiteLLM endpoint + key in ~/.sdlc-gate/env (mode 600)
+#   4. fetches the LiteLLM configuration from the central repository's secrets (key broker) into ~/.sdlc-gate/env (mode 600)
+#   5. signs the developer in with their Microsoft work account (one-time)
 #
-# Environment overrides: SDLC_GATE_REPO_URL, SDLC_GATE_REF, LITELLM_BASE_URL, LITELLM_API_KEY, SDLC_GATE_HOME
+# Environment overrides: SDLC_GATE_REPO_URL, SDLC_GATE_REF, SDLC_GATE_HOME (LITELLM_API_KEY only for manual set-ups)
 set -euo pipefail
 
 REPO_URL="${SDLC_GATE_REPO_URL:-https://github.com/arijitaich-og1o/ai-sdlc-gate.git}"
@@ -61,30 +62,24 @@ if [ -n "$CURRENT_HOOKS" ] && [ "$CURRENT_HOOKS" != "$SDLC_HOME/hooks" ]; then
 fi
 git config --global core.hooksPath "$SDLC_HOME/hooks"
 
-if [ ! -f "$SDLC_HOME/env" ] || [ -n "${LITELLM_API_KEY:-}" ]; then
-  BASE_URL="${LITELLM_BASE_URL:-$DEFAULT_BASE_URL}"
-  KEY="${LITELLM_API_KEY:-}"
-  if [ -z "$KEY" ] && [ -t 0 ]; then
-    printf 'LiteLLM API key (input hidden, stored in %s): ' "$SDLC_HOME/env"
-    read -rs KEY; echo
-  fi
-  if [ -n "$KEY" ]; then
-    umask 077
-    { printf 'export LITELLM_BASE_URL=%q\n' "$BASE_URL"; printf 'export LITELLM_API_KEY=%q\n' "$KEY"; } > "$SDLC_HOME/env"
-    chmod 600 "$SDLC_HOME/env"
-    say "Stored LiteLLM configuration in $SDLC_HOME/env"
-  else
-    say "No LiteLLM key provided; local hooks will skip the model review until $SDLC_HOME/env exists."
-  fi
-fi
 date +%s > "$SDLC_HOME/.last-refresh"
 
+GATE="sdlc-gate"
+command -v sdlc-gate >/dev/null 2>&1 || GATE="$PY -m sdlc_gate.cli"
+CONFIG="$SDLC_HOME/repo/gate.config.yaml"
+
 say "Verifying"
-if command -v sdlc-gate >/dev/null 2>&1; then
-  sdlc-gate validate-skills --config "$SDLC_HOME/repo/gate.config.yaml"
-  if [ -t 0 ] && ! sdlc-gate identity show --quiet --config "$SDLC_HOME/repo/gate.config.yaml" >/dev/null 2>&1; then
-    say "Signing you in with your Microsoft work account (one-time)"
-    sdlc-gate identity login --config "$SDLC_HOME/repo/gate.config.yaml" || say "Identity sign-in skipped; run 'sdlc-gate identity login' later."
-  fi
+$GATE validate-skills --config "$CONFIG"
+
+say "Fetching the LiteLLM configuration from the central repository (uses your GitHub sign-in)"
+if [ -n "${LITELLM_API_KEY:-}" ]; then
+  $GATE configure --config "$CONFIG" --api-key "$LITELLM_API_KEY" --base-url "${LITELLM_BASE_URL:-$DEFAULT_BASE_URL}"
+else
+  $GATE configure --config "$CONFIG" || say "Could not fetch the LiteLLM configuration yet; run 'sdlc-gate configure' after signing in to GitHub (gh auth login)."
+fi
+
+if [ -t 0 ] && ! $GATE identity show --quiet --config "$CONFIG" >/dev/null 2>&1; then
+  say "Signing you in with your Microsoft work account (one-time)"
+  $GATE identity login --config "$CONFIG" || say "Identity sign-in skipped; run 'sdlc-gate identity login' later."
 fi
 say "Done. Every commit and push on this machine now runs the SDLC Gate locally; GitHub enforces it centrally."

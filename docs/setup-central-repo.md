@@ -4,13 +4,14 @@
 
 | Secret | Used by | Value |
 |---|---|---|
-| `LITELLM_BASE_URL` | self gate, skill challenge | `https://litellm-dev.dev.aime.osp-fine.de` |
-| `LITELLM_API_KEY` | self gate, skill challenge | a dedicated LiteLLM virtual key with a spend limit |
+| `LITELLM_BASE_URL` | key broker (clients), self gate, skill challenge | `https://litellm-dev.dev.aime.osp-fine.de` |
+| `LITELLM_API_KEY` | key broker (clients), self gate, skill challenge | a dedicated LiteLLM virtual key with a spend limit |
 | `SDLC_GATE_TOKEN` | skill challenge (pushing resolution commits so checks re-run) | fine-grained PAT or GitHub App token with **Contents: read & write** and **Pull requests: read & write** on this repository |
 
-Developers' machines never receive these. Each developer stores their **own** LiteLLM key with `sdlc-gate configure`
-(issue one virtual key per developer or per team in LiteLLM so spend is attributable), and metrics are sent with the
-developer's own GitHub credential.
+Installed clients obtain the LiteLLM configuration from these secrets through the `Key Broker` workflow (encrypted to
+the requesting machine; see [enforcement.md](enforcement.md)). Everyone with access to this repository can therefore
+use the key, so give it a spend limit and rotate it on a schedule; rotation only requires updating the secret.
+`SDLC_GATE_TOKEN` is never given to clients; metrics are sent with the developer's own GitHub credential.
 
 ## 2. Repository settings
 
@@ -33,7 +34,7 @@ its tenant id and client id into `gate.config.yaml` under `identity:` (see [enfo
   (macOS, Linux, WSL) as administrator through Intune, Jamf, SCCM or Ansible. The script is idempotent and safe to
   re-run; it also installs a daily refresh so policy and skill changes propagate without redeploying.
 - **Other machines:** point developers at the installers in the README.
-- Tell developers to run `sdlc-gate identity login` and `sdlc-gate configure` once.
+- Tell developers to run `sdlc-gate configure` and `sdlc-gate identity login` once (the self-service installers do this).
 
 ## 5. First run
 

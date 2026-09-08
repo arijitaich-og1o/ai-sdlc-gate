@@ -24,8 +24,8 @@ shim that removes `--no-verify` and any attempt to override the hooks path, refr
 switch the hooks to managed mode (fail closed, identity required). Developers then run only:
 
 ```bash
+sdlc-gate configure          # one-time: fetches the LiteLLM configuration from the central repository's secrets
 sdlc-gate identity login     # one-time Microsoft sign-in
-sdlc-gate configure          # one-time: store the LiteLLM key from the platform team
 ```
 
 ## Self-service install (any machine)
@@ -83,6 +83,16 @@ works with MFA and Conditional Access, and it is auditable in Entra sign-in logs
      allowed_domains: [og1o.in]
      required: true
    ```
+
+## LiteLLM configuration from the repository secrets
+
+`LITELLM_BASE_URL` and `LITELLM_API_KEY` live only in this repository's GitHub secrets. Secrets are readable only
+inside a workflow run, so the client obtains them through the **key broker** workflow: it generates an RSA key pair,
+triggers `key-broker.yml` with the public key using the developer's GitHub credential, the workflow encrypts the
+configuration to that key and publishes it as a one-day artifact, and the client downloads and decrypts it into
+`~/.sdlc-gate/env` (user-only permissions). The plaintext never leaves the runner and the developer's machine; only
+people with access to this repository can request it. To rotate: update the secret and have clients run
+`sdlc-gate configure` again.
 
 ## Metrics from the client
 
