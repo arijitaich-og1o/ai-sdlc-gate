@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # SDLC Gate — local commit gate.
 #
-# Runs the same engine and skills as the server-side gate against the staged change, using the commit message
+# Reviews the staged change with the organisation skills and policy, using the commit message
 # for intent and skip trailers, then stamps the message with an `SDLC-Gate-Client` attestation carrying the
 # developer's verified identity. In managed installs (system gitconfig sdlc-gate.managed=true) the hook fails
 # closed and requires a verified identity. The GitHub check remains the authoritative enforcement point.
