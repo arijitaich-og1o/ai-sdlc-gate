@@ -1,9 +1,15 @@
-# Key broker: hands the LiteLLM configuration held in this repository's secrets to an installed client (workflow_dispatch only).
+# Key broker: gives an installed client a LiteLLM key without the key ever appearing in plaintext outside the runner
+# and the requesting machine.
 #
-# The client (a developer with access to this repository) generates an RSA key pair, triggers this workflow with
-# its PUBLIC key, and downloads the artifact. The artifact contains the LiteLLM endpoint and key encrypted with
-# that public key (RSA-OAEP/SHA-256), so only the requesting machine can read it. The plaintext key never leaves
-# the runner. Rotation: update the secret and have clients run `sdlc-gate configure` again.
+# Preferred mode (LITELLM_ADMIN_KEY secret present): mint a PER-DEVELOPER virtual key through LiteLLM's key
+# management API, bound to the GitHub login that triggered the run, with a spend budget, model allow-list and
+# expiry. Abuse is attributable and capped, and a single developer's key can be revoked without touching anyone
+# else. The admin key is only ever used inside this workflow.
+#
+# Fallback mode (no admin key): hand out the shared LITELLM_API_KEY. Acceptable for a pilot, not for a roll-out.
+#
+# In both modes the result is encrypted with the client's RSA public key (OAEP/SHA-256) and published as a
+# one-day artifact that only the requester can decrypt.
 name: Key Broker
 
 run-name: "key-broker ${{ inputs.request_id }}"
@@ -24,12 +30,18 @@ permissions: {}
 
 jobs:
   broker:
-    name: Encrypt configuration for the requester
+    name: Issue configuration for the requester
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: gate.config.yaml
+          sparse-checkout-cone-mode: false
+
       - name: Validate the request
         env:
           REQUEST_ID: ${{ inputs.request_id }}
@@ -42,25 +54,80 @@ jobs:
           BITS="$(openssl pkey -pubin -in "$RUNNER_TEMP/pub.pem" -text -noout | grep -Eo 'Public-Key: \([0-9]+ bit\)' | grep -Eo '[0-9]+')"
           [ "${BITS:-0}" -ge 2048 ] || { echo "::error::public key too small"; exit 1; }
 
-      - name: Encrypt the LiteLLM configuration
-        env:
-          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
-          LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+      - name: Read the developer-key policy
+        id: policy
         run: |
           set -euo pipefail
-          if [ -z "${LITELLM_API_KEY:-}" ]; then echo "::error::LITELLM_API_KEY secret is not configured"; exit 1; fi
-          # Accept a key pasted together with its LiteLLM display name ("Name: sk-...") and keep only the key.
-          KEY="$(printf '%s' "$LITELLM_API_KEY" | grep -Eo 'sk-[A-Za-z0-9_-]{16,}' | head -n1 || true)"
-          if [ -z "$KEY" ]; then echo "::error::LITELLM_API_KEY does not contain a LiteLLM virtual key (expected a token starting with 'sk-')"; exit 1; fi
-          if [ "$KEY" != "$LITELLM_API_KEY" ]; then echo "::warning::LITELLM_API_KEY contained extra text around the key (a label or whitespace); only the 'sk-' token was used. Consider saving the bare key."; fi
-          LITELLM_API_KEY="$KEY"
+          python3 - >> "$GITHUB_OUTPUT" <<'PY'
+          import json, yaml
+          cfg = yaml.safe_load(open("gate.config.yaml")) or {}
+          llm = cfg.get("llm", {}) or {}
+          dk = llm.get("developer_keys", {}) or {}
+          models = [llm.get("review_model"), llm.get("judge_model"), *(llm.get("fallback_models") or [])]
+          models = [m for m in dict.fromkeys(models) if m]
+          print(f"max_budget={dk.get('max_budget_usd', 25)}")
+          print(f"budget_duration={dk.get('budget_duration', '30d')}")
+          print(f"duration={dk.get('duration', '90d')}")
+          print(f"rpm={dk.get('rpm_limit', 60)}")
+          print(f"models={json.dumps(models, separators=(',', ':'))}")
+          PY
+
+      - name: Issue the key
+        env:
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          LITELLM_ADMIN_KEY: ${{ secrets.LITELLM_ADMIN_KEY }}
+          LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+          DEVELOPER: ${{ github.actor }}
+          REQUEST_ID: ${{ inputs.request_id }}
+          MAX_BUDGET: ${{ steps.policy.outputs.max_budget }}
+          BUDGET_DURATION: ${{ steps.policy.outputs.budget_duration }}
+          DURATION: ${{ steps.policy.outputs.duration }}
+          RPM: ${{ steps.policy.outputs.rpm }}
+          MODELS: ${{ steps.policy.outputs.models }}
+        run: |
+          set -euo pipefail
+          BASE_URL="${LITELLM_BASE_URL:-https://litellm-dev.dev.aime.osp-fine.de}"
+          BASE_URL="${BASE_URL%/}"
+          normalize() { printf '%s' "$1" | grep -Eo 'sk-[A-Za-z0-9_-]{16,}' | head -n1 || true; }
           mkdir -p "$RUNNER_TEMP/out"
-          printf '{"base_url":"%s","api_key":"%s"}' "${LITELLM_BASE_URL:-https://litellm-dev.dev.aime.osp-fine.de}" "$LITELLM_API_KEY" > "$RUNNER_TEMP/plain.json"
+          MODE="shared"
+          KEY=""
+          if [ -n "${LITELLM_ADMIN_KEY:-}" ]; then
+            ADMIN="$(normalize "$LITELLM_ADMIN_KEY")"
+            ALIAS="sdlc-gate/${DEVELOPER}/${REQUEST_ID:0:8}"
+            BODY="$(ALIAS="$ALIAS" python3 -c 'import json, os
+          print(json.dumps({
+            "key_alias": os.environ["ALIAS"], "duration": os.environ["DURATION"],
+            "max_budget": float(os.environ["MAX_BUDGET"]), "budget_duration": os.environ["BUDGET_DURATION"],
+            "rpm_limit": int(os.environ["RPM"]), "models": json.loads(os.environ["MODELS"]), "tags": ["sdlc-gate"],
+            "metadata": {"purpose": "sdlc-gate", "developer": os.environ["DEVELOPER"], "request": os.environ["REQUEST_ID"]},
+          }))' )"
+            RESP="$(ALIAS="$ALIAS" curl -sS -m 30 -X POST "$BASE_URL/key/generate" -H "Authorization: Bearer $ADMIN" -H "Content-Type: application/json" -d "$BODY" || true)"
+            KEY="$(printf '%s' "$RESP" | python3 -c 'import json, sys
+          try:
+              print(json.load(sys.stdin).get("key", ""))
+          except Exception:
+              print("")')"
+            if [ -n "$KEY" ]; then
+              MODE="per-developer"
+              echo "issued a per-developer key for $DEVELOPER (alias $ALIAS, budget $MAX_BUDGET USD per $BUDGET_DURATION, expires in $DURATION)"
+            else
+              echo "::warning::LiteLLM key generation failed; falling back to the shared key. Response: $(printf '%s' "$RESP" | head -c 200)"
+            fi
+          fi
+          if [ -z "$KEY" ]; then
+            if [ -z "${LITELLM_API_KEY:-}" ]; then echo "::error::neither LITELLM_ADMIN_KEY nor LITELLM_API_KEY is configured"; exit 1; fi
+            KEY="$(normalize "$LITELLM_API_KEY")"
+            [ -n "$KEY" ] || { echo "::error::LITELLM_API_KEY does not contain a LiteLLM virtual key (expected a token starting with 'sk-')"; exit 1; }
+            echo "::warning::Issuing the SHARED LiteLLM key to $DEVELOPER. Configure LITELLM_ADMIN_KEY so each developer receives an individual, budget-capped key."
+          fi
+          KEY="$KEY" MODE="$MODE" BASE_URL="$BASE_URL" python3 -c 'import json, os
+          print(json.dumps({"base_url": os.environ["BASE_URL"], "api_key": os.environ["KEY"], "mode": os.environ["MODE"], "developer": os.environ["DEVELOPER"]}))' > "$RUNNER_TEMP/plain.json"
           openssl pkeyutl -encrypt -pubin -inkey "$RUNNER_TEMP/pub.pem" \
             -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256 \
             -in "$RUNNER_TEMP/plain.json" -out "$RUNNER_TEMP/out/config.enc"
           rm -f "$RUNNER_TEMP/plain.json"
-          echo "encrypted $(wc -c < "$RUNNER_TEMP/out/config.enc") bytes for the requester"
+          echo "encrypted configuration ($MODE) for the requester"
 
       - name: Publish the encrypted configuration
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

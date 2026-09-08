@@ -11,8 +11,9 @@ command and input that reproduces the problem.
 - **Integrity of enforcement.** Policy (`gate.config.yaml`), engine (`gate/`), workflows and benchmark can
   only change through code-owner-reviewed pull requests. Skills change only through the arbiter workflow, which
   itself is code-owned.
-- **Secrets.** LiteLLM credentials and the metrics token exist only as GitHub secrets. The engine reads them
-  from environment variables, never logs them, and the local installer stores them in a user-only file.
+- **Secrets.** The LiteLLM admin key and the shared key exist only as GitHub secrets. Developers receive
+  individual, budget-capped, model-restricted, expiring keys through the key broker, encrypted to their machine
+  and kept in the OS credential store. The engine never logs keys.
 - **Untrusted input.** Diffs, commit messages, PR bodies and candidate skills are data. They are fenced in
   explicit delimiters, the model is instructed to treat them as untrusted, model output is parsed as JSON and
   validated, and nothing from the model or the input is ever executed or interpolated into a shell.

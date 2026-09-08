@@ -14,6 +14,13 @@ llm:
   max_retries: 3
   temperature: 0
   max_output_tokens: 8000
+  # Per-developer virtual keys minted by the key broker (requires the LITELLM_ADMIN_KEY secret). Each developer's key
+  # is limited to the models above, capped in spend, rate limited, tagged with their GitHub login, and expires.
+  developer_keys:
+    max_budget_usd: 25
+    budget_duration: 30d
+    duration: 90d
+    rpm_limit: 60
 
 # The seven SDLC phases. This list is fixed; the repository must hold exactly one skill per phase.
 phases:

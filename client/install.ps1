@@ -7,7 +7,7 @@
   2. installs the `sdlc-gate` CLI for the current user (pipx if available, else pip --user)
   3. installs global git hooks (commit-msg, pre-push) via core.hooksPath. Git for Windows runs hooks with its
      bundled sh, so the same bash hooks work in PowerShell, cmd, VS Code, IntelliJ and any other IDE.
-  4. fetches the LiteLLM configuration from the central repository's secrets (key broker) into %USERPROFILE%\.sdlc-gate\env
+  4. obtains your LiteLLM key from the central repository (key broker) and keeps it in Windows Credential Manager
   5. signs the developer in with their Microsoft work account (one-time)
 
 .EXAMPLE
@@ -93,4 +93,4 @@ if ($LASTEXITCODE -ne 0) {
   Say "Signing you in with your Microsoft work account (one-time)"
   Gate identity login --config $config
 }
-Say "Done. Every commit and push on this machine now runs the SDLC Gate locally; GitHub enforces it centrally."
+Say "Done. Every commit and push on this machine now goes through the SDLC Gate."

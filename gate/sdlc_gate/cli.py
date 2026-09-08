@@ -17,6 +17,7 @@ from .gitutil import GitError, repo_root
 from . import identity as identity_mod
 from . import ghauth
 from . import keybroker
+from . import secrets_store
 from .intent import detect_intent
 from .judge import apply_decision, decision_markdown, judge
 from .llm import LLMClient, LLMError, StaticLLM
@@ -495,31 +496,29 @@ def cmd_attest(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
-def _store_env(base_url: str, key: str) -> Path:
-    import stat
-
-    home = identity_mod.sdlc_home()
-    home.mkdir(parents=True, exist_ok=True)
-    env_path = home / "env"
-    env_path.write_text(f"export LITELLM_BASE_URL='{base_url}'\nexport LITELLM_API_KEY='{key}'\n", encoding="utf-8")
-    try:
-        os.chmod(env_path, stat.S_IRUSR | stat.S_IWUSR)
-    except OSError:
-        pass
-    return env_path
-
-
 def cmd_configure(args: argparse.Namespace) -> int:
-    """Obtain the LiteLLM configuration and store it in ~/.sdlc-gate/env (user-only permissions).
+    """Obtain the LiteLLM configuration and keep it in the operating system credential store.
 
-    By default the configuration is fetched from the central repository's GitHub secrets through the key-broker
-    workflow, using the developer's existing GitHub credential. `--api-key` stores an explicitly given key instead.
+    By default the configuration is fetched from the central repository through the key-broker workflow, using the
+    developer's existing GitHub credential; the broker issues a per-developer key when the platform has configured
+    it. `--api-key` stores an explicitly given key instead. `--check` only reports whether a key is available.
     """
     cfg = Config.load(args.config)
-    default_url = os.environ.get("LITELLM_BASE_URL") or "https://litellm-dev.dev.aime.osp-fine.de"
+    if args.check:
+        stored = secrets_store.load()
+        if stored is None:
+            _eprint("no LiteLLM configuration stored; run: sdlc-gate configure")
+            return EXIT_FAIL
+        print(f"LiteLLM configuration present ({stored.backend}, {stored.base_url})")
+        return EXIT_PASS
+    if args.clear:
+        secrets_store.clear()
+        print("LiteLLM configuration removed")
+        return EXIT_PASS
+    default_url = os.environ.get("LITELLM_BASE_URL") or secrets_store.DEFAULT_BASE_URL
     if args.api_key:
-        path = _store_env(args.base_url or default_url, args.api_key)
-        print(f"stored LiteLLM configuration in {path}")
+        st = secrets_store.store(args.base_url or default_url, args.api_key, mode="manual")
+        print(f"stored LiteLLM configuration in the {st.backend} store")
         return EXIT_PASS
     cred = ghauth.find_credential(token_env="SDLC_GATE_GITHUB_TOKEN")
     if cred is None:
@@ -538,10 +537,12 @@ def cmd_configure(args: argparse.Namespace) -> int:
     problem = _verify_litellm_key(base_url, llm.api_key)
     if problem:
         _eprint(f"configure: the configuration was received but does not work: {problem}")
-        _eprint("Ask the platform team to check the LITELLM_API_KEY / LITELLM_BASE_URL secrets in the central repository, then run `sdlc-gate configure` again.")
+        _eprint("Ask the platform team to check the LiteLLM secrets in the central repository, then run `sdlc-gate configure` again.")
         return EXIT_FAIL
-    path = _store_env(base_url, llm.api_key)
-    print(f"LiteLLM configuration obtained from {repo}, verified against {base_url}, and stored in {path}")
+    st = secrets_store.store(base_url, llm.api_key, mode=llm.mode, developer=llm.developer)
+    kind = "a personal, budget-capped key" if llm.mode == "per-developer" else "the shared key"
+    where = "the operating system credential store" if st.backend == "keyring" else f"{secrets_store.env_path()} (no OS credential store available on this machine; file is user-only)"
+    print(f"Received {kind} from {repo}, verified against {base_url}, stored in {where}.")
     return EXIT_PASS
 
 
@@ -586,9 +587,11 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     at.add_argument("--require-identity", action="store_true"), at.add_argument("--quiet", action="store_true")
     at.set_defaults(func=cmd_attest)
 
-    cf = sub.add_parser("configure", help="fetch the LiteLLM configuration from the central repository secrets (or store a given key)")
+    cf = sub.add_parser("configure", help="obtain your LiteLLM key from the central repository and keep it in the OS credential store")
     cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker")
     cf.add_argument("--repo", help="central repository (default from policy)"), cf.add_argument("--ref", help="branch of the central repository (default main)")
+    cf.add_argument("--check", action="store_true", help="exit 0 if a key is available, 1 otherwise")
+    cf.add_argument("--clear", action="store_true", help="remove the stored key")
     cf.set_defaults(func=cmd_configure)
 
 

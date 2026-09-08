@@ -5,13 +5,14 @@
 | Secret | Used by | Value |
 |---|---|---|
 | `LITELLM_BASE_URL` | key broker (clients), self gate, skill challenge | `https://litellm-dev.dev.aime.osp-fine.de` |
-| `LITELLM_API_KEY` | key broker (clients), self gate, skill challenge | a dedicated LiteLLM virtual key with a spend limit |
+| `LITELLM_API_KEY` | self gate, skill challenge; broker fallback | a dedicated LiteLLM virtual key with a spend limit |
+| `LITELLM_ADMIN_KEY` | key broker (mints per-developer keys) | a LiteLLM key with the `proxy_admin` role (or the master key). **Strongly recommended**; without it every developer receives the shared key. |
 | `SDLC_GATE_TOKEN` | skill challenge (pushing resolution commits so checks re-run) | fine-grained PAT or GitHub App token with **Contents: read & write** and **Pull requests: read & write** on this repository |
 
-Installed clients obtain the LiteLLM configuration from these secrets through the `Key Broker` workflow (encrypted to
-the requesting machine; see [enforcement.md](enforcement.md)). Everyone with access to this repository can therefore
-use the key, so give it a spend limit and rotate it on a schedule; rotation only requires updating the secret.
-`SDLC_GATE_TOKEN` is never given to clients; metrics are sent with the developer's own GitHub credential.
+Installed clients obtain their LiteLLM key through the `Key Broker` workflow: with `LITELLM_ADMIN_KEY` present each
+developer receives an individual, budget-capped, model-restricted, expiring key tagged with their GitHub login and
+stored in their OS credential store (see [enforcement.md](enforcement.md)). `SDLC_GATE_TOKEN` and the admin key are
+never given to clients; metrics are sent with the developer's own GitHub credential.
 
 ## 2. Repository settings
 

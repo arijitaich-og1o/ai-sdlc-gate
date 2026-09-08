@@ -17,8 +17,10 @@ The installer installs the `sdlc-gate` CLI, syncs the skills and policy to `~/.s
 - `sdlc-gate identity login` — a Microsoft sign-in opens in your browser (usually one click because you are
   already signed in for Outlook/Teams). Your verified corporate e-mail becomes your gate identity and your git
   `user.email`. Nothing is read from Outlook, Teams or the browser; only what Microsoft returns after you sign in.
-- `sdlc-gate configure` — fetches the LiteLLM configuration from the central repository's secrets using your
-  existing GitHub sign-in and stores it in `~/.sdlc-gate/env`, readable only by you. Nothing to type.
+- `sdlc-gate configure` — obtains your personal LiteLLM key from the central repository using your existing GitHub
+  sign-in and keeps it in your operating system's credential store (Windows Credential Manager, macOS Keychain,
+  Linux Secret Service). Nothing to type, nothing readable on disk. The key only works for the gate's models and has
+  a monthly spend cap.
 
 On company-managed devices IT installs the gate system-wide (see [enforcement.md](enforcement.md)); you still run
 the two one-time steps above.
