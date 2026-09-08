@@ -176,10 +176,18 @@ class LLMClient:
             except httpx.HTTPError as exc:
                 last_error = exc
             else:
-                if resp.status_code == 400 and json_mode and "response_format" in payload:
-                    # Some models behind the proxy do not accept response_format; retry without it.
-                    payload.pop("response_format", None)
-                    continue
+                if resp.status_code == 400:
+                    # Some models behind the gateway reject particular parameters; drop the offending one and retry.
+                    body = resp.text
+                    if "temperature" in payload and "temperature" in body:
+                        payload.pop("temperature", None)
+                        continue
+                    if "response_format" in payload and ("response_format" in body or "json" in body.lower()):
+                        payload.pop("response_format", None)
+                        continue
+                    if "max_tokens" in payload and "max_tokens" in body:
+                        payload["max_completion_tokens"] = payload.pop("max_tokens")
+                        continue
                 if resp.status_code in RETRY_STATUSES:
                     last_error = LLMError(f"{model}: HTTP {resp.status_code}: {resp.text[:300]}")
                 elif resp.status_code >= 400:
