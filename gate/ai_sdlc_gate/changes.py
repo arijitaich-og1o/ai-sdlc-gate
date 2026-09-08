@@ -97,7 +97,7 @@ def _is_binary(text: str | None) -> bool:
 def _truncate(text: str | None, limit: int) -> tuple[str | None, bool]:
     if text is None or len(text) <= limit:
         return text, False
-    return text[:limit] + f"\n... [truncated {len(text) - limit} chars by sdlc-gate]\n", True
+    return text[:limit] + f"\n... [truncated {len(text) - limit} chars by ai-sdlc-gate]\n", True
 
 
 def collect_range(cfg: Config, base: str | None, head: str, cwd: Path | None = None) -> ChangeSet:

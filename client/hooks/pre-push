@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDLC Gate — local push gate.
+# AI SDLC Gate — local push gate.
 #
 # For every branch being pushed, reviews the commits that are new to the remote with the intent derived from
 # the branch name / trailers (release/*, hotfix/* -> deployment phases, ...). Managed installs fail closed.
@@ -8,17 +8,17 @@ set -u
 
 REMOTE_NAME="$1"
 ZERO="0000000000000000000000000000000000000000"
-SDLC_HOME="${SDLC_GATE_HOME:-$HOME/.sdlc-gate}"
-MANAGED="$(git config --system --get sdlc-gate.managed 2>/dev/null || true)"
-PREFIX="$(git config --system --get sdlc-gate.prefix 2>/dev/null || true)"
+SDLC_HOME="${AI_SDLC_GATE_HOME:-$HOME/.ai-sdlc-gate}"
+MANAGED="$(git config --system --get ai-sdlc-gate.managed 2>/dev/null || true)"
+PREFIX="$(git config --system --get ai-sdlc-gate.prefix 2>/dev/null || true)"
 REPO_DIR="$SDLC_HOME/repo"
-GATE="sdlc-gate"
+GATE="ai-sdlc-gate"
 if [ "$MANAGED" = "true" ] && [ -n "$PREFIX" ] && [ -d "$PREFIX/repo" ]; then
   REPO_DIR="$PREFIX/repo"
-  [ -x "$PREFIX/bin/sdlc-gate" ] && GATE="$PREFIX/bin/sdlc-gate"
+  [ -x "$PREFIX/bin/ai-sdlc-gate" ] && GATE="$PREFIX/bin/ai-sdlc-gate"
 fi
 FAIL_CLOSED=1
-[ "${SDLC_GATE_LOCAL_FAIL_OPEN:-0}" = "1" ] && [ "$MANAGED" != "true" ] && FAIL_CLOSED=0
+[ "${AI_SDLC_GATE_LOCAL_FAIL_OPEN:-0}" = "1" ] && [ "$MANAGED" != "true" ] && FAIL_CLOSED=0
 
 INPUT="$(cat)"
 
@@ -27,13 +27,13 @@ if [ -x "$LOCAL_HOOK" ] && [ "$LOCAL_HOOK" != "$0" ]; then
   printf '%s\n' "$INPUT" | "$LOCAL_HOOK" "$@" || exit $?
 fi
 
-[ "$MANAGED" != "true" ] && [ "${SDLC_GATE_LOCAL_PUSH:-1}" = "0" ] && exit 0
+[ "$MANAGED" != "true" ] && [ "${AI_SDLC_GATE_LOCAL_PUSH:-1}" = "0" ] && exit 0
 [ "$MANAGED" != "true" ] && [ -x "$SDLC_HOME/hooks/refresh-skills" ] && "$SDLC_HOME/hooks/refresh-skills" >/dev/null 2>&1
 
 if ! command -v "$GATE" >/dev/null 2>&1 || [ ! -f "$REPO_DIR/gate.config.yaml" ] || ! "$GATE" configure --check --config "$REPO_DIR/gate.config.yaml" >/dev/null 2>&1; then
-  echo "sdlc-gate: engine, policy or review configuration not available locally (run: sdlc-gate configure)." >&2
+  echo "ai-sdlc-gate: engine, policy or review configuration not available locally (run: ai-sdlc-gate configure)." >&2
   [ "$FAIL_CLOSED" = "1" ] && exit 1
-  echo "sdlc-gate: fail-open mode; continuing without a review." >&2
+  echo "ai-sdlc-gate: fail-open mode; continuing without a review." >&2
   exit 0
 fi
 
@@ -48,7 +48,7 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
     DEFAULT="$(git symbolic-ref -q --short "refs/remotes/$REMOTE_NAME/HEAD" 2>/dev/null || echo "$REMOTE_NAME/main")"
     BASE="$(git merge-base "$DEFAULT" "$LOCAL_SHA" 2>/dev/null || true)"
   fi
-  REPORT="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/sdlc-gate-$$.md")"
+  REPORT="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/ai-sdlc-gate-$$.md")"
   REPORT_JSON="$REPORT.json"
   REPO_SLUG="$(git remote get-url "$REMOTE_NAME" 2>/dev/null | sed -E 's#.*github\.com[:/]##; s#\.git$##')"
   ARGS=(run --config "$REPO_DIR/gate.config.yaml" --skills-dir "$REPO_DIR/skills"
@@ -56,17 +56,17 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
   [ -n "$BASE" ] && ARGS+=(--base "$BASE")
   "$GATE" "${ARGS[@]}"
   RC=$?
-  [ -f "$REPORT_JSON" ] && "$GATE" emit-metrics --config "$REPO_DIR/gate.config.yaml" --report "$REPORT_JSON" --dispatch >/dev/null 2>&1 || echo "sdlc-gate: run not recorded in metrics (no GitHub credential available)." >&2
+  [ -f "$REPORT_JSON" ] && "$GATE" emit-metrics --config "$REPO_DIR/gate.config.yaml" --report "$REPORT_JSON" --dispatch >/dev/null 2>&1 || echo "ai-sdlc-gate: run not recorded in metrics (no GitHub credential available)." >&2
   if [ "$RC" = "1" ]; then
     cat "$REPORT" >&2
     echo "" >&2
-    echo "sdlc-gate: push of $BRANCH blocked locally. Fix the findings or add SDLC-Skip trailers to the commit (skips are recorded)." >&2
+    echo "ai-sdlc-gate: push of $BRANCH blocked locally. Fix the findings or add SDLC-Skip trailers to the commit (skips are recorded)." >&2
     FAILED=1
   elif [ "$RC" != "0" ]; then
-    echo "sdlc-gate: local gate could not run for $BRANCH (exit $RC)." >&2
+    echo "ai-sdlc-gate: local gate could not run for $BRANCH (exit $RC)." >&2
     [ "$FAIL_CLOSED" = "1" ] && FAILED=1
   else
-    echo "sdlc-gate: $BRANCH PASS" >&2
+    echo "ai-sdlc-gate: $BRANCH PASS" >&2
   fi
   rm -f "$REPORT" "$REPORT_JSON"
 done <<EOF

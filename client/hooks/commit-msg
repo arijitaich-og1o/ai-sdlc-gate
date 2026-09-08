@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
-# SDLC Gate — local commit gate.
+# AI SDLC Gate — local commit gate.
 #
 # Reviews the staged change with the organisation skills and policy, using the commit message
-# for intent and skip trailers, then stamps the message with an `SDLC-Gate-Client` attestation carrying the
-# developer's verified identity. In managed installs (system gitconfig sdlc-gate.managed=true) the hook fails
+# for intent and skip trailers, then stamps the message with an `AI-SDLC-Gate-Client` attestation carrying the
+# developer's verified identity. In managed installs (system gitconfig ai-sdlc-gate.managed=true) the hook fails
 # closed and requires a verified identity. The GitHub check remains the authoritative enforcement point.
 set -u
 
 MSG_FILE="$1"
-SDLC_HOME="${SDLC_GATE_HOME:-$HOME/.sdlc-gate}"
-MANAGED="$(git config --system --get sdlc-gate.managed 2>/dev/null || true)"
-PREFIX="$(git config --system --get sdlc-gate.prefix 2>/dev/null || true)"
+SDLC_HOME="${AI_SDLC_GATE_HOME:-$HOME/.ai-sdlc-gate}"
+MANAGED="$(git config --system --get ai-sdlc-gate.managed 2>/dev/null || true)"
+PREFIX="$(git config --system --get ai-sdlc-gate.prefix 2>/dev/null || true)"
 REPO_DIR="$SDLC_HOME/repo"
-GATE="sdlc-gate"
+GATE="ai-sdlc-gate"
 if [ "$MANAGED" = "true" ] && [ -n "$PREFIX" ] && [ -d "$PREFIX/repo" ]; then
   REPO_DIR="$PREFIX/repo"
-  [ -x "$PREFIX/bin/sdlc-gate" ] && GATE="$PREFIX/bin/sdlc-gate"
+  [ -x "$PREFIX/bin/ai-sdlc-gate" ] && GATE="$PREFIX/bin/ai-sdlc-gate"
 fi
 FAIL_CLOSED=1
-[ "${SDLC_GATE_LOCAL_FAIL_OPEN:-0}" = "1" ] && [ "$MANAGED" != "true" ] && FAIL_CLOSED=0
+[ "${AI_SDLC_GATE_LOCAL_FAIL_OPEN:-0}" = "1" ] && [ "$MANAGED" != "true" ] && FAIL_CLOSED=0
 
 # Chain any repository-local hook first.
 LOCAL_HOOK="$(git rev-parse --git-path hooks 2>/dev/null)/commit-msg"
@@ -29,9 +29,9 @@ fi
 [ "$MANAGED" != "true" ] && [ -x "$SDLC_HOME/hooks/refresh-skills" ] && "$SDLC_HOME/hooks/refresh-skills" >/dev/null 2>&1
 
 if ! command -v "$GATE" >/dev/null 2>&1 || [ ! -f "$REPO_DIR/gate.config.yaml" ]; then
-  echo "sdlc-gate: engine or policy not available locally." >&2
-  if [ "$FAIL_CLOSED" = "1" ]; then echo "sdlc-gate: blocking the commit until the client is repaired (re-run the installer or contact IT)." >&2; exit 1; fi
-  echo "sdlc-gate: fail-open mode; continuing without a review." >&2
+  echo "ai-sdlc-gate: engine or policy not available locally." >&2
+  if [ "$FAIL_CLOSED" = "1" ]; then echo "ai-sdlc-gate: blocking the commit until the client is repaired (re-run the installer or contact IT)." >&2; exit 1; fi
+  echo "ai-sdlc-gate: fail-open mode; continuing without a review." >&2
   exit 0
 fi
 
@@ -42,42 +42,42 @@ REQ_FLAG="--require-identity"
 STRICT=""
 [ "$MANAGED" = "true" ] && STRICT="--strict"
 if ! "$GATE" identity check --config "$CONFIG" $STRICT >/dev/null 2>&1; then
-  echo "sdlc-gate: a verified identity is required. Run:  sdlc-gate identity login" >&2
+  echo "ai-sdlc-gate: a verified identity is required. Run:  ai-sdlc-gate identity login" >&2
   exit 1
 fi
 
 if ! "$GATE" configure --check --config "$CONFIG" >/dev/null 2>&1; then
-  echo "sdlc-gate: review configuration missing. Run:  sdlc-gate configure" >&2
+  echo "ai-sdlc-gate: review configuration missing. Run:  ai-sdlc-gate configure" >&2
   if [ "$FAIL_CLOSED" = "1" ]; then exit 1; fi
   exit 0
 fi
 
-REPORT="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/sdlc-gate-$$.md")"
+REPORT="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/ai-sdlc-gate-$$.md")"
 REPORT_JSON="$REPORT.json"
 "$GATE" run --staged --config "$CONFIG" --skills-dir "$REPO_DIR/skills" \
   --pr-body-file "$MSG_FILE" --event-name local-commit --repo "$(git remote get-url origin 2>/dev/null | sed -E 's#.*github\.com[:/]##; s#\.git$##')" \
   --output-md "$REPORT" --output-json "$REPORT_JSON" --quiet
 RC=$?
-[ -f "$REPORT_JSON" ] && "$GATE" emit-metrics --config "$CONFIG" --report "$REPORT_JSON" --dispatch >/dev/null 2>&1 || echo "sdlc-gate: run not recorded in metrics (no GitHub credential available)." >&2
+[ -f "$REPORT_JSON" ] && "$GATE" emit-metrics --config "$CONFIG" --report "$REPORT_JSON" --dispatch >/dev/null 2>&1 || echo "ai-sdlc-gate: run not recorded in metrics (no GitHub credential available)." >&2
 
 case "$RC" in
   0)
     RESULT="pass"
     grep -q "^SDLC-Skip:" "$MSG_FILE" 2>/dev/null && RESULT="waived"
-    "$GATE" attest --config "$CONFIG" --message-file "$MSG_FILE" --result "$RESULT" --quiet $REQ_FLAG || { RC=$?; echo "sdlc-gate: attestation failed (exit $RC)." >&2; }
-    [ "$RC" = 0 ] && echo "sdlc-gate: PASS ($RESULT)" >&2
+    "$GATE" attest --config "$CONFIG" --message-file "$MSG_FILE" --result "$RESULT" --quiet $REQ_FLAG || { RC=$?; echo "ai-sdlc-gate: attestation failed (exit $RC)." >&2; }
+    [ "$RC" = 0 ] && echo "ai-sdlc-gate: PASS ($RESULT)" >&2
     ;;
   1)
     cat "$REPORT" >&2
     echo "" >&2
-    echo "sdlc-gate: commit blocked. Fix the findings above, or add SDLC-Skip / SDLC-Skip-Reason trailers (skips are recorded)." >&2
+    echo "ai-sdlc-gate: commit blocked. Fix the findings above, or add SDLC-Skip / SDLC-Skip-Reason trailers (skips are recorded)." >&2
     ;;
   *)
-    echo "sdlc-gate: the local gate could not run (exit $RC)." >&2
+    echo "ai-sdlc-gate: the local gate could not run (exit $RC)." >&2
     if [ "$FAIL_CLOSED" = "1" ]; then
-      echo "sdlc-gate: fail-closed mode, blocking the commit." >&2
+      echo "ai-sdlc-gate: fail-closed mode, blocking the commit." >&2
     else
-      echo "sdlc-gate: fail-open mode; continuing without a review." >&2
+      echo "ai-sdlc-gate: fail-open mode; continuing without a review." >&2
       RC=0
     fi
     ;;

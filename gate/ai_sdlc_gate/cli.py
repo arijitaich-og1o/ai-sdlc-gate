@@ -1,4 +1,4 @@
-"""Command line interface for the SDLC Gate."""
+"""Command line interface for the AI SDLC Gate."""
 from __future__ import annotations
 
 import argparse
@@ -342,12 +342,12 @@ def cmd_metrics_build(args: argparse.Namespace) -> int:
 # ----------------------------------------------------------------------------- parser
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="sdlc-gate", description="AI SDLC standardization gate (Otto Group One.O India)")
-    p.add_argument("--version", action="version", version=f"sdlc-gate {__version__}")
+    p = argparse.ArgumentParser(prog="ai-sdlc-gate", description="AI SDLC standardization gate (Otto Group One.O India)")
+    p.add_argument("--version", action="version", version=f"ai-sdlc-gate {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     def common(sp: argparse.ArgumentParser, skills: bool = True) -> None:
-        sp.add_argument("--config", help="path to gate.config.yaml (default: $SDLC_GATE_CONFIG or ./gate.config.yaml)")
+        sp.add_argument("--config", help="path to gate.config.yaml (default: $AI_SDLC_GATE_CONFIG or ./gate.config.yaml)")
         sp.add_argument("--root", help="repository root to operate in (default: current git repo)")
         if skills:
             sp.add_argument("--skills-dir", help="directory holding the 7 phase skills (default: next to the config)")
@@ -406,7 +406,7 @@ def build_parser() -> argparse.ArgumentParser:
     m = sub.add_parser("emit-metrics", help="build (and optionally dispatch) a metrics event from a report")
     m.add_argument("--config")
     m.add_argument("--report", required=True), m.add_argument("--output")
-    m.add_argument("--dispatch", action="store_true"), m.add_argument("--repo"), m.add_argument("--token-env", default="SDLC_GATE_TOKEN")
+    m.add_argument("--dispatch", action="store_true"), m.add_argument("--repo"), m.add_argument("--token-env", default="AI_SDLC_GATE_TOKEN")
     m.set_defaults(func=cmd_emit_metrics)
 
     mm = sub.add_parser("metrics", help="metrics store operations")
@@ -437,7 +437,7 @@ def cmd_identity(args: argparse.Namespace) -> int:
         ident = identity_mod.load_identity()
         if ident is None or ident.expired:
             if not args.quiet:
-                _eprint("no verified identity; run `sdlc-gate identity login`")
+                _eprint("no verified identity; run `ai-sdlc-gate identity login`")
             return EXIT_IDENTITY_REQUIRED
         if args.quiet:
             print(ident.email)
@@ -460,10 +460,10 @@ def cmd_identity(args: argparse.Namespace) -> int:
         if not idc.get("required", False) and not args.strict:
             print("identity optional by policy")
             return EXIT_PASS
-        _eprint("A verified identity is required before committing. Run: sdlc-gate identity login")
+        _eprint("A verified identity is required before committing. Run: ai-sdlc-gate identity login")
         return EXIT_IDENTITY_REQUIRED
-    tenant = args.tenant or os.environ.get("SDLC_GATE_ENTRA_TENANT") or idc.get("tenant", "")
-    client_id = args.client_id or os.environ.get("SDLC_GATE_ENTRA_CLIENT_ID") or idc.get("client_id", "")
+    tenant = args.tenant or os.environ.get("AI_SDLC_GATE_ENTRA_TENANT") or idc.get("tenant", "")
+    client_id = args.client_id or os.environ.get("AI_SDLC_GATE_ENTRA_CLIENT_ID") or idc.get("client_id", "")
     if not tenant or not client_id:
         _eprint("identity: the Microsoft Entra application is not configured yet (identity.tenant / identity.client_id in gate.config.yaml); "
                 "sign-in will be enabled by the platform team. Nothing to do now.")
@@ -491,7 +491,7 @@ def cmd_attest(args: argparse.Namespace) -> int:
         ident = None
     required = (bool(cfg.identity.get("required")) or args.require_identity) and _identity_configured(cfg.identity)
     if required and ident is None:
-        _eprint("A verified identity is required before committing. Run: sdlc-gate identity login")
+        _eprint("A verified identity is required before committing. Run: ai-sdlc-gate identity login")
         return EXIT_IDENTITY_REQUIRED
     line = identity_mod.attestation_line(args.result, __version__, ident)
     added = identity_mod.append_attestation(Path(args.message_file), line)
@@ -511,7 +511,7 @@ def cmd_configure(args: argparse.Namespace) -> int:
     if args.check:
         stored = secrets_store.load()
         if stored is None or not stored.base_url:
-            _eprint("no gateway configuration stored; run: sdlc-gate configure")
+            _eprint("no gateway configuration stored; run: ai-sdlc-gate configure")
             return EXIT_FAIL
         print(f"gateway configuration present ({stored.backend})")
         return EXIT_PASS
@@ -527,16 +527,16 @@ def cmd_configure(args: argparse.Namespace) -> int:
         st = secrets_store.store(args.base_url, args.api_key, models=models, mode="manual")
         print(f"stored gateway configuration in the {st.backend} store")
         return EXIT_PASS
-    cred = ghauth.find_credential(token_env="SDLC_GATE_GITHUB_TOKEN")
+    cred = ghauth.find_credential(token_env="AI_SDLC_GATE_GITHUB_TOKEN")
     if cred is None:
         _eprint(
             "No GitHub credential found. Sign in once with `gh auth login`, or push/pull any repository so the git credential "
-            "helper stores your credential, then run `sdlc-gate configure` again."
+            "helper stores your credential, then run `ai-sdlc-gate configure` again."
         )
         return EXIT_FAIL
     repo = args.repo or cfg.metrics["central_repo"]
     try:
-        llm = keybroker.fetch_config(cred.token, repo, ref=args.ref or "main", out=lambda m: _eprint(f"[sdlc-gate] {m}"))
+        llm = keybroker.fetch_config(cred.token, repo, ref=args.ref or "main", out=lambda m: _eprint(f"[ai-sdlc-gate] {m}"))
     except keybroker.KeyBrokerError as exc:
         _eprint(f"configure: {exc}")
         return EXIT_FAIL
@@ -546,7 +546,7 @@ def cmd_configure(args: argparse.Namespace) -> int:
     problem = _verify_litellm_key(llm.base_url, llm.api_key)
     if problem:
         _eprint(f"configure: the configuration was received but does not work: {problem}")
-        _eprint("Ask the platform team to check the gateway secrets in the central repository, then run `sdlc-gate configure` again.")
+        _eprint("Ask the platform team to check the gateway secrets in the central repository, then run `ai-sdlc-gate configure` again.")
         return EXIT_FAIL
     st = secrets_store.store(llm.base_url, llm.api_key, models=llm.models or [], mode=llm.mode)
     where = "the operating system credential store" if st.backend == "keyring" else "an encrypted file (no OS credential store is available on this machine)"
@@ -589,7 +589,7 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
         sp.add_argument("--config")
     idp.set_defaults(func=cmd_identity)
 
-    at = sub.add_parser("attest", help="append the SDLC-Gate-Client trailer to a commit message (hook use)")
+    at = sub.add_parser("attest", help="append the AI-SDLC-Gate-Client trailer to a commit message (hook use)")
     at.add_argument("--config"), at.add_argument("--message-file", required=True)
     at.add_argument("--result", choices=["pass", "waived"], default="pass")
     at.add_argument("--require-identity", action="store_true"), at.add_argument("--quiet", action="store_true")

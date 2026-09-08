@@ -131,7 +131,7 @@ def dispatch_event(event: dict[str, Any], repo: str, token: str, event_type: str
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "sdlc-gate/1.0",
+            "User-Agent": "ai-sdlc-gate/1.0",
         },
         json={"event_type": event_type, "client_payload": {"event": event}},
         timeout=30,
@@ -327,7 +327,7 @@ def _dev_label(key: str, b: dict[str, Any]) -> str:
 def dashboard_markdown(summary: dict[str, Any]) -> str:
     org = summary["organisation"]
     L: list[str] = []
-    L.append("# SDLC Gate — Organisation Dashboard")
+    L.append("# AI SDLC Gate — Organisation Dashboard")
     L.append("")
     L.append(f"_Generated {summary['generated_at']} from {summary['events']} gate run(s)._")
     L.append("")
@@ -412,7 +412,7 @@ def scoreboard_svg(summary: dict[str, Any], top: int = 10) -> str:
     L = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" font-family="Segoe UI, Helvetica, Arial, sans-serif">',
         f'<rect width="{width}" height="{height}" rx="10" fill="#0d1117"/>',
-        '<text x="24" y="38" font-size="22" font-weight="700" fill="#e6edf3">SDLC Gate — live scoreboard</text>',
+        '<text x="24" y="38" font-size="22" font-weight="700" fill="#e6edf3">AI SDLC Gate — live scoreboard</text>',
         f'<text x="24" y="62" font-size="12" fill="#8b949e">updated {escape(summary["generated_at"][:16].replace("T", " "))} UTC · {summary["events"]} gate runs · {org["developers_count"]} developers · {len(org["repos"])} repositories</text>',
     ]
     tiles = [

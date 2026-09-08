@@ -7,16 +7,16 @@
 | `LITELLM_BASE_URL` | key broker, self gate, skill challenge | the model gateway endpoint (kept out of the repository on purpose) |
 | `LITELLM_API_KEY` | key broker, self gate, skill challenge | the gateway key from IT (a display name in front of it is tolerated) |
 | `LITELLM_MODELS` | key broker, self gate, skill challenge | comma separated model names: review model, judge model, fallbacks. Keeps model names out of the repository. |
-| `SDLC_GATE_TOKEN` | skill challenge (pushing resolution commits so checks re-run) | fine-grained PAT or GitHub App token with **Contents: read & write** and **Pull requests: read & write** on this repository |
+| `AI_SDLC_GATE_TOKEN` | skill challenge (pushing resolution commits so checks re-run) | fine-grained PAT or GitHub App token with **Contents: read & write** and **Pull requests: read & write** on this repository |
 
 Installed clients obtain endpoint, key and model names through the `Key Broker` workflow and keep them in their OS
-credential store (see [enforcement.md](enforcement.md)). `SDLC_GATE_TOKEN` is never given to clients; metrics are sent
+credential store (see [enforcement.md](enforcement.md)). `AI_SDLC_GATE_TOKEN` is never given to clients; metrics are sent
 with the developer's own GitHub credential.
 
 ## 2. Repository settings
 
 - Protect `main`: require a pull request, one code-owner review, and the checks `Validate Repository / Validate (3.10)`,
-  `Validate Repository / Validate (3.12)`, `Self Gate / SDLC Gate` and `Skill Challenge / Arbitrate`. No bypass actors.
+  `Validate Repository / Validate (3.12)`, `Self Gate / AI SDLC Gate` and `Skill Challenge / Arbitrate`. No bypass actors.
 - Give all developers **write** access (needed to open skill challenges and to record metrics via `repository_dispatch`);
   the branch protection prevents direct pushes to `main`.
 - Enable *Allow auto-merge* and *Allow squash merging*; disable merge commits.
@@ -25,7 +25,7 @@ with the developer's own GitHub credential.
 
 ## 3. Identity provider
 
-Register a public client application in Microsoft Entra ID ("SDLC Gate client", *Allow public client flows* on) and put
+Register a public client application in Microsoft Entra ID ("AI SDLC Gate client", *Allow public client flows* on) and put
 its tenant id and client id into `gate.config.yaml` under `identity:` (see [enforcement.md](enforcement.md)).
 
 ## 4. Client roll-out
@@ -34,7 +34,7 @@ its tenant id and client id into `gate.config.yaml` under `identity:` (see [enfo
   (macOS, Linux, WSL) as administrator through Intune, Jamf, SCCM or Ansible. The script is idempotent and safe to
   re-run; it also installs a daily refresh so policy and skill changes propagate without redeploying.
 - **Other machines:** point developers at the installers in the README.
-- Tell developers to run `sdlc-gate configure` and `sdlc-gate identity login` once (the self-service installers do this).
+- Tell developers to run `ai-sdlc-gate configure` and `ai-sdlc-gate identity login` once (the self-service installers do this).
 
 ## 5. First run
 
@@ -46,8 +46,8 @@ its tenant id and client id into `gate.config.yaml` under `identity:` (see [enfo
 
 ## 6. Operating
 
-- Tag releases (`vX.Y.Z`); clients follow `main` by default and can be pinned to a tag with `SDLC_GATE_REF` at install.
+- Tag releases (`vX.Y.Z`); clients follow `main` by default and can be pinned to a tag with `AI_SDLC_GATE_REF` at install.
 - Watch the model gateway spend per developer key; a typical commit costs a few thousand tokens per phase.
 - Review `dashboard/README.md` on the `metrics` branch; the weekly issue mirrors it. Low "client attested" shares point
   at machines where the gate is missing.
-- Rotate the gateway keys and `SDLC_GATE_TOKEN` on a schedule (see SECURITY.md).
+- Rotate the gateway keys and `AI_SDLC_GATE_TOKEN` on a schedule (see SECURITY.md).

@@ -18,7 +18,7 @@ from .skip import SkipRequest
 
 MAX_FINDINGS_PER_PHASE = 60
 
-SYSTEM_PROMPT = """You are the SDLC Gate reviewer for Otto Group One.O India.
+SYSTEM_PROMPT = """You are the AI SDLC Gate reviewer for Otto Group One.O India.
 
 You review one change set for exactly ONE software development life cycle (SDLC) phase, applying the
 PHASE SKILL that follows. The skill is the authoritative checklist for what to look for in this phase.

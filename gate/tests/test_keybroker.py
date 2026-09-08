@@ -9,7 +9,7 @@ import pytest
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 
-from sdlc_gate import keybroker
+from ai_sdlc_gate import keybroker
 
 
 def _encrypt_for(public_pem: str, payload: dict) -> bytes:
@@ -81,10 +81,10 @@ def test_fetch_config_reports_missing_workflow_and_failed_run():
 
 
 def test_secrets_store_roundtrip_with_fake_keyring(tmp_path, monkeypatch):
-    from sdlc_gate import secrets_store
+    from ai_sdlc_gate import secrets_store
 
-    monkeypatch.setenv("SDLC_GATE_HOME", str(tmp_path))
-    for var in ("LITELLM_API_KEY", "LITELLM_BASE_URL", "LITELLM_MODELS", "SDLC_GATE_MODEL", "SDLC_JUDGE_MODEL"):
+    monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
+    for var in ("LITELLM_API_KEY", "LITELLM_BASE_URL", "LITELLM_MODELS", "AI_SDLC_GATE_MODEL", "AI_SDLC_JUDGE_MODEL"):
         monkeypatch.delenv(var, raising=False)
 
     class FakeKeyring:
@@ -109,8 +109,8 @@ def test_secrets_store_roundtrip_with_fake_keyring(tmp_path, monkeypatch):
     assert loaded.base_url == "https://gw.example" and loaded.models == ["m-review", "m-judge", "m-fallback"]
 
     # The LLM client resolves endpoint, key and models from the store when the environment does not provide them.
-    from sdlc_gate.config import Config
-    from sdlc_gate.llm import LLMClient, resolve_models
+    from ai_sdlc_gate.config import Config
+    from ai_sdlc_gate.llm import LLMClient, resolve_models
 
     client = LLMClient.from_config(Config())
     assert client.api_key == "sk-personal-key-1234" and client.base_url == "https://gw.example"

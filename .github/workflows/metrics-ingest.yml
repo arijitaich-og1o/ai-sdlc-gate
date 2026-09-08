@@ -4,7 +4,7 @@ name: Metrics Ingest
 
 on:
   repository_dispatch:
-    types: [sdlc-gate-result]
+    types: [ai-sdlc-gate-result]
 
 permissions: {}
 
@@ -52,21 +52,21 @@ jobs:
             mkdir -p "$STORE" && cd "$STORE"
             git init --quiet --initial-branch=metrics
             git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
-            printf '# SDLC Gate metrics\n\nMachine-written branch. Do not edit by hand.\n' > README.md
+            printf '# AI SDLC Gate metrics\n\nMachine-written branch. Do not edit by hand.\n' > README.md
           fi
 
       - name: Ingest the event and rebuild the dashboard
         run: |
           set -euo pipefail
-          sdlc-gate metrics ingest --payload "$RUNNER_TEMP/payload.json" --events-dir "$STORE/events"
-          sdlc-gate metrics build --events-dir "$STORE/events" --out "$STORE/dashboard"
+          ai-sdlc-gate metrics ingest --payload "$RUNNER_TEMP/payload.json" --events-dir "$STORE/events"
+          ai-sdlc-gate metrics build --events-dir "$STORE/events" --out "$STORE/dashboard"
 
       - name: Commit and push (with retry)
         run: |
           set -euo pipefail
           cd "$STORE"
-          git config user.name "sdlc-gate-bot"
-          git config user.email "sdlc-gate-bot@users.noreply.github.com"
+          git config user.name "ai-sdlc-gate-bot"
+          git config user.email "ai-sdlc-gate-bot@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then echo "Duplicate event; nothing to commit."; exit 0; fi
           git commit --quiet -m "metrics: ingest gate result"
@@ -74,7 +74,7 @@ jobs:
             if git push --quiet origin HEAD:refs/heads/metrics; then exit 0; fi
             echo "push rejected (attempt $attempt); rebasing and retrying"
             git fetch --quiet origin metrics && git rebase --quiet origin/metrics || { git rebase --abort || true; }
-            sdlc-gate metrics build --events-dir events --out dashboard
+            ai-sdlc-gate metrics build --events-dir events --out dashboard
             git add -A && git commit --quiet --amend --no-edit
             sleep $((attempt * attempt * 2))
           done

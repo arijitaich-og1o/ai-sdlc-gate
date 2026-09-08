@@ -1,5 +1,5 @@
 @echo off
-rem SDLC Gate installer for Windows. Double-click, or run from a terminal.
+rem AI SDLC Gate installer for Windows. Double-click, or run from a terminal.
 rem Requires Git for Windows and Python 3.10+ (https://www.python.org/downloads/windows/).
 setlocal
 set "HERE=%~dp0"
@@ -10,9 +10,9 @@ if exist "%HERE%install.ps1" (
 )
 if errorlevel 1 (
   echo.
-  echo [sdlc-gate] Installation did not complete. See the messages above.
+  echo [ai-sdlc-gate] Installation did not complete. See the messages above.
 ) else (
   echo.
-  echo [sdlc-gate] Installed. Restart your terminals and IDEs so they pick up the new PATH.
+  echo [ai-sdlc-gate] Installed. Restart your terminals and IDEs so they pick up the new PATH.
 )
 pause

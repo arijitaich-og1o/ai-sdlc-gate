@@ -112,7 +112,7 @@ def run_prechecks(cfg: Config, cs: ChangeSet) -> list[dict]:
             )
         seen_rules: set[tuple[str, int | None]] = set()
         for line_no, text in _added_lines(f.diff, f.content):
-            if "sdlc-gate: allow-secret" in text:
+            if "ai-sdlc-gate: allow-secret" in text:
                 continue
             for label, pat in SECRET_PATTERNS:
                 m = pat.search(text)

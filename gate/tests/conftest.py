@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from sdlc_gate.config import Config
+from ai_sdlc_gate.config import Config
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

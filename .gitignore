@@ -12,7 +12,7 @@ dist/
 
 # Local artefacts
 *.log
-.sdlc-gate-local/
+.ai-sdlc-gate-local/
 report.json
 report.md
 

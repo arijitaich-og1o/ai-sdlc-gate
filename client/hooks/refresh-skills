@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Keep the local copy of the central repository (skills + policy) fresh, at most once per 24h.
 set -u
-SDLC_HOME="${SDLC_GATE_HOME:-$HOME/.sdlc-gate}"
+SDLC_HOME="${AI_SDLC_GATE_HOME:-$HOME/.ai-sdlc-gate}"
 REPO_DIR="$SDLC_HOME/repo"
 STAMP="$SDLC_HOME/.last-refresh"
-MAX_AGE_SECONDS="${SDLC_GATE_REFRESH_SECONDS:-86400}"
+MAX_AGE_SECONDS="${AI_SDLC_GATE_REFRESH_SECONDS:-86400}"
 
 [ -d "$REPO_DIR/.git" ] || exit 0
 if [ -f "$STAMP" ]; then

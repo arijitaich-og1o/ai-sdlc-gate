@@ -32,7 +32,7 @@ intent explicitly with an `SDLC-Intent:` trailer; otherwise it is inferred from 
 
 ## Live scoreboard
 
-![SDLC Gate scoreboard](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/scoreboard.svg?raw=true)
+![AI SDLC Gate scoreboard](https://github.com/arijitaich-og1o/ai-sdlc-gate/blob/metrics/dashboard/scoreboard.svg?raw=true)
 
 Refreshed after every gate run. Full tables per developer, repository and month:
 [dashboard](../../blob/metrics/dashboard/README.md) · [JSON](../../blob/metrics/dashboard/summary.json).

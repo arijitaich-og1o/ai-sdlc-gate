@@ -79,7 +79,7 @@ jobs:
           mkdir -p "$OUT_DIR"
 
       - name: Candidate skills must be structurally valid (still exactly seven)
-        run: sdlc-gate validate-skills --config gate.config.yaml
+        run: ai-sdlc-gate validate-skills --config gate.config.yaml
 
       - name: Detect resolution state
         id: state
@@ -111,7 +111,7 @@ jobs:
               echo "::error::skills/$SLUG did not exist on the base branch; new skill directories are not permitted."
               exit 1
             fi
-            sdlc-gate challenge --config gate.config.yaml \
+            ai-sdlc-gate challenge --config gate.config.yaml \
               --baseline "$OUT_DIR/baseline-$SLUG.md" \
               --candidate "skills/$SLUG/SKILL.md" \
               --trials trials \
@@ -127,17 +127,17 @@ jobs:
           echo "Decisions:"; cat "$OUT_DIR/decisions.txt"
 
       - name: The repository must still hold exactly seven valid skills
-        run: sdlc-gate validate-skills --config gate.config.yaml
+        run: ai-sdlc-gate validate-skills --config gate.config.yaml
 
       - name: Commit the resolution to the challenge branch
         id: commit
         if: steps.state.outputs.resolved == 'false'
         env:
-          PUSH_TOKEN: ${{ secrets.SDLC_GATE_TOKEN != '' && secrets.SDLC_GATE_TOKEN || github.token }}
+          PUSH_TOKEN: ${{ secrets.AI_SDLC_GATE_TOKEN != '' && secrets.AI_SDLC_GATE_TOKEN || github.token }}
         run: |
           set -euo pipefail
-          git config user.name "sdlc-gate-bot"
-          git config user.email "sdlc-gate-bot@users.noreply.github.com"
+          git config user.name "ai-sdlc-gate-bot"
+          git config user.email "ai-sdlc-gate-bot@users.noreply.github.com"
           git add skills CREDITS.md
           if git diff --cached --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -156,7 +156,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          EXISTING="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | contains("<!-- sdlc-gate-challenge -->")) | .id' | head -n1 || true)"
+          EXISTING="$(gh api "repos/$REPO/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | contains("<!-- ai-sdlc-gate-challenge -->")) | .id' | head -n1 || true)"
           if [ -n "$EXISTING" ]; then
             gh api --method PATCH "repos/$REPO/issues/comments/$EXISTING" -F body=@"$OUT_DIR/comment.md" > /dev/null
           else
@@ -165,7 +165,7 @@ jobs:
 
       - name: Close rejected challenges, auto-merge accepted ones
         env:
-          GH_TOKEN: ${{ secrets.SDLC_GATE_TOKEN != '' && secrets.SDLC_GATE_TOKEN || github.token }}
+          GH_TOKEN: ${{ secrets.AI_SDLC_GATE_TOKEN != '' && secrets.AI_SDLC_GATE_TOKEN || github.token }}
           RESOLVED: ${{ steps.state.outputs.resolved }}
         run: |
           set -euo pipefail

@@ -4,7 +4,7 @@ Everything sensitive is stored as one encrypted record in the operating system c
 `keyring`: Windows Credential Manager (DPAPI, bound to the signed-in user), macOS Keychain, Linux Secret
 Service / KWallet. Nothing about the gateway, its address or the models used is written to a readable file.
 
-Fallback for headless Linux machines without a secret service: `~/.sdlc-gate/env.enc`, encrypted with a
+Fallback for headless Linux machines without a secret service: `~/.ai-sdlc-gate/env.enc`, encrypted with a
 random key that is itself kept in a user-only file next to it. That only protects against casual reading;
 the client reports it as the weaker option.
 """
@@ -19,7 +19,7 @@ from pathlib import Path
 
 from .identity import sdlc_home
 
-SERVICE = "sdlc-gate"
+SERVICE = "ai-sdlc-gate"
 ACCOUNT = "gateway-config"
 
 
