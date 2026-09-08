@@ -137,6 +137,7 @@ jobs:
           REF_NAME: ${{ github.head_ref || github.ref_name }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          set +e
           set -uo pipefail
           ARGS=(run --config "$SDLC_GATE_CONFIG" --skills-dir "$GATE_DIR/skills" --head "$HEAD" --quiet
                 --repo "$GITHUB_REPOSITORY" --actor "$GITHUB_ACTOR" --ref "$REF_NAME" --sha "$HEAD"
@@ -148,8 +149,8 @@ jobs:
           [ -n "$APPROVED" ] && ARGS+=(--approved-skip-phases "$APPROVED")
           [ -n "$PR_NUMBER" ] && ARGS+=(--pr-number "$PR_NUMBER")
           [ -f "$REPORT_DIR/pr_body.txt" ] && ARGS+=(--pr-body-file "$REPORT_DIR/pr_body.txt")
-          sdlc-gate "${ARGS[@]}"
-          RC=$?
+          RC=0
+          sdlc-gate "${ARGS[@]}" || RC=$?
           echo "exit_code=$RC" >> "$GITHUB_OUTPUT"
           if [ -f "$REPORT_DIR/report.md" ]; then
             echo "report_exists=true" >> "$GITHUB_OUTPUT"
