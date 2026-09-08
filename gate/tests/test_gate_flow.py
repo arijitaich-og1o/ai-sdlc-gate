@@ -245,3 +245,13 @@ def test_report_roundtrip_to_json(cfg, skills_dir):
     report = _run(cfg, skills, [_finding(sev="medium")])
     data = json.loads(json.dumps(report.to_dict()))
     assert data["verdict"] == "pass" and data["intent"]["phases"] == [3, 4, 5]
+
+
+def test_api_key_normalisation_accepts_labelled_keys():
+    from sdlc_gate.llm import normalize_api_key
+
+    assert normalize_api_key("sk-abcdefghijklmnopqrstuvwxyz") == "sk-abcdefghijklmnopqrstuvwxyz"
+    assert normalize_api_key("India-Proj-03-360Platform: sk-abcdefghijklmnopqrstuvwxyz") == "sk-abcdefghijklmnopqrstuvwxyz"
+    assert normalize_api_key("  sk-abcdefghijklmnopqrstuvwxyz 
+") == "sk-abcdefghijklmnopqrstuvwxyz"
+    assert normalize_api_key("not-a-key") == "not-a-key"
