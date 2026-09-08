@@ -1,4 +1,4 @@
-# Key broker: hands the LiteLLM configuration held in this repository's secrets to an installed client.
+# Key broker: hands the LiteLLM configuration held in this repository's secrets to an installed client (workflow_dispatch only).
 #
 # The client (a developer with access to this repository) generates an RSA key pair, triggers this workflow with
 # its PUBLIC key, and downloads the artifact. The artifact contains the LiteLLM endpoint and key encrypted with
