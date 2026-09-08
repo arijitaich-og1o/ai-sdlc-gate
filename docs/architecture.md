@@ -25,7 +25,7 @@ skills.py     SKILL.md parsing + directory validation (exactly 7, forbidden inst
 runner.py     system prompt, per-phase review, waiver application, GateReport
 report.py     Markdown rendering (PR comment, step summary)
 skip.py       SDLC-Skip / SDLC-Skip-Reason parsing and policy
-llm.py        OpenAI-compatible client for LiteLLM: retries, fallbacks, JSON extraction; StaticLLM for tests
+llm.py        OpenAI-compatible client for the model gateway: retries, fallbacks, JSON extraction; StaticLLM for tests
 metrics.py    compact event, repository_dispatch, JSONL ingest with dedupe, dashboard build
 evaluate.py   run a skill on trials, match GROUND_TRUTH, recall/precision/clarity
 judge.py      arbiter prompt, deterministic guards, apply decision, CREDITS.md
@@ -41,7 +41,7 @@ ghauth.py     locate the developer's existing GitHub credential for sending metr
 3. `sdlc-gate run --staged` (or `--base/--head` for pushes) builds a `ChangeSet` (per-file diff + post-change content,
    generated/binary files excluded, large files truncated, change set chunked to the budget).
 4. Intent is resolved. Pre-checks run. For each phase in scope the skill body, review context and fenced change
-   set are sent to LiteLLM with a JSON-only system prompt. Findings are normalised (severity aliases, ids,
+   set are sent to the model gateway with a JSON-only system prompt. Findings are normalised (severity aliases, ids,
    categories) and sorted.
 5. Skip trailers are parsed from the commit message. Findings in validly skipped phases are marked `waived` unless
    their category is non-skippable.

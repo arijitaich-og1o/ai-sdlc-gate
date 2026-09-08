@@ -7,17 +7,16 @@
 #   1. clones (or refreshes) the central repository to ~/.sdlc-gate/repo
 #   2. installs the `sdlc-gate` CLI for the current user (pipx if available, else pip --user)
 #   3. installs global git hooks (commit-msg, pre-push) via core.hooksPath, chaining to repo-local hooks
-#   4. obtains your LiteLLM key from the central repository (key broker) and keeps it in the OS credential store
-#      (macOS Keychain / Linux Secret Service; falls back to ~/.sdlc-gate/env with mode 600 on headless machines)
+#   4. obtains the review configuration from the central repository (key broker) and keeps it in the OS credential
+#      store (macOS Keychain / Linux Secret Service; encrypted file fallback on headless machines)
 #   5. signs the developer in with their Microsoft work account (one-time)
 #
-# Environment overrides: SDLC_GATE_REPO_URL, SDLC_GATE_REF, SDLC_GATE_HOME (LITELLM_API_KEY only for manual set-ups)
+# Environment overrides: SDLC_GATE_REPO_URL, SDLC_GATE_REF, SDLC_GATE_HOME
 set -euo pipefail
 
 REPO_URL="${SDLC_GATE_REPO_URL:-https://github.com/arijitaich-og1o/ai-sdlc-gate.git}"
 REF="${SDLC_GATE_REF:-main}"
 SDLC_HOME="${SDLC_GATE_HOME:-$HOME/.sdlc-gate}"
-DEFAULT_BASE_URL="https://litellm-dev.dev.aime.osp-fine.de"
 
 say() { printf '\033[1;34m[sdlc-gate]\033[0m %s\n' "$*"; }
 die() { printf '\033[1;31m[sdlc-gate] %s\033[0m\n' "$*" >&2; exit 1; }
@@ -72,12 +71,8 @@ CONFIG="$SDLC_HOME/repo/gate.config.yaml"
 say "Verifying"
 $GATE validate-skills --config "$CONFIG"
 
-say "Fetching the LiteLLM configuration from the central repository (uses your GitHub sign-in)"
-if [ -n "${LITELLM_API_KEY:-}" ]; then
-  $GATE configure --config "$CONFIG" --api-key "$LITELLM_API_KEY" --base-url "${LITELLM_BASE_URL:-$DEFAULT_BASE_URL}"
-else
-  $GATE configure --config "$CONFIG" || say "Could not fetch the LiteLLM configuration yet; run 'sdlc-gate configure' after signing in to GitHub (gh auth login)."
-fi
+say "Fetching the review configuration from the central repository (uses your GitHub sign-in)"
+$GATE configure --config "$CONFIG" || say "Could not fetch the configuration yet; run 'sdlc-gate configure' after signing in to GitHub (gh auth login)."
 
 if [ -t 0 ] && ! $GATE identity check --config "$CONFIG" --strict >/dev/null 2>&1; then
   say "Signing you in with your Microsoft work account (one-time)"

@@ -84,8 +84,8 @@ def test_secrets_store_roundtrip_with_fake_keyring(tmp_path, monkeypatch):
     from sdlc_gate import secrets_store
 
     monkeypatch.setenv("SDLC_GATE_HOME", str(tmp_path))
-    monkeypatch.delenv("LITELLM_API_KEY", raising=False)
-    monkeypatch.delenv("LITELLM_BASE_URL", raising=False)
+    for var in ("LITELLM_API_KEY", "LITELLM_BASE_URL", "LITELLM_MODELS", "SDLC_GATE_MODEL", "SDLC_JUDGE_MODEL"):
+        monkeypatch.delenv(var, raising=False)
 
     class FakeKeyring:
         store: dict = {}
@@ -101,22 +101,33 @@ def test_secrets_store_roundtrip_with_fake_keyring(tmp_path, monkeypatch):
 
     fake = FakeKeyring()
     monkeypatch.setattr(secrets_store, "_keyring", lambda: fake)
-    st = secrets_store.store("https://llm.example/", "sk-personal-key-1234", mode="per-developer", developer="priya")
-    assert st.backend == "keyring" and not (tmp_path / "env").exists() and (tmp_path / "config.json").is_file()
+    st = secrets_store.store("https://gw.example/", "sk-personal-key-1234", models=["m-review", "m-judge", "m-fallback"], mode="shared")
+    assert st.backend == "keyring"
+    assert not any(tmp_path.glob("*")), "nothing may be written to disk when the OS store is available"
     loaded = secrets_store.load()
-    assert loaded and loaded.backend == "keyring" and loaded.api_key == "sk-personal-key-1234" and loaded.base_url == "https://llm.example"
+    assert loaded and loaded.backend == "keyring" and loaded.api_key == "sk-personal-key-1234"
+    assert loaded.base_url == "https://gw.example" and loaded.models == ["m-review", "m-judge", "m-fallback"]
+
+    # The LLM client resolves endpoint, key and models from the store when the environment does not provide them.
+    from sdlc_gate.config import Config
+    from sdlc_gate.llm import LLMClient, resolve_models
+
+    client = LLMClient.from_config(Config())
+    assert client.api_key == "sk-personal-key-1234" and client.base_url == "https://gw.example"
+    assert client.model == "m-review" and client.fallback_models == ["m-fallback"]
+    assert LLMClient.from_config(Config(), model="judge").model == "m-judge"
+    assert resolve_models(Config(), ["only-one"]) == ("only-one", "only-one", [])
+    monkeypatch.setenv("LITELLM_MODELS", "e-review, e-judge ,e-fb")
+    assert resolve_models(Config(), ["m-review"]) == ("e-review", "e-judge", ["e-fb"])
+    monkeypatch.delenv("LITELLM_MODELS")
+
     secrets_store.clear()
     assert secrets_store.load() is None
 
-    # Without an OS store the client falls back to a private file and says so.
+    # Without an OS store the client falls back to an encrypted file (never plaintext).
     monkeypatch.setattr(secrets_store, "_keyring", lambda: None)
-    st = secrets_store.store("https://llm.example", "sk-fallback-key-1234")
-    assert st.backend == "file" and (tmp_path / "env").is_file()
+    st = secrets_store.store("https://gw.example", "sk-fallback-key-1234", models=["m"])
+    assert st.backend == "file" and (tmp_path / "env.enc").is_file() and not (tmp_path / "env").exists()
+    assert b"sk-fallback-key-1234" not in (tmp_path / "env.enc").read_bytes()
+    assert b"gw.example" not in (tmp_path / "env.enc").read_bytes()
     assert secrets_store.load().api_key == "sk-fallback-key-1234"
-
-    # The LLM client resolves the key from the store when the environment does not provide one.
-    from sdlc_gate.config import Config
-    from sdlc_gate.llm import LLMClient
-
-    client = LLMClient.from_config(Config())
-    assert client.api_key == "sk-fallback-key-1234" and client.base_url == "https://llm.example"

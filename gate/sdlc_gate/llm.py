@@ -1,7 +1,7 @@
-"""OpenAI-compatible chat client for the organisation's LiteLLM proxy.
+"""OpenAI-compatible chat client for the organisation's model gateway proxy.
 
 Design notes
-- Only the `/v1/chat/completions` endpoint is used; works with any model LiteLLM exposes.
+- Only the `/v1/chat/completions` endpoint is used; works with any model model gateway exposes.
 - All model output is treated as untrusted data: it is parsed as JSON and validated by
   callers, never executed or interpolated into commands.
 - Retries with exponential backoff on 408/409/429/5xx and network errors, then fails over
@@ -26,7 +26,7 @@ _KEY_TOKEN = re.compile(r"sk-[A-Za-z0-9_-]{16,}")
 
 
 def normalize_api_key(raw: str) -> str:
-    """Accept a LiteLLM virtual key pasted together with its display name ("Name: sk-...") and keep only the key."""
+    """Accept a model gateway virtual key pasted together with its display name ("Name: sk-...") and keep only the key."""
     raw = (raw or "").strip()
     if raw.startswith("sk-"):
         return raw
@@ -36,6 +36,25 @@ def normalize_api_key(raw: str) -> str:
 
 class LLMError(RuntimeError):
     pass
+
+
+# Used only when neither the LITELLM_MODELS secret nor the stored client configuration names any model.
+_BUILTIN_MODELS = ["gpt-4.1", "gpt-5", "gpt-4o", "stackit-gpt-oss-120B"]
+
+
+def resolve_models(cfg: Config, stored_models: list[str] | None = None) -> tuple[str, str, list[str]]:
+    """Return (review_model, judge_model, fallback_models) from env, stored configuration, policy, or built-ins."""
+    llm = cfg.llm
+    env_list = [m.strip() for m in os.environ.get(llm.get("models_env", "LITELLM_MODELS"), "").split(",") if m.strip()]
+    names = env_list or list(stored_models or [])
+    if not names:
+        names = [m for m in (llm.get("review_model"), llm.get("judge_model"), *(llm.get("fallback_models") or [])) if m]
+    if not names:
+        names = list(_BUILTIN_MODELS)
+    review = os.environ.get("SDLC_GATE_MODEL") or names[0]
+    judge = os.environ.get("SDLC_JUDGE_MODEL") or (names[1] if len(names) > 1 else names[0])
+    fallbacks = [m for m in names[2:] if m not in (review, judge)] if len(names) > 2 else [m for m in names if m not in (review,)]
+    return review, judge, fallbacks
 
 
 @dataclass
@@ -83,9 +102,9 @@ class LLMClient:
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         if not base_url:
-            raise LLMError("LiteLLM base URL is not configured (LITELLM_BASE_URL)")
+            raise LLMError("model gateway base URL is not configured (LITELLM_BASE_URL)")
         if not api_key:
-            raise LLMError("LiteLLM API key is not configured (LITELLM_API_KEY)")
+            raise LLMError("model gateway API key is not configured (LITELLM_API_KEY)")
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.model = model
@@ -102,20 +121,20 @@ class LLMClient:
     @classmethod
     def from_config(cls, cfg: Config, model: str | None = None, **kwargs: Any) -> "LLMClient":
         llm = cfg.llm
-        base_url = os.environ.get(llm.get("base_url_env", "LITELLM_BASE_URL"), "")
-        api_key = normalize_api_key(os.environ.get(llm.get("api_key_env", "LITELLM_API_KEY"), ""))
-        if not api_key or not base_url:
-            from . import secrets_store  # local import: keyring is optional at import time
+        from . import secrets_store  # local import: keyring is optional at import time
 
-            stored = secrets_store.load()
-            if stored is not None:
-                api_key = api_key or normalize_api_key(stored.api_key)
-                base_url = base_url or stored.base_url
+        stored = secrets_store.load()
+        base_url = os.environ.get(llm.get("base_url_env", "LITELLM_BASE_URL"), "") or (stored.base_url if stored else "")
+        api_key = normalize_api_key(os.environ.get(llm.get("api_key_env", "LITELLM_API_KEY"), "") or (stored.api_key if stored else ""))
+        review, judge, fallbacks = resolve_models(cfg, stored.models if stored else None)
+        chosen = model or review
+        if model == "judge":
+            chosen = judge
         return cls(
             base_url=base_url,
             api_key=api_key,
-            model=model or os.environ.get("SDLC_GATE_MODEL") or llm["review_model"],
-            fallback_models=llm.get("fallback_models", []),
+            model=chosen,
+            fallback_models=fallbacks,
             timeout=float(llm.get("timeout_seconds", 180)),
             max_retries=int(llm.get("max_retries", 3)),
             temperature=float(llm.get("temperature", 0)),

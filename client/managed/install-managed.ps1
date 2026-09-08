@@ -12,7 +12,7 @@
     Machine PATH                      C:\ProgramData\sdlc-gate\bin is prepended so `git` resolves to the shim
     Scheduled task                    daily refresh of skills/policy as SYSTEM
 
-  Each developer then runs `sdlc-gate configure` (LiteLLM key from the central repository) and `sdlc-gate identity login`.
+  Each developer then runs `sdlc-gate configure` (review configuration from the central repository) and `sdlc-gate identity login`.
   Limits: local administrators can undo this. The GitHub ruleset is the guarantee; see docs/enforcement.md.
 #>
 [CmdletBinding()]

@@ -1,4 +1,4 @@
-"""Obtain the LiteLLM configuration from the central repository's GitHub secrets.
+"""Obtain the model-gateway configuration from the central repository's GitHub secrets.
 
 GitHub secrets are only readable inside a workflow run, so the client asks a workflow to hand them over:
 
@@ -38,6 +38,7 @@ class LiteLLMConfig:
     api_key: str
     mode: str = ""
     developer: str = ""
+    models: list[str] | None = None
 
 
 def _headers(token: str) -> dict[str, str]:
@@ -64,7 +65,8 @@ def decrypt_config(private: rsa.RSAPrivateKey, blob: bytes) -> LiteLLMConfig:
     key = str(data.get("api_key") or "").strip()
     if not key:
         raise KeyBrokerError("key broker returned an empty API key")
-    return LiteLLMConfig(base_url=str(data.get("base_url") or "").strip(), api_key=key, mode=str(data.get("mode") or ""), developer=str(data.get("developer") or ""))
+    return LiteLLMConfig(base_url=str(data.get("base_url") or "").strip(), api_key=key, mode=str(data.get("mode") or ""),
+                         developer=str(data.get("developer") or ""), models=[str(m) for m in data.get("models") or []])
 
 
 def fetch_config(
@@ -92,7 +94,7 @@ def fetch_config(
             raise KeyBrokerError(f"key broker workflow not found in {repo}@{ref}, or your GitHub credential has no access to that repository")
         if resp.status_code not in (204, 200):
             raise KeyBrokerError(f"could not start the key broker: HTTP {resp.status_code}: {resp.text[:200]}")
-        out(f"requested the LiteLLM configuration from {repo} (request {request_id[:8]}...)")
+        out(f"requested the model gateway configuration from {repo} (request {request_id[:8]}...)")
 
         deadline = time.monotonic() + timeout_s
         run: dict[str, Any] | None = None
@@ -123,7 +125,7 @@ def fetch_config(
         except (zipfile.BadZipFile, KeyError) as exc:
             raise KeyBrokerError("key broker artifact is malformed") from exc
         cfg = decrypt_config(private, blob)
-        out("LiteLLM configuration received and decrypted")
+        out("model gateway configuration received and decrypted")
         return cfg
     finally:
         if client is None:

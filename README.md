@@ -1,8 +1,8 @@
 # AI SDLC Gate — Otto Group One.O India
 
 Every change a developer commits, pushes or releases in the organisation passes through one gate. The gate
-reviews the change against the seven phases of the software development life cycle with the organisation's own
-LiteLLM models, blocks it until findings are fixed or explicitly waived with a recorded reason, and keeps a
+reviews the change against the seven phases of the software development life cycle through the organisation's own
+model gateway, blocks it until findings are fixed or explicitly waived with a recorded reason, and keeps a
 scoreboard so we all know how we are doing. It is installed once on every developer machine, by IT or with a
 one-click installer, and from then on every commit and push from any IDE or terminal goes through it. There is
 nothing to add to any project.
@@ -50,8 +50,8 @@ operating system:
 | Linux / WSL | `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh \| bash` |
 
 Requirements: git and Python 3.10+, and a GitHub sign-in on the machine (the GitHub CLI or the git credential helper
-you already push with). The installer obtains a personal, budget-capped LiteLLM key for you from this repository,
-keeps it in your operating system's credential store, and ends with a one-click Microsoft sign-in that ties your
+you already push with). The installer obtains the review configuration from this repository, keeps it in your
+operating system's credential store, and ends with a one-click Microsoft sign-in that ties your
 commits to your corporate e-mail. Nothing to type.
 
 When the gate blocks a change, fix the findings and commit again. If a phase genuinely cannot be satisfied right

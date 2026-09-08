@@ -100,6 +100,7 @@ jobs:
         env:
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
           LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
+          LITELLM_MODELS: ${{ secrets.LITELLM_MODELS }}
         run: |
           set -euo pipefail
           : > "$OUT_DIR/comment.md"

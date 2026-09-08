@@ -11,7 +11,7 @@
 #                            require a verified identity)
 #   /etc/profile.d           puts /opt/sdlc-gate/bin first in PATH for login shells
 #
-# Each developer still runs `sdlc-gate configure` (fetches the LiteLLM key from the central repository's secrets
+# Each developer still runs `sdlc-gate configure` (fetches the review configuration from the central repository
 # with their GitHub credential) and `sdlc-gate identity login` once; the managed layer holds no secrets.
 #
 # Limits (read docs/enforcement.md): a user with root/sudo can remove any of this. The GitHub ruleset remains the
@@ -110,4 +110,4 @@ EOF
 fi
 
 "$PREFIX/bin/sdlc-gate" validate-skills --config "$PREFIX/repo/gate.config.yaml"
-echo "[sdlc-gate] managed install complete at $PREFIX. Developers: run 'sdlc-gate configure' (fetches the LiteLLM key from the central repository) and 'sdlc-gate identity login'."
+echo "[sdlc-gate] managed install complete at $PREFIX. Developers: run 'sdlc-gate configure' (fetches the review configuration from the central repository) and 'sdlc-gate identity login'."

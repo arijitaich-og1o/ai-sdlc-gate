@@ -22,14 +22,14 @@
 - A sufficiently subtle defect can pass a model review. Skills improve continuously through challenges; the trials
   codebase is the regression suite.
 - Repository admins can still push directly if the ruleset is misconfigured; audit ruleset changes.
-- The LiteLLM proxy sees the code under review. Keep it inside the organisation's boundary and apply its
+- The model gateway sees the code under review. Keep it inside the organisation's boundary and apply its
   retention policy.
 
 ## Hardening checklist for operators
 
 - [ ] Managed client deployed to all company devices; attested share on the scoreboard near 100 %.
 - [ ] `identity.required: true` and Entra app configured.
-- [ ] Secrets in this repository only; per-developer LiteLLM keys with spend limits.
+- [ ] Secrets in this repository only; per-developer gateway keys with spend limits.
 - [ ] Auto-merge enabled here; squash only.
 - [ ] `metrics` branch protected from human pushes (ruleset: only the workflow's token / app may push).
 - [ ] Dependabot PRs for actions merged promptly.

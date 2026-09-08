@@ -3,24 +3,16 @@
 version: 1
 
 llm:
-  # Names of the environment variables (GitHub secrets) that hold the LiteLLM endpoint and key.
+  # The model gateway (endpoint, key and model names) is never written into this repository. Workflows read it from
+  # the repository secrets LITELLM_BASE_URL / LITELLM_API_KEY / LITELLM_MODELS; installed clients receive the same
+  # values through the key broker and keep them in the operating system credential store.
   base_url_env: LITELLM_BASE_URL
   api_key_env: LITELLM_API_KEY
-  # Any chat model exposed by the LiteLLM proxy may be used. Override per run with SDLC_GATE_MODEL / SDLC_JUDGE_MODEL.
-  review_model: gpt-4.1
-  judge_model: gpt-5
-  fallback_models: [gpt-4o, stackit-gpt-oss-120B]
+  models_env: LITELLM_MODELS      # comma separated: review model, judge model, fallback models...
   timeout_seconds: 180
   max_retries: 3
   temperature: 0
   max_output_tokens: 8000
-  # Per-developer virtual keys minted by the key broker (requires the LITELLM_ADMIN_KEY secret). Each developer's key
-  # is limited to the models above, capped in spend, rate limited, tagged with their GitHub login, and expires.
-  developer_keys:
-    max_budget_usd: 25
-    budget_duration: 30d
-    duration: 90d
-    rpm_limit: 60
 
 # The seven SDLC phases. This list is fixed; the repository must hold exactly one skill per phase.
 phases:
