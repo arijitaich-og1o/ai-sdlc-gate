@@ -252,6 +252,5 @@ def test_api_key_normalisation_accepts_labelled_keys():
 
     assert normalize_api_key("sk-abcdefghijklmnopqrstuvwxyz") == "sk-abcdefghijklmnopqrstuvwxyz"
     assert normalize_api_key("India-Proj-03-360Platform: sk-abcdefghijklmnopqrstuvwxyz") == "sk-abcdefghijklmnopqrstuvwxyz"
-    assert normalize_api_key("  sk-abcdefghijklmnopqrstuvwxyz 
-") == "sk-abcdefghijklmnopqrstuvwxyz"
+    assert normalize_api_key("  sk-abcdefghijklmnopqrstuvwxyz \n") == "sk-abcdefghijklmnopqrstuvwxyz"
     assert normalize_api_key("not-a-key") == "not-a-key"
