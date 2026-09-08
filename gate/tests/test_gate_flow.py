@@ -250,7 +250,7 @@ def test_report_roundtrip_to_json(cfg, skills_dir):
 def test_api_key_normalisation_accepts_labelled_keys():
     from sdlc_gate.llm import normalize_api_key
 
-    assert normalize_api_key("sk-abcdefghijklmnopqrstuvwxyz") == "sk-abcdefghijklmnopqrstuvwxyz"
-    assert normalize_api_key("India-Proj-03-360Platform: sk-abcdefghijklmnopqrstuvwxyz") == "sk-abcdefghijklmnopqrstuvwxyz"
-    assert normalize_api_key("  sk-abcdefghijklmnopqrstuvwxyz \n") == "sk-abcdefghijklmnopqrstuvwxyz"
+    assert normalize_api_key("sk-abcdefghijklmnop") == "sk-abcdefghijklmnop"
+    assert normalize_api_key("India-Proj-03-360Platform: sk-abcdefghijklmnop") == "sk-abcdefghijklmnop"
+    assert normalize_api_key("  sk-abcdefghijklmnop \n") == "sk-abcdefghijklmnop"
     assert normalize_api_key("not-a-key") == "not-a-key"
