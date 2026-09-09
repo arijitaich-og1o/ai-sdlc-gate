@@ -1,19 +1,19 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-09T05:09:07+00:00 from 6 gate run(s)._
+_Generated 2026-09-09T05:09:35+00:00 from 7 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 6 |
-| Pass rate | 83% |
-| Runs flagged (findings at/above threshold) | 1 (17%) |
-| Runs blocked | 1 (17%) |
+| Gate runs | 7 |
+| Pass rate | 86% |
+| Runs flagged (findings at/above threshold) | 1 (14%) |
+| Runs blocked | 1 (14%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 1.0 |
-| Runs with local client attestation | 0% |
+| Findings per run | 0.86 |
+| Runs with local client attestation | 14% |
 | Active developers / repositories | 2 / 3 |
 | Top finding categories | missing-negative-tests, hardcoded-credential, hardcoded-configuration |
 
@@ -21,21 +21,21 @@ _Generated 2026-09-09T05:09:07+00:00 from 6 gate run(s)._
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 6 | 83% | 1 | 0 | 4 | 0 | 2 |
+| 2026-09 | 7 | 86% | 1 | 0 | 4 | 0 | 2 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | @arijitaich-og1o | 4 | 100% | 0 | 0 | 0/0 | 0 | 0.5 | 0% | missing-negative-tests | 2026-09-09 |
-| arijit.aich@og1o.in (@arijitaich-og1o) | 2 | 50% | 1 | 1 | 0/0 | 0 | 2.0 | 0% | hardcoded-credential, hardcoded-configuration | 2026-09-09 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 3 | 67% | 1 | 1 | 0/0 | 0 | 1.33 | 33% | hardcoded-credential, hardcoded-configuration | 2026-09-09 |
 
 ## Repositories
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
 | arijitaich-og1o/hook-demo | 4 | 75% | 1 | 0 | 2 | 1.5 | missing-negative-tests, hardcoded-credential, hardcoded-configuration |
-| arijitaich-og1o/review-skill | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
+| arijitaich-og1o/review-skill | 2 | 100% | 0 | 0 | 1 | 0.0 | - |
 | unknown/unknown | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
 
 ### Reading this dashboard
