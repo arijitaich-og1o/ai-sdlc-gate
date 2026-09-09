@@ -47,7 +47,7 @@
       "actors_count": 1,
       "attested": 0,
       "attested_rate": 0.0,
-      "block_rate": 1.0,
+      "block_rate": 0.5,
       "blocked": 1,
       "developers_count": 1,
       "findings": {
@@ -57,20 +57,21 @@
         "low": 0,
         "medium": 0
       },
-      "findings_per_run": 4.0,
+      "findings_per_run": 2.0,
       "first_seen": "2026-09-08T23:07:00+00:00",
-      "flag_rate": 1.0,
+      "flag_rate": 0.5,
       "flagged": 1,
       "intents": {
-        "commit": 1
+        "commit": 2
       },
-      "last_seen": "2026-09-08T23:07:00+00:00",
-      "pass_rate": 0.0,
-      "passed": 0,
+      "last_seen": "2026-09-09T05:08:52+00:00",
+      "pass_rate": 0.5,
+      "passed": 1,
       "repos": [
-        "arijitaich-og1o/hook-demo"
+        "arijitaich-og1o/hook-demo",
+        "arijitaich-og1o/review-skill"
       ],
-      "runs": 1,
+      "runs": 2,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -81,8 +82,8 @@
       "waived_findings": 0
     }
   },
-  "events": 5,
-  "generated_at": "2026-09-09T00:26:56+00:00",
+  "events": 6,
+  "generated_at": "2026-09-09T05:09:07+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -91,7 +92,7 @@
       "actors_count": 1,
       "attested": 0,
       "attested_rate": 0.0,
-      "block_rate": 0.2,
+      "block_rate": 0.167,
       "blocked": 1,
       "developers_count": 2,
       "findings": {
@@ -101,21 +102,22 @@
         "low": 0,
         "medium": 2
       },
-      "findings_per_run": 1.2,
+      "findings_per_run": 1.0,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.2,
+      "flag_rate": 0.167,
       "flagged": 1,
       "intents": {
-        "commit": 5
+        "commit": 6
       },
-      "last_seen": "2026-09-09T00:26:21+00:00",
-      "pass_rate": 0.8,
-      "passed": 4,
+      "last_seen": "2026-09-09T05:08:52+00:00",
+      "pass_rate": 0.833,
+      "passed": 5,
       "repos": [
         "arijitaich-og1o/hook-demo",
+        "arijitaich-og1o/review-skill",
         "unknown/unknown"
       ],
-      "runs": 5,
+      "runs": 6,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -134,7 +136,7 @@
     "actors_count": 1,
     "attested": 0,
     "attested_rate": 0.0,
-    "block_rate": 0.2,
+    "block_rate": 0.167,
     "blocked": 1,
     "developers_count": 2,
     "findings": {
@@ -144,21 +146,22 @@
       "low": 0,
       "medium": 2
     },
-    "findings_per_run": 1.2,
+    "findings_per_run": 1.0,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.2,
+    "flag_rate": 0.167,
     "flagged": 1,
     "intents": {
-      "commit": 5
+      "commit": 6
     },
-    "last_seen": "2026-09-09T00:26:21+00:00",
-    "pass_rate": 0.8,
-    "passed": 4,
+    "last_seen": "2026-09-09T05:08:52+00:00",
+    "pass_rate": 0.833,
+    "passed": 5,
     "repos": [
       "arijitaich-og1o/hook-demo",
+      "arijitaich-og1o/review-skill",
       "unknown/unknown"
     ],
-    "runs": 5,
+    "runs": 6,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
@@ -209,6 +212,43 @@
         "hardcoded-credential",
         "hardcoded-configuration"
       ],
+      "waived_findings": 0
+    },
+    "arijitaich-og1o/review-skill": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 0,
+      "attested_rate": 0.0,
+      "block_rate": 0.0,
+      "blocked": 0,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 0,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 0
+      },
+      "findings_per_run": 0.0,
+      "first_seen": "2026-09-09T05:08:52+00:00",
+      "flag_rate": 0.0,
+      "flagged": 0,
+      "intents": {
+        "commit": 1
+      },
+      "last_seen": "2026-09-09T05:08:52+00:00",
+      "pass_rate": 1.0,
+      "passed": 1,
+      "repos": [
+        "arijitaich-og1o/review-skill"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [],
       "waived_findings": 0
     },
     "unknown/unknown": {
