@@ -1,6 +1,8 @@
 """Render gate reports as Markdown (PR comments, step summaries, terminal)."""
 from __future__ import annotations
 
+import textwrap
+
 from .config import SEVERITIES, severity_rank
 from .runner import GateReport
 
@@ -125,4 +127,56 @@ def to_markdown(report: GateReport, cfg=None, compact: bool = False) -> str:
                      "Skips of the deployment and maintenance phases are highlighted separately on the dashboard.")
     else:
         lines.append("_All required phases satisfied. Findings below the blocking threshold are advisory._")
+    return "\n".join(lines)
+
+
+def to_text(report: GateReport, full_report_path: str | None = None, max_findings: int = 25) -> str:
+    """Compact rendering for terminals and hook output (no tables, no markup)."""
+    thr = severity_rank(report.threshold)
+    it = report.intent
+    lines: list[str] = []
+    verdict = "PASSED" if report.passed else "BLOCKED"
+    lines.append(f"AI SDLC Gate: {verdict}")
+    lines.append(f"Intent: {it.intent} · phases {', '.join(str(p) for p in it.phases)} · blocking threshold: {report.threshold}")
+    if report.fail_reasons:
+        lines.append("")
+        lines.append("Why:")
+        lines.extend(f"  - {r}" for r in report.fail_reasons)
+    blocking = [f for f in report.all_findings() if severity_rank(f["severity"]) >= thr and not f.get("waived")]
+    advisory = [f for f in report.all_findings() if f not in blocking]
+    if blocking:
+        lines.append("")
+        lines.append("Findings that block this change:")
+        for f in blocking[:max_findings]:
+            loc = f"{f['file']}:{f['line']}" if f.get("file") and f.get("line") else (f.get("file") or "-")
+            phase = f"phase {f['phase']}" if f.get("phase") else "pre-check"
+            lines.append(f"  [{f['severity'].upper():7}] {loc}  ({phase}, {f['category']})")
+            lines.append(f"            {f['title']}")
+            if f.get("recommendation"):
+                for w in textwrap.wrap("Fix: " + f["recommendation"], width=88):
+                    lines.append(f"            {w}")
+        if len(blocking) > max_findings:
+            lines.append(f"  ... and {len(blocking) - max_findings} more blocking finding(s) in the full report")
+    if advisory:
+        lines.append("")
+        lines.append(f"Advisory findings below the threshold: {len(advisory)} (see the full report)")
+    if report.skip.requested:
+        lines.append("")
+        if report.skip.valid:
+            lines.append(f"Skip applied for phase(s) {', '.join(map(str, report.skip.valid_phases))}: {report.skip.reason}")
+        else:
+            lines.append("Skip request rejected:")
+            lines.extend(f"  - {e}" for e in report.skip.errors)
+    for pr in report.phases:
+        if pr.error:
+            lines.append("")
+            lines.append(f"Phase {pr.phase} ({pr.phase_name}) could not be reviewed: {pr.error[:300]}")
+    lines.append("")
+    if full_report_path:
+        lines.append(f"Full report: {full_report_path}   (or run: ai-sdlc-gate last)")
+    if not report.passed:
+        lines.append("Fix the findings and commit again. To waive a phase that genuinely cannot be satisfied now, add to the commit message:")
+        lines.append("  SDLC-Skip: <phase numbers>")
+        lines.append("  SDLC-Skip-Reason: <at least 40 characters, with a ticket reference>")
+        lines.append("Secrets, hard-coded credentials and known-vulnerable dependencies can never be waived.")
     return "\n".join(lines)

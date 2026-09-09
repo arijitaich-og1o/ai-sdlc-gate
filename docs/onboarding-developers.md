@@ -57,6 +57,10 @@ lefthook) keep working: the gate runs first and then hands over to them.
 
 ## Working with findings
 
+A blocked commit prints a compact list of the blocking findings with file, line and fix. The full report of the
+last run is kept at `~/.ai-sdlc-gate/last-report.md`; `ai-sdlc-gate last` shows it again (`--md` for the full
+markdown, `--json` for the raw data).
+
 Each finding has a severity, category, file:line and a concrete recommendation. Fix `blocker` and `high`
 findings; `medium` and below are advisory unless your repository sets a stricter threshold.
 

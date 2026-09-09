@@ -62,19 +62,20 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
     DEFAULT="$(git symbolic-ref -q --short "refs/remotes/$REMOTE_NAME/HEAD" 2>/dev/null || echo "$REMOTE_NAME/main")"
     BASE="$(git merge-base "$DEFAULT" "$LOCAL_SHA" 2>/dev/null || true)"
   fi
-  REPORT="$(mktemp 2>/dev/null || echo "${TMPDIR:-/tmp}/ai-sdlc-gate-$$.md")"
-  REPORT_JSON="$REPORT.json"
+  LAST_DIR="${AI_SDLC_GATE_HOME:-$HOME/.ai-sdlc-gate}"; mkdir -p "$LAST_DIR"
+  REPORT="$LAST_DIR/last-report.md"; REPORT_JSON="$LAST_DIR/last-report.json"; REPORT_TXT="$LAST_DIR/last-report.txt"
   REPO_SLUG="$(git remote get-url "$REMOTE_NAME" 2>/dev/null | sed -E 's#.*github\.com[:/]##; s#\.git$##')"
   ARGS=(run --config "$REPO_DIR/gate.config.yaml" --skills-dir "$REPO_DIR/skills"
-        --head "$LOCAL_SHA" --ref "$BRANCH" --event-name local-push --repo "$REPO_SLUG" --output-md "$REPORT" --output-json "$REPORT_JSON" --quiet)
+        --head "$LOCAL_SHA" --ref "$BRANCH" --event-name local-push --repo "$REPO_SLUG" --output-md "$REPORT" --output-json "$REPORT_JSON" --output-text "$REPORT_TXT" --quiet)
   [ -n "$BASE" ] && ARGS+=(--base "$BASE")
   "$GATE" "${ARGS[@]}"
   RC=$?
   [ -f "$REPORT_JSON" ] && "$GATE" emit-metrics --config "$REPO_DIR/gate.config.yaml" --report "$REPORT_JSON" --dispatch >/dev/null 2>&1 || echo "ai-sdlc-gate: run not recorded in metrics (no GitHub credential available)." >&2
   if [ "$RC" = "1" ]; then
-    cat "$REPORT" >&2
-    echo "" >&2
-    echo "ai-sdlc-gate: push of $BRANCH blocked locally. Fix the findings or add SDLC-Skip trailers to the commit (skips are recorded)." >&2
+    echo ""
+    cat "$REPORT_TXT" 2>/dev/null || cat "$REPORT" >&2
+    echo ""
+    echo "ai-sdlc-gate: push of $BRANCH blocked." >&2
     FAILED=1
   elif [ "$RC" != "0" ]; then
     echo "ai-sdlc-gate: local gate could not run for $BRANCH (exit $RC)." >&2
@@ -82,7 +83,6 @@ while read -r LOCAL_REF LOCAL_SHA REMOTE_REF REMOTE_SHA; do
   else
     echo "ai-sdlc-gate: $BRANCH PASS" >&2
   fi
-  rm -f "$REPORT" "$REPORT_JSON"
 done <<EOF
 $INPUT
 EOF

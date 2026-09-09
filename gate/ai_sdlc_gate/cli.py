@@ -22,7 +22,7 @@ from .intent import detect_intent
 from .judge import apply_decision, decision_markdown, judge
 from .llm import LLMClient, LLMError, StaticLLM
 from .prechecks import run_prechecks
-from .report import to_markdown
+from .report import to_markdown, to_text
 from .runner import run_gate
 from .skills import load_skill_file, load_skills, validate_skills_dir
 from .skip import parse_skip
@@ -135,8 +135,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     md = to_markdown(report, cfg)
     _write(args.output_md, md)
     _write(args.output_json, json.dumps(report.to_dict(), indent=2))
+    if args.output_text:
+        _write(args.output_text, to_text(report, full_report_path=args.output_md))
     if not args.quiet:
-        print(md)
+        print(to_text(report, full_report_path=args.output_md) if args.text else md)
     return EXIT_PASS if report.passed else EXIT_FAIL
 
 
@@ -365,10 +367,16 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--approved-skip-phases", help="comma separated phases whose skip has been approved via label")
     r.add_argument("--repo"), r.add_argument("--actor"), r.add_argument("--ref"), r.add_argument("--sha")
     r.add_argument("--run-id"), r.add_argument("--run-url"), r.add_argument("--event-name"), r.add_argument("--pr-number")
-    r.add_argument("--output-json"), r.add_argument("--output-md")
+    r.add_argument("--output-json"), r.add_argument("--output-md"), r.add_argument("--output-text", help="write the compact terminal rendering here")
+    r.add_argument("--text", action="store_true", help="print the compact terminal rendering instead of markdown")
     r.add_argument("--offline", action="store_true", help="do not call the model (pre-checks only; for tests)")
     r.add_argument("--quiet", action="store_true")
     r.set_defaults(func=cmd_run)
+
+    last = sub.add_parser("last", help="show the result of the last gate run on this machine")
+    last.add_argument("--md", action="store_true", help="show the full markdown report")
+    last.add_argument("--json", action="store_true", help="show the raw JSON report")
+    last.set_defaults(func=cmd_last)
 
     i = sub.add_parser("intent", help="show the detected intent and phases for a change set")
     common(i, skills=False)
@@ -666,6 +674,17 @@ def cmd_update(args: argparse.Namespace) -> int:
     else:
         cmd = ["bash", str(repo / "client" / "install.sh")]
     return subprocess.run(cmd, env=env).returncode
+
+
+def cmd_last(args: argparse.Namespace) -> int:
+    home = identity_mod.sdlc_home()
+    name = "last-report.json" if args.json else ("last-report.md" if args.md else "last-report.txt")
+    path = home / name
+    if not path.is_file():
+        _eprint("no gate run recorded on this machine yet")
+        return EXIT_FAIL
+    print(path.read_text(encoding="utf-8"), flush=True)
+    return EXIT_PASS
 
 
 def _utf8_console() -> None:
