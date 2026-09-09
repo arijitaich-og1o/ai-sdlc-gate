@@ -53,7 +53,12 @@ def _transport(claims: dict, pending_polls: int = 1):
 
 def test_device_code_login_returns_verified_identity(tmp_path, monkeypatch):
     client = httpx.Client(transport=_transport(_claims()))
-    ident = idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, sleep=lambda s: None, open_browser=False, client=client)
+    opened: list[str] = []
+    shown: list[str] = []
+    monkeypatch.setattr(idm, "copy_to_clipboard", lambda text: True)
+    ident = idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=shown.append, sleep=lambda s: None, open_browser=True, client=client, browser=opened.append)
+    assert opened == ["https://login.microsoftonline.com/common/oauth2/deviceauth?otc=ABCD"]
+    assert any("Your code:   ABCD" in line for line in shown) and any("Sign-in confirmed" in line for line in shown)
     assert ident.email == "arijit.aich@og1o.in" and ident.name == "Arijit Aich" and ident.tid == TENANT
     monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
     path = idm.save_identity(ident)
