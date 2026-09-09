@@ -87,8 +87,13 @@ foreach ($h in @("commit-msg", "pre-push", "refresh-skills")) {
 }
 $hooksPosix = $hooks -replace "\\", "/"
 $current = git config --global --get core.hooksPath
-if ($current -and $current -ne $hooksPosix) { Say "core.hooksPath was '$current'; replacing it." }
+if ($current -and $current -ne $hooksPosix) { Say "core.hooksPath was '$current'; replacing it (the gate chains to repository hooks itself)." }
 git config --global core.hooksPath $hooksPosix
+# Repositories may set their own core.hooksPath (husky and friends). Git's environment override wins over repository
+# configuration, so set it for the user; IDEs and GUI clients started afterwards inherit it.
+$gitParams = "'core.hooksPath=$hooksPosix'"
+[Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $gitParams, "User")
+$env:GIT_CONFIG_PARAMETERS = $gitParams
 
 Say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
 Gate configure --config $config
@@ -98,5 +103,19 @@ Say "Verifying"
 Gate validate-skills --config $config | Select-Object -Last 1
 
 Set-Content -Path (Join-Path $home_ ".last-refresh") -Value ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -Encoding ascii
+
+# WSL is a separate Linux system with its own git. Install the gate in every distribution and carry the sign-in over.
+if (Get-Command wsl.exe -ErrorAction SilentlyContinue) {
+  $distros = @()
+  try { $distros = (& wsl.exe -l -q 2>$null) -replace "\x00", "" | ForEach-Object { $_.Trim() } | Where-Object { $_ -and $_ -notmatch "docker-desktop" } } catch {}
+  foreach ($d in $distros) {
+    Say "WSL: installing the gate in '$d'"
+    $winHome = ($env:USERPROFILE -replace "\\", "/") -replace "^([A-Za-z]):", { "/mnt/" + $_.Groups[1].Value.ToLower() }
+    $cmd = "export AI_SDLC_GATE_NONINTERACTIVE=1; curl -fsSL $($RepoUrl -replace '\.git$','' -replace 'github\.com','raw.githubusercontent.com')/$Ref/client/install.sh | bash; " +
+           "mkdir -p ~/.ai-sdlc-gate; [ -f '$winHome/.ai-sdlc-gate/identity.json' ] && cp '$winHome/.ai-sdlc-gate/identity.json' ~/.ai-sdlc-gate/ && chmod 600 ~/.ai-sdlc-gate/identity.json; true"
+    & wsl.exe -d $d -- bash -lc $cmd 2>&1 | Where-Object { $_ -notmatch "notice|pip is available|To update, run|WARNING: The script" }
+    if ($LASTEXITCODE -ne 0) { Say "WSL '$d': the gate could not be installed there (git and Python 3.10+ are required inside WSL). Run the Linux installer inside it later." }
+  }
+}
 
 Say "Done. Every commit and push on this machine now goes through the AI SDLC Gate."

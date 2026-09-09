@@ -6,6 +6,7 @@ $ErrorActionPreference = "Continue"
 $home_ = if ($env:AI_SDLC_GATE_HOME) { $env:AI_SDLC_GATE_HOME } else { Join-Path $env:USERPROFILE ".ai-sdlc-gate" }
 $current = git config --global --get core.hooksPath
 if ($current -like "*.ai-sdlc-gate/hooks*") { git config --global --unset core.hooksPath; Write-Host "global git hooks path removed" }
+if (([Environment]::GetEnvironmentVariable("GIT_CONFIG_PARAMETERS", "User")) -like "*ai-sdlc-gate*") { [Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $null, "User"); Write-Host "git environment override removed" }
 $cli = if (Get-Command ai-sdlc-gate -ErrorAction SilentlyContinue) { "ai-sdlc-gate" } else { $null }
 if (-not $cli) { foreach ($c in @("py -3", "python")) { & cmd /c "$c -m ai_sdlc_gate.cli --version >nul 2>&1"; if ($LASTEXITCODE -eq 0) { $cli = "$c -m ai_sdlc_gate.cli"; break } } }
 if ($cli) {

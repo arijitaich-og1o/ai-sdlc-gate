@@ -27,6 +27,19 @@ the two one-time steps above.
 Requirements: git, Python 3.10+, and a GitHub sign-in on the machine (GitHub CLI `gh auth login`, or the credential
 helper that stores your login when you push). Corporate proxies: set `HTTPS_PROXY` in your shell profile.
 
+## What is covered
+
+The gate hooks into git itself, so it applies to every way you commit or push on that operating system: PowerShell,
+cmd, Git Bash, Windows Terminal, macOS Terminal and iTerm, any Linux shell, VS Code, IntelliJ and other JetBrains IDEs,
+Visual Studio, GitHub Desktop, SourceTree, and scripts. Projects that define their own hooks (husky, pre-commit,
+lefthook) keep working: the gate runs first and then hands over to them.
+
+- **WSL** is a separate Linux system. The Windows installer detects your WSL distributions and installs the gate inside
+  each one, carrying your sign-in over. On a WSL distribution installed later, run the Linux installer inside it.
+- **Containers and remote machines** are separate systems too; install the gate there with the Linux installer.
+- **IDE bundled git on Windows** needs Git for Windows present on the machine (it provides the shell that runs hooks);
+  the installer checks for it.
+
 ## What happens on your machine
 
 - `git commit` → the `commit-msg` hook reviews the staged change with the intent and skip trailers from your

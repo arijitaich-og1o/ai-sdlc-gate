@@ -20,9 +20,16 @@ fi
 FAIL_CLOSED=1
 [ "${AI_SDLC_GATE_LOCAL_FAIL_OPEN:-0}" = "1" ] && [ "$MANAGED" != "true" ] && FAIL_CLOSED=0
 
-# Chain any repository-local hook first.
-LOCAL_HOOK="$(git rev-parse --git-path hooks 2>/dev/null)/commit-msg"
-if [ -x "$LOCAL_HOOK" ] && [ "$LOCAL_HOOK" != "$0" ]; then
+# Chain to the repository's own hooks (its .git/hooks or a project hooks path such as .husky) so nothing a team
+# relies on is skipped. Our hooks path is enforced through GIT_CONFIG_PARAMETERS, which overrides repository settings.
+LOCAL_DIR="$(git config --local --get core.hooksPath 2>/dev/null || true)"
+if [ -n "$LOCAL_DIR" ]; then
+  case "$LOCAL_DIR" in /*|[A-Za-z]:*|~*) ;; *) LOCAL_DIR="$(git rev-parse --show-toplevel 2>/dev/null)/$LOCAL_DIR";; esac
+else
+  LOCAL_DIR="$(git rev-parse --git-path hooks 2>/dev/null)"
+fi
+LOCAL_HOOK="$LOCAL_DIR/commit-msg"
+if [ -x "$LOCAL_HOOK" ] && [ "$(cd "$(dirname "$LOCAL_HOOK")" && pwd)" != "$(cd "$(dirname "$0")" && pwd)" ]; then
   "$LOCAL_HOOK" "$@" || exit $?
 fi
 

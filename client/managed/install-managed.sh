@@ -79,7 +79,7 @@ git config --system ai-sdlc-gate.managed true
 git config --system ai-sdlc-gate.prefix "$PREFIX"
 
 if [ -d /etc/profile.d ]; then
-  printf 'export PATH="%s/bin:$PATH"\nexport AI_SDLC_GATE_REPO="%s/repo"\n' "$PREFIX" "$PREFIX" > /etc/profile.d/ai-sdlc-gate.sh
+  printf 'export PATH="%s/bin:$PATH"\nexport AI_SDLC_GATE_REPO="%s/repo"\nexport GIT_CONFIG_PARAMETERS="%s"\n' "$PREFIX" "$PREFIX" "'core.hooksPath=$PREFIX/hooks'" > /etc/profile.d/ai-sdlc-gate.sh
 fi
 if [ -d /etc/paths.d ]; then printf '%s/bin\n' "$PREFIX" > /etc/paths.d/00-ai-sdlc-gate; fi
 if [ -f /etc/zshenv ] || [ "$(uname)" = "Darwin" ]; then

@@ -71,9 +71,17 @@ for h in commit-msg pre-push refresh-skills; do
 done
 CURRENT_HOOKS="$(git config --global --get core.hooksPath || true)"
 if [ -n "$CURRENT_HOOKS" ] && [ "$CURRENT_HOOKS" != "$SDLC_HOME/hooks" ]; then
-  say "core.hooksPath is currently '$CURRENT_HOOKS'. It will be replaced; hooks in that directory will no longer run."
+  say "core.hooksPath is currently '$CURRENT_HOOKS'. It will be replaced; the gate chains to repository hooks itself."
 fi
 git config --global core.hooksPath "$SDLC_HOME/hooks"
+# Repositories may set their own core.hooksPath (husky and friends). Git's environment override wins over
+# repository configuration, so export it from the shell profiles; the gate chains to the project's hooks.
+GIT_ENV_LINE="export GIT_CONFIG_PARAMETERS=\"'core.hooksPath=$SDLC_HOME/hooks'\" # ai-sdlc-gate"
+for prof in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zshenv"; do
+  [ -f "$prof" ] || { case "$prof" in *".profile"|*".bashrc") touch "$prof";; *) continue;; esac; }
+  grep -q "# ai-sdlc-gate" "$prof" 2>/dev/null && sed -i.bak '/# ai-sdlc-gate$/d' "$prof" && rm -f "$prof.bak"
+  printf '%s\n' "$GIT_ENV_LINE" >> "$prof"
+done
 
 say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
 $GATE configure --config "$CONFIG" || say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)."
