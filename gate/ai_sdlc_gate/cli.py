@@ -634,6 +634,38 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     cf.add_argument("--import-record", action="store_true", help=argparse.SUPPRESS)
     cf.set_defaults(func=cmd_configure)
 
+    up = sub.add_parser("update", help="refresh policy, skills and engine on this machine now")
+    up.set_defaults(func=cmd_update)
+
+
+def cmd_update(args: argparse.Namespace) -> int:
+    """Refresh policy, skills and engine now (the hooks do this at most once a day)."""
+    import platform
+    import subprocess
+
+    home = identity_mod.sdlc_home()
+    repo = home / "repo"
+    if not (repo / ".git").is_dir():
+        _eprint(f"no installation found at {home}; run the installer")
+        return EXIT_FAIL
+    origin = subprocess.run(["git", "-C", str(repo), "remote", "get-url", "origin"], capture_output=True, text=True).stdout.strip()
+    ref = (home / "ref").read_text(encoding="utf-8").strip() if (home / "ref").is_file() else "main"
+    # Inside WSL the source is the Windows copy; refresh that first with Windows git (which holds the GitHub sign-in).
+    if identity_mod.is_wsl() and origin.startswith("/mnt/"):
+        drive = origin[5]
+        win_path = f"{drive.upper()}:" + origin[6:].replace("/", "\\")
+        for exe in ("git.exe", "/mnt/c/Program Files/Git/cmd/git.exe"):
+            r = subprocess.run([exe, "-C", win_path, "pull", "--ff-only", "--quiet"], capture_output=True, text=True)
+            if r.returncode == 0:
+                print("[ai-sdlc-gate] refreshed the Windows copy", flush=True)
+                break
+    env = {**os.environ, "AI_SDLC_GATE_NONINTERACTIVE": "1", "AI_SDLC_GATE_REPO_URL": origin, "AI_SDLC_GATE_REF": ref}
+    if platform.system() == "Windows":
+        cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(repo / "client" / "install.ps1")]
+    else:
+        cmd = ["bash", str(repo / "client" / "install.sh")]
+    return subprocess.run(cmd, env=env).returncode
+
 
 def _utf8_console() -> None:
     """Reports contain non-ASCII symbols; make sure Windows consoles do not choke on them."""
