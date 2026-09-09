@@ -254,3 +254,17 @@ def test_api_key_normalisation_accepts_labelled_keys():
     assert normalize_api_key("India-Proj-03-360Platform: sk-abcdefghijklmnop") == "sk-abcdefghijklmnop"
     assert normalize_api_key("  sk-abcdefghijklmnop \n") == "sk-abcdefghijklmnop"
     assert normalize_api_key("not-a-key") == "not-a-key"
+
+
+def test_text_rendering_lists_blocking_findings(cfg, skills_dir):
+    from ai_sdlc_gate.report import to_text
+
+    skills = load_skills(skills_dir, cfg)
+    report = _run(cfg, skills, [_finding(sev="high"), _finding(sev="low", cat="dead-code", title="unused import", line=3)])
+    text = to_text(report, full_report_path="/tmp/last-report.md")
+    assert text.startswith("AI SDLC Gate: BLOCKED")
+    assert "[HIGH   ] app.py:10" in text and "SQL built by f-string" in text and "Fix: r" in text
+    assert "Advisory findings below the threshold: 3" in text
+    assert "SDLC-Skip-Reason" in text and "ai-sdlc-gate last" in text
+    ok = to_text(_run(cfg, skills, []))
+    assert ok.startswith("AI SDLC Gate: PASSED") and "SDLC-Skip" not in ok
