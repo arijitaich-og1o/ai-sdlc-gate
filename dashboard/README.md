@@ -1,41 +1,41 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-09T05:21:54+00:00 from 12 gate run(s)._
+_Generated 2026-09-09T05:22:36+00:00 from 13 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 12 |
-| Pass rate | 50% |
-| Runs flagged (findings at/above threshold) | 6 (50%) |
-| Runs blocked | 6 (50%) |
+| Gate runs | 13 |
+| Pass rate | 46% |
+| Runs flagged (findings at/above threshold) | 7 (54%) |
+| Runs blocked | 7 (54%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 4.17 |
+| Findings per run | 4.38 |
 | Runs with local client attestation | 8% |
 | Active developers / repositories | 2 / 3 |
-| Top finding categories | hardcoded-credential, insecure-design, data-protection-design-gap, hardcoded-configuration, general |
+| Top finding categories | hardcoded-credential, data-protection-design-gap, insecure-design, general, credentials-in-tests |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 12 | 50% | 6 | 0 | 22 | 6 | 14 |
+| 2026-09 | 13 | 46% | 7 | 0 | 22 | 7 | 17 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
+| arijit.aich@og1o.in (@arijitaich-og1o) | 7 | 29% | 5 | 5 | 0/0 | 0 | 5.14 | 14% | hardcoded-credential, data-protection-design-gap, general | 2026-09-09 |
 | @arijitaich-og1o | 6 | 67% | 2 | 2 | 0/0 | 0 | 3.5 | 0% | missing-negative-tests, hardcoded-credential, secret-exposure | 2026-09-09 |
-| arijit.aich@og1o.in (@arijitaich-og1o) | 6 | 33% | 4 | 4 | 0/0 | 0 | 4.83 | 17% | hardcoded-credential, data-protection-design-gap, general | 2026-09-09 |
 
 ## Repositories
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
 | arijitaich-og1o/hook-demo | 6 | 50% | 3 | 0 | 2 | 4.17 | hardcoded-credential, hardcoded-configuration, missing-negative-tests |
-| arijitaich-og1o/review-skill | 5 | 40% | 3 | 0 | 1 | 5.0 | data-protection-design-gap, general, hardcoded-credential |
+| arijitaich-og1o/review-skill | 6 | 33% | 4 | 0 | 1 | 5.33 | data-protection-design-gap, general, hardcoded-credential |
 | unknown/unknown | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
 
 ### Reading this dashboard
