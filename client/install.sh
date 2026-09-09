@@ -52,7 +52,20 @@ else
   fi
 fi
 
-say "Installing global git hooks"
+GATE="ai-sdlc-gate"
+command -v ai-sdlc-gate >/dev/null 2>&1 || GATE="$PY -m ai_sdlc_gate.cli"
+CONFIG="$SDLC_HOME/repo/gate.config.yaml"
+
+# Step 1: who you are. Runs first so the developer sees the code immediately; skipped only when there is no
+# terminal (automation) or AI_SDLC_GATE_NONINTERACTIVE=1.
+if [ "${AI_SDLC_GATE_NONINTERACTIVE:-0}" != "1" ] && [ -t 1 ] && ! $GATE identity check --config "$CONFIG" --strict >/dev/null 2>&1; then
+  say "Step 1 of 3: sign in with your Microsoft work account"
+  $GATE identity login --config "$CONFIG" || say "Sign-in not completed; run 'ai-sdlc-gate identity login' later."
+else
+  $GATE identity check --config "$CONFIG" --strict >/dev/null 2>&1 && say "Step 1 of 3: already signed in" || say "Step 1 of 3: sign-in skipped (no terminal); run 'ai-sdlc-gate identity login' later."
+fi
+
+say "Step 2 of 3: installing the git hooks"
 for h in commit-msg pre-push refresh-skills; do
   install -m 755 "$SDLC_HOME/repo/client/hooks/$h" "$SDLC_HOME/hooks/$h"
 done
@@ -62,20 +75,11 @@ if [ -n "$CURRENT_HOOKS" ] && [ "$CURRENT_HOOKS" != "$SDLC_HOME/hooks" ]; then
 fi
 git config --global core.hooksPath "$SDLC_HOME/hooks"
 
-date +%s > "$SDLC_HOME/.last-refresh"
-
-GATE="ai-sdlc-gate"
-command -v ai-sdlc-gate >/dev/null 2>&1 || GATE="$PY -m ai_sdlc_gate.cli"
-CONFIG="$SDLC_HOME/repo/gate.config.yaml"
-
-say "Verifying"
-$GATE validate-skills --config "$CONFIG"
-
-say "Fetching the review configuration from the central repository (uses your GitHub sign-in)"
+say "Step 3 of 3: fetching the review configuration from the central repository (uses your GitHub sign-in)"
 $GATE configure --config "$CONFIG" || say "Could not fetch the configuration yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)."
 
-if [ -t 0 ] && ! $GATE identity check --config "$CONFIG" --strict >/dev/null 2>&1; then
-  say "Signing you in with your Microsoft work account (one-time)"
-  $GATE identity login --config "$CONFIG" || say "Identity sign-in skipped; run 'ai-sdlc-gate identity login' later."
-fi
+say "Verifying"
+$GATE validate-skills --config "$CONFIG" | tail -n 1
+date +%s > "$SDLC_HOME/.last-refresh"
+
 say "Done. Every commit and push on this machine now goes through the AI SDLC Gate."

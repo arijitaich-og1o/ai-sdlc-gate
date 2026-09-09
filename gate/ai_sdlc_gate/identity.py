@@ -19,7 +19,9 @@ from __future__ import annotations
 import base64
 import json
 import os
+import platform
 import re
+import shutil
 import stat
 import subprocess
 import time
@@ -142,16 +144,49 @@ def _validate_claims(claims: dict[str, Any], tenant: str, client_id: str, author
     )
 
 
+def copy_to_clipboard(text: str) -> bool:
+    """Best-effort clipboard copy so the developer can paste the code if the browser did not pre-fill it."""
+    try:
+        system = platform.system()
+        if system == "Windows":
+            cmd = ["clip"]
+        elif system == "Darwin":
+            cmd = ["pbcopy"]
+        elif shutil.which("wl-copy"):
+            cmd = ["wl-copy"]
+        elif shutil.which("xclip"):
+            cmd = ["xclip", "-selection", "clipboard"]
+        else:
+            return False
+        subprocess.run(cmd, input=text.encode("utf-8"), check=True, timeout=5, capture_output=True)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _print_out(message: str) -> None:
+    print(message, flush=True)
+
+
+def prefilled_login_url(authority: str, verification_uri: str, user_code: str) -> str:
+    """Microsoft's device-login page accepts the code as `otc`, so the developer only confirms the account."""
+    base = f"{authority.rstrip('/')}/common/oauth2/deviceauth"
+    if "microsoftonline.com" in verification_uri or "microsoft.com/devicelogin" in verification_uri:
+        return f"{base}?otc={user_code}"
+    return verification_uri
+
+
 def device_code_login(
     tenant: str,
     client_id: str,
     allowed_domains: list[str] | None = None,
     authority: str = DEFAULT_AUTHORITY,
-    out: Callable[[str], None] = print,
+    out: Callable[[str], None] = _print_out,
     sleep: Callable[[float], None] = time.sleep,
     open_browser: bool = True,
     client: httpx.Client | None = None,
     max_wait_seconds: int = 900,
+    browser: Callable[[str], object] = webbrowser.open,
 ) -> Identity:
     if not tenant or not client_id:
         raise IdentityError("identity.tenant and identity.client_id must be configured (see docs/enforcement.md)")
@@ -162,10 +197,24 @@ def device_code_login(
         if resp.status_code != 200:
             raise IdentityError(f"device code request failed: HTTP {resp.status_code}: {resp.text[:200]}")
         dc = resp.json()
-        out(dc.get("message") or f"Open {dc.get('verification_uri')} and enter code {dc.get('user_code')}")
+        code = str(dc.get("user_code") or "")
+        verification_uri = str(dc.get("verification_uri") or "https://microsoft.com/devicelogin")
+        url = str(dc.get("verification_uri_complete") or prefilled_login_url(authority, verification_uri, code))
+        copied = copy_to_clipboard(code)
+        out("")
+        out("=" * 66)
+        out("  MICROSOFT SIGN-IN")
+        out("")
+        out(f"  Your code:   {code}" + ("   (copied to the clipboard)" if copied else ""))
+        out("")
+        out("  A browser window is opening with this code already filled in.")
+        out("  Choose your work account and click Next. Then return here.")
+        out(f"  If no window opened: {verification_uri}")
+        out("=" * 66)
+        out("")
         if open_browser:
             try:
-                webbrowser.open(dc.get("verification_uri_complete") or dc.get("verification_uri") or "")
+                browser(url)
             except Exception:  # noqa: BLE001 - browser launch is best effort
                 pass
         interval = float(dc.get("interval") or 5)
@@ -177,6 +226,7 @@ def device_code_login(
                 data={"grant_type": "urn:ietf:params:oauth:grant-type:device_code", "client_id": client_id, "device_code": dc["device_code"]},
             )
             if tok.status_code == 200:
+                out("  Sign-in confirmed.")
                 id_token = tok.json().get("id_token")
                 if not id_token:
                     raise IdentityError("token response did not include an id_token (request the openid scope)")

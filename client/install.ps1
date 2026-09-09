@@ -62,7 +62,22 @@ if (Get-Command pipx -ErrorAction SilentlyContinue) {
   }
 }
 
-Say "Installing global git hooks"
+$config = Join-Path $repo "gate.config.yaml"
+function Gate { if (Get-Command ai-sdlc-gate -ErrorAction SilentlyContinue) { & ai-sdlc-gate @args } else { & cmd /c "$py -m ai_sdlc_gate.cli $($args -join ' ')" } }
+
+# Step 1: who you are. Runs first so the developer sees the code immediately.
+Gate identity check --config $config --strict 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0 -and $env:AI_SDLC_GATE_NONINTERACTIVE -ne "1") {
+  Say "Step 1 of 3: sign in with your Microsoft work account"
+  Gate identity login --config $config
+  if ($LASTEXITCODE -ne 0) { Say "Sign-in not completed; run 'ai-sdlc-gate identity login' later." }
+} elseif ($LASTEXITCODE -eq 0) {
+  Say "Step 1 of 3: already signed in"
+} else {
+  Say "Step 1 of 3: sign-in skipped; run 'ai-sdlc-gate identity login' later."
+}
+
+Say "Step 2 of 3: installing the git hooks"
 foreach ($h in @("commit-msg", "pre-push", "refresh-skills")) {
   Copy-Item -Force (Join-Path $repo "client\hooks\$h") (Join-Path $hooks $h)
 }
@@ -71,21 +86,13 @@ $current = git config --global --get core.hooksPath
 if ($current -and $current -ne $hooksPosix) { Say "core.hooksPath was '$current'; replacing it." }
 git config --global core.hooksPath $hooksPosix
 
-Set-Content -Path (Join-Path $home_ ".last-refresh") -Value ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -Encoding ascii
-
-$config = Join-Path $repo "gate.config.yaml"
-function Gate { if (Get-Command ai-sdlc-gate -ErrorAction SilentlyContinue) { & ai-sdlc-gate @args } else { & cmd /c "$py -m ai_sdlc_gate.cli $($args -join ' ')" } }
-
-Say "Verifying"
-Gate validate-skills --config $config
-
-Say "Fetching the review configuration from the central repository (uses your GitHub sign-in)"
+Say "Step 3 of 3: fetching the review configuration from the central repository (uses your GitHub sign-in)"
 Gate configure --config $config
 if ($LASTEXITCODE -ne 0) { Say "Could not fetch the configuration yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)." }
 
-Gate identity check --config $config --strict 2>$null | Out-Null
-if ($LASTEXITCODE -ne 0) {
-  Say "Signing you in with your Microsoft work account (one-time)"
-  Gate identity login --config $config
-}
+Say "Verifying"
+Gate validate-skills --config $config | Select-Object -Last 1
+
+Set-Content -Path (Join-Path $home_ ".last-refresh") -Value ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -Encoding ascii
+
 Say "Done. Every commit and push on this machine now goes through the AI SDLC Gate."

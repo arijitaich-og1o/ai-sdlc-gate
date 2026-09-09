@@ -479,7 +479,7 @@ def cmd_identity(args: argparse.Namespace) -> int:
     path = identity_mod.save_identity(ident)
     if not args.no_git:
         identity_mod.configure_git_identity(ident)
-    print(f"signed in as {ident.email}; stored at {path}; git user.email updated")
+    print(f"Signed in as {ident.email}. Your commits will carry this identity.", flush=True)
     return EXIT_PASS
 
 
