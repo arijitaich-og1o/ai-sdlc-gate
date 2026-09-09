@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # AI SDLC Gate developer installer (Linux, macOS, WSL, Git Bash).
 #
-#   curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash
+#   git clone https://github.com/arijitaich-og1o/ai-sdlc-gate ~/.ai-sdlc-gate/repo && bash ~/.ai-sdlc-gate/repo/client/install.sh
 #
 # What it does
 #   1. clones (or refreshes) the central repository to ~/.ai-sdlc-gate/repo
@@ -32,12 +32,15 @@ mkdir -p "$SDLC_HOME/hooks"
 chmod 700 "$SDLC_HOME"
 
 say "Syncing central repository ($REF) to $SDLC_HOME/repo"
+# The repository is private: cloning uses the developer's existing GitHub sign-in (credential helper). Inside WSL the
+# Windows installer passes the already-synced Windows copy as REPO_URL, so no credential is needed there.
 if [ -d "$SDLC_HOME/repo/.git" ]; then
+  git -C "$SDLC_HOME/repo" remote set-url origin "$REPO_URL" 2>/dev/null || true
   git -C "$SDLC_HOME/repo" fetch --quiet --depth 1 origin "$REF"
   git -C "$SDLC_HOME/repo" reset --quiet --hard FETCH_HEAD
 else
   rm -rf "$SDLC_HOME/repo"
-  git clone --quiet --depth 1 --branch "$REF" "$REPO_URL" "$SDLC_HOME/repo"
+  git clone --quiet --depth 1 --branch "$REF" "$REPO_URL" "$SDLC_HOME/repo" || die "Could not clone the AI SDLC Gate repository. Sign in to GitHub in your browser once (a credential prompt should have appeared) and run the installer again."
 fi
 printf '%s\n' "$REF" > "$SDLC_HOME/ref"
 
@@ -84,7 +87,11 @@ for prof in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zshenv"; do
 done
 
 say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
-$GATE configure --config "$CONFIG" || say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)."
+if [ -n "${AI_SDLC_GATE_RECORD_FILE:-}" ] && [ -f "$AI_SDLC_GATE_RECORD_FILE" ]; then
+  $GATE configure --config "$CONFIG" --import-record < "$AI_SDLC_GATE_RECORD_FILE" || say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' later."
+else
+  $GATE configure --config "$CONFIG" || say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)."
+fi
 
 say "Verifying"
 $GATE validate-skills --config "$CONFIG" | tail -n 1

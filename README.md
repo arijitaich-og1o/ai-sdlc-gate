@@ -45,9 +45,9 @@ operating system:
 
 | OS | Installer |
 |---|---|
-| Windows | [install.cmd](client/install.cmd) (double-click) or `irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 \| iex` |
-| macOS | [install.command](client/install.command) (double-click) or `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh \| bash` |
-| Linux / WSL | `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh \| bash` |
+| Windows | [install.cmd](client/install.cmd) (double-click) or `git clone https://github.com/arijitaich-og1o/ai-sdlc-gate "$env:USERPROFILE\.ai-sdlc-gate\repo"; & "$env:USERPROFILE\.ai-sdlc-gate\repo\client\install.ps1"` |
+| macOS | [install.command](client/install.command) (double-click) or `git clone https://github.com/arijitaich-og1o/ai-sdlc-gate ~/.ai-sdlc-gate/repo && bash ~/.ai-sdlc-gate/repo/client/install.sh` |
+| Linux / WSL | `git clone https://github.com/arijitaich-og1o/ai-sdlc-gate ~/.ai-sdlc-gate/repo && bash ~/.ai-sdlc-gate/repo/client/install.sh` |
 
 Requirements: git and Python 3.10+, and a GitHub sign-in on the machine (the GitHub CLI or the git credential helper
 you already push with). The installer obtains the review configuration from this repository, keeps it in your

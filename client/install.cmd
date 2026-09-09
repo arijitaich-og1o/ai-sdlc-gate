@@ -6,7 +6,9 @@ set "HERE=%~dp0"
 if exist "%HERE%install.ps1" (
   powershell -NoProfile -ExecutionPolicy Bypass -File "%HERE%install.ps1"
 ) else (
-  powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 | iex"
+  rem Standalone download: fetch the repository with git (uses your GitHub sign-in) and run the installer from it.
+  if not exist "%USERPROFILE%\.ai-sdlc-gate\repo\.git" git clone --depth 1 https://github.com/arijitaich-og1o/ai-sdlc-gate "%USERPROFILE%\.ai-sdlc-gate\repo"
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\.ai-sdlc-gate\repo\client\install.ps1"
 )
 if errorlevel 1 (
   echo.

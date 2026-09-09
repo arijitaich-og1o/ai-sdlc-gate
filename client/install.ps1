@@ -11,7 +11,7 @@
   5. signs the developer in with their Microsoft work account (one-time)
 
 .EXAMPLE
-  irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 | iex
+  git clone https://github.com/arijitaich-og1o/ai-sdlc-gate "$env:USERPROFILE\.ai-sdlc-gate\repo"; & "$env:USERPROFILE\.ai-sdlc-gate\repo\client\install.ps1"
 #>
 [CmdletBinding()]
 param(
@@ -104,17 +104,25 @@ Gate validate-skills --config $config | Select-Object -Last 1
 
 Set-Content -Path (Join-Path $home_ ".last-refresh") -Value ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -Encoding ascii
 
-# WSL is a separate Linux system with its own git. Install the gate in every distribution and carry the sign-in over.
+# WSL is a separate Linux system with its own git. Install the gate in every distribution from the Windows copy of
+# the repository (no network or GitHub credential needed inside WSL) and carry the sign-in and review engine over.
 if (Get-Command wsl.exe -ErrorAction SilentlyContinue) {
   $distros = @()
   try { $distros = (& wsl.exe -l -q 2>$null) -replace "\x00", "" | ForEach-Object { $_.Trim() } | Where-Object { $_ -and $_ -notmatch "docker-desktop" } } catch {}
-  foreach ($d in $distros) {
-    Say "WSL: installing the gate in '$d'"
-    $winHome = ($env:USERPROFILE -replace "\\", "/") -replace "^([A-Za-z]):", { "/mnt/" + $_.Groups[1].Value.ToLower() }
-    $cmd = "export AI_SDLC_GATE_NONINTERACTIVE=1; curl -fsSL $($RepoUrl -replace '\.git$','' -replace 'github\.com','raw.githubusercontent.com')/$Ref/client/install.sh | bash; " +
-           "mkdir -p ~/.ai-sdlc-gate; [ -f '$winHome/.ai-sdlc-gate/identity.json' ] && cp '$winHome/.ai-sdlc-gate/identity.json' ~/.ai-sdlc-gate/ && chmod 600 ~/.ai-sdlc-gate/identity.json; true"
-    & wsl.exe -d $d -- bash -lc $cmd 2>&1 | Where-Object { $_ -notmatch "notice|pip is available|To update, run|WARNING: The script" }
-    if ($LASTEXITCODE -ne 0) { Say "WSL '$d': the gate could not be installed there (git and Python 3.10+ are required inside WSL). Run the Linux installer inside it later." }
+  if ($distros.Count -gt 0) {
+    $drive = $home_.Substring(0, 1).ToLower()
+    $winHomeWsl = "/mnt/$drive" + ($home_.Substring(2) -replace "\\", "/")
+    $record = Join-Path $home_ "handover.json"
+    & cmd /c "$(GateCmd) configure --export-record > ""$record"" 2>nul"
+    foreach ($d in $distros) {
+      Say "WSL: installing the gate in '$d'"
+      $cmd = "export AI_SDLC_GATE_NONINTERACTIVE=1 AI_SDLC_GATE_REPO_URL='$winHomeWsl/repo' AI_SDLC_GATE_RECORD_FILE='$winHomeWsl/handover.json'; " +
+             "bash '$winHomeWsl/repo/client/install.sh'; mkdir -p ~/.ai-sdlc-gate; " +
+             "[ -f '$winHomeWsl/identity.json' ] && cp '$winHomeWsl/identity.json' ~/.ai-sdlc-gate/ && chmod 600 ~/.ai-sdlc-gate/identity.json; true"
+      & cmd /c "wsl.exe -d $d -- bash -lc ""$cmd"" 2>&1" | Where-Object { $_ -notmatch "notice|pip is available|To update, run|WARNING: The script" }
+      if ($LASTEXITCODE -ne 0) { Say "WSL '$d': the gate could not be installed there (git and Python 3.10+ are required inside WSL). Run 'bash $winHomeWsl/repo/client/install.sh' inside it later." }
+    }
+    if (Test-Path $record) { Remove-Item -Force $record }
   }
 }
 
