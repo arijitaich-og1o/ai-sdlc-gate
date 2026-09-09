@@ -536,7 +536,7 @@ def cmd_configure(args: argparse.Namespace) -> int:
         return EXIT_FAIL
     repo = args.repo or cfg.metrics["central_repo"]
     try:
-        llm = keybroker.fetch_config(cred.token, repo, ref=args.ref or "main", out=lambda m: _eprint(f"[ai-sdlc-gate] {m}"))
+        llm = keybroker.fetch_config(cred.token, repo, ref=args.ref or "main", out=lambda m: print(f"[ai-sdlc-gate] {m}", flush=True))
     except keybroker.KeyBrokerError as exc:
         _eprint(f"configure: {exc}")
         return EXIT_FAIL
