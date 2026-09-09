@@ -50,32 +50,32 @@
       ],
       "actors_count": 1,
       "attested": 1,
-      "attested_rate": 0.143,
-      "block_rate": 0.714,
-      "blocked": 5,
+      "attested_rate": 0.125,
+      "block_rate": 0.75,
+      "blocked": 6,
       "developers_count": 1,
       "findings": {
-        "blocker": 4,
-        "high": 6,
+        "blocker": 6,
+        "high": 8,
         "info": 0,
-        "low": 11,
-        "medium": 15
+        "low": 12,
+        "medium": 17
       },
-      "findings_per_run": 5.14,
+      "findings_per_run": 5.38,
       "first_seen": "2026-09-08T23:07:00+00:00",
-      "flag_rate": 0.714,
-      "flagged": 5,
+      "flag_rate": 0.75,
+      "flagged": 6,
       "intents": {
-        "commit": 7
+        "commit": 8
       },
-      "last_seen": "2026-09-09T05:22:20+00:00",
-      "pass_rate": 0.286,
+      "last_seen": "2026-09-09T05:23:07+00:00",
+      "pass_rate": 0.25,
       "passed": 2,
       "repos": [
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/review-skill"
       ],
-      "runs": 7,
+      "runs": 8,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -89,8 +89,8 @@
       "waived_findings": 0
     }
   },
-  "events": 13,
-  "generated_at": "2026-09-09T05:22:36+00:00",
+  "events": 14,
+  "generated_at": "2026-09-09T05:23:22+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -98,42 +98,42 @@
       ],
       "actors_count": 1,
       "attested": 1,
-      "attested_rate": 0.077,
-      "block_rate": 0.538,
-      "blocked": 7,
+      "attested_rate": 0.071,
+      "block_rate": 0.571,
+      "blocked": 8,
       "developers_count": 2,
       "findings": {
-        "blocker": 22,
-        "high": 7,
+        "blocker": 24,
+        "high": 9,
         "info": 0,
-        "low": 11,
-        "medium": 17
+        "low": 12,
+        "medium": 19
       },
-      "findings_per_run": 4.38,
+      "findings_per_run": 4.57,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.538,
-      "flagged": 7,
+      "flag_rate": 0.571,
+      "flagged": 8,
       "intents": {
-        "commit": 13
+        "commit": 14
       },
-      "last_seen": "2026-09-09T05:22:20+00:00",
-      "pass_rate": 0.462,
+      "last_seen": "2026-09-09T05:23:07+00:00",
+      "pass_rate": 0.429,
       "passed": 6,
       "repos": [
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/review-skill",
         "unknown/unknown"
       ],
-      "runs": 13,
+      "runs": 14,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "hardcoded-credential",
         "data-protection-design-gap",
-        "insecure-design",
         "general",
-        "credentials-in-tests"
+        "credentials-in-tests",
+        "insecure-design"
       ],
       "waived_findings": 0
     }
@@ -144,42 +144,42 @@
     ],
     "actors_count": 1,
     "attested": 1,
-    "attested_rate": 0.077,
-    "block_rate": 0.538,
-    "blocked": 7,
+    "attested_rate": 0.071,
+    "block_rate": 0.571,
+    "blocked": 8,
     "developers_count": 2,
     "findings": {
-      "blocker": 22,
-      "high": 7,
+      "blocker": 24,
+      "high": 9,
       "info": 0,
-      "low": 11,
-      "medium": 17
+      "low": 12,
+      "medium": 19
     },
-    "findings_per_run": 4.38,
+    "findings_per_run": 4.57,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.538,
-    "flagged": 7,
+    "flag_rate": 0.571,
+    "flagged": 8,
     "intents": {
-      "commit": 13
+      "commit": 14
     },
-    "last_seen": "2026-09-09T05:22:20+00:00",
-    "pass_rate": 0.462,
+    "last_seen": "2026-09-09T05:23:07+00:00",
+    "pass_rate": 0.429,
     "passed": 6,
     "repos": [
       "arijitaich-og1o/hook-demo",
       "arijitaich-og1o/review-skill",
       "unknown/unknown"
     ],
-    "runs": 13,
+    "runs": 14,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
     "top_categories": [
       "hardcoded-credential",
       "data-protection-design-gap",
-      "insecure-design",
       "general",
-      "credentials-in-tests"
+      "credentials-in-tests",
+      "insecure-design"
     ],
     "waived_findings": 0
   },
@@ -233,31 +233,31 @@
       ],
       "actors_count": 1,
       "attested": 1,
-      "attested_rate": 0.167,
-      "block_rate": 0.667,
-      "blocked": 4,
+      "attested_rate": 0.143,
+      "block_rate": 0.714,
+      "blocked": 5,
       "developers_count": 1,
       "findings": {
-        "blocker": 0,
-        "high": 6,
+        "blocker": 2,
+        "high": 8,
         "info": 0,
-        "low": 11,
-        "medium": 15
+        "low": 12,
+        "medium": 17
       },
-      "findings_per_run": 5.33,
+      "findings_per_run": 5.57,
       "first_seen": "2026-09-09T05:08:52+00:00",
-      "flag_rate": 0.667,
-      "flagged": 4,
+      "flag_rate": 0.714,
+      "flagged": 5,
       "intents": {
-        "commit": 6
+        "commit": 7
       },
-      "last_seen": "2026-09-09T05:22:20+00:00",
-      "pass_rate": 0.333,
+      "last_seen": "2026-09-09T05:23:07+00:00",
+      "pass_rate": 0.286,
       "passed": 2,
       "repos": [
         "arijitaich-og1o/review-skill"
       ],
-      "runs": 6,
+      "runs": 7,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
