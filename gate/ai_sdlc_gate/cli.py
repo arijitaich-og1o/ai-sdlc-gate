@@ -608,7 +608,7 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     at.add_argument("--require-identity", action="store_true"), at.add_argument("--quiet", action="store_true")
     at.set_defaults(func=cmd_attest)
 
-    cf = sub.add_parser("configure", help="obtain the model-gateway configuration from the central repository and keep it in the OS credential store")
+    cf = sub.add_parser("configure", help="prepare the review engine on this machine (uses your GitHub sign-in)")
     cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker (with --base-url)")
     cf.add_argument("--models", help="comma separated model names to store with --api-key")
     cf.add_argument("--repo", help="central repository (default from policy)"), cf.add_argument("--ref", help="branch of the central repository (default main)")
