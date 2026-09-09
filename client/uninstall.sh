@@ -14,6 +14,7 @@ if [ -n "$CLI" ]; then
 else
   for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -c "import keyring; keyring.delete_password('ai-sdlc-gate','gateway-config')" >/dev/null 2>&1 && { echo "gateway configuration removed from the credential store"; break; }; done
 fi
+for prof in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zshenv"; do [ -f "$prof" ] && grep -q "# ai-sdlc-gate" "$prof" && sed -i.bak '/# ai-sdlc-gate$/d' "$prof" && rm -f "$prof.bak"; done
 rm -rf "$HOME_DIR" && echo "removed $HOME_DIR"
 for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -m pip uninstall -y -q ai-sdlc-gate >/dev/null 2>&1 && echo "removed the ai-sdlc-gate package ($c)"; done
 command -v pipx >/dev/null 2>&1 && pipx uninstall ai-sdlc-gate >/dev/null 2>&1 && echo "removed the ai-sdlc-gate package (pipx)"

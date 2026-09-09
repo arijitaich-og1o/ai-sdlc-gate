@@ -96,6 +96,7 @@ git config --system ai-sdlc-gate.prefix ($Prefix -replace "\\", "/")
 $binDir = Join-Path $Prefix "bin"
 $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
 if ($machinePath -notlike "$binDir*") { [Environment]::SetEnvironmentVariable("Path", "$binDir;$machinePath", "Machine") }
+[Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", "'core.hooksPath=$hooksPosix'", "Machine")
 
 $refresh = @"
 `$ErrorActionPreference = 'Stop'
