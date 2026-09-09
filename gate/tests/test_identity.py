@@ -162,3 +162,49 @@ def test_identity_check_command_respects_configuration(tmp_path, monkeypatch, cf
     cfg_path.write_text("identity:\n  tenant: ''\n  client_id: ''\n  required: true\n", encoding="utf-8")
     assert main(["attest", "--config", str(cfg_path), "--message-file", str(msg), "--quiet"]) == 0
     assert "anonymous" in msg.read_text(encoding="utf-8")
+
+
+def test_browser_login_pkce_roundtrip():
+    import threading
+    import urllib.parse
+    import urllib.request
+
+    seen: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/token"):
+            body = dict(urllib.parse.parse_qsl(request.content.decode()))
+            seen["token_request"] = body
+            claims = _claims(nonce=seen["nonce"])
+            return httpx.Response(200, json={"id_token": _jwt(claims)})
+        return httpx.Response(404)
+
+    def fake_browser(url: str):
+        q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))
+        seen["nonce"] = q["nonce"]
+        seen["challenge"] = q["code_challenge"]
+        assert q["code_challenge_method"] == "S256" and q["client_id"] == CLIENT and q["redirect_uri"].startswith("http://localhost:")
+        cb = f"{q['redirect_uri']}/?code=the-code&state={q['state']}"
+        threading.Thread(target=lambda: urllib.request.urlopen(cb, timeout=5).read(), daemon=True).start()
+
+    ident = idm.browser_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, client=httpx.Client(transport=httpx.MockTransport(handler)), browser=fake_browser, timeout_seconds=10)
+    assert ident.email == "arijit.aich@og1o.in"
+    body = seen["token_request"]
+    assert body["grant_type"] == "authorization_code" and body["code"] == "the-code" and body["code_verifier"]
+    import base64, hashlib
+    assert base64.urlsafe_b64encode(hashlib.sha256(body["code_verifier"].encode()).digest()).rstrip(b"=").decode() == seen["challenge"]
+
+
+def test_browser_login_rejects_wrong_state():
+    import threading
+    import urllib.parse
+    import urllib.request
+
+    def fake_browser(url: str):
+        q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))
+        cb = f"{q['redirect_uri']}/?code=x&state=forged"
+        threading.Thread(target=lambda: urllib.request.urlopen(cb, timeout=5).read(), daemon=True).start()
+
+    with pytest.raises(idm.IdentityError) as exc:
+        idm.browser_login(TENANT, CLIENT, out=lambda m: None, client=httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(404))), browser=fake_browser, timeout_seconds=10)
+    assert "did not match" in str(exc.value)
