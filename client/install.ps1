@@ -63,10 +63,14 @@ if (Get-Command pipx -ErrorAction SilentlyContinue) {
 }
 
 $config = Join-Path $repo "gate.config.yaml"
-function Gate { if (Get-Command ai-sdlc-gate -ErrorAction SilentlyContinue) { & ai-sdlc-gate @args } else { & cmd /c "$py -m ai_sdlc_gate.cli $($args -join ' ')" } }
+# Native programs that write to stderr make PowerShell 5.1 throw under $ErrorActionPreference = "Stop".
+# Run the CLI through cmd with stderr merged so all output is plain text; the exit code stays in $LASTEXITCODE.
+function GateCmd { if (Get-Command ai-sdlc-gate -ErrorAction SilentlyContinue) { "ai-sdlc-gate" } else { "$py -m ai_sdlc_gate.cli" } }
+function Gate { $q = ($args | ForEach-Object { '"' + $_ + '"' }) -join ' '; & cmd /c "$(GateCmd) $q 2>&1" }
+function GateQuiet { $q = ($args | ForEach-Object { '"' + $_ + '"' }) -join ' '; & cmd /c "$(GateCmd) $q >nul 2>&1" }
 
 # Step 1: who you are. Runs first so the developer sees the code immediately.
-Gate identity check --config $config --strict 2>$null | Out-Null
+GateQuiet identity check --config $config --strict
 if ($LASTEXITCODE -ne 0 -and $env:AI_SDLC_GATE_NONINTERACTIVE -ne "1") {
   Say "Step 1 of 3: sign in with your Microsoft work account"
   Gate identity login --config $config
