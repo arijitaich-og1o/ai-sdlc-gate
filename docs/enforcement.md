@@ -54,9 +54,10 @@ not to whatever `git config user.email` happens to say.
 
 ### How it works
 
-1. `ai-sdlc-gate identity login` starts a Microsoft Entra ID **device-code sign-in**. The developer's browser opens
-   the Microsoft sign-in page; because Outlook, Teams and the browser already share that Microsoft session, the
-   step is normally one click ("Continue as arijit.aich@og1o.in"). The developer sees exactly what is being
+1. `ai-sdlc-gate identity login` starts a Microsoft Entra ID **browser sign-in** (authorization code with PKCE and
+   a loopback redirect on `localhost`). The developer's browser opens the Microsoft account picker; because Outlook,
+   Teams and the browser already share that Microsoft session, the step is one click. Nothing has to be typed. On
+   headless machines `--device-code` uses the device-code flow instead. The developer sees exactly what is being
    requested (`openid profile email`) and consents.
 2. Microsoft returns an ID token whose `preferred_username` claim is the verified UPN. The engine checks the
    audience, issuer, tenant, expiry and allowed domains, then stores the identity in `~/.ai-sdlc-gate/identity.json`
@@ -71,12 +72,14 @@ works with MFA and Conditional Access, and it is auditable in Entra sign-in logs
 
 ### Platform set-up
 
-Out of the box the sign-in uses Microsoft's public Azure CLI client id, which most tenants allow for device-code
-sign-in, restricted to `og1o.in` accounts. For a dedicated registration (recommended before the roll-out, and required
-if Conditional Access blocks the Azure CLI client):
+Out of the box the sign-in uses Microsoft's public Azure CLI client id, restricted to `og1o.in` accounts. Tenants
+whose Conditional Access policy blocks that application (error **AADSTS53003**) need a dedicated registration, which
+is recommended before the roll-out in any case:
 
-1. In Entra ID register an application "AI SDLC Gate client" (public client / native). Enable *Allow public client
-   flows*. Note the **Directory (tenant) ID** and **Application (client) ID**.
+1. In Entra ID register an application "AI SDLC Gate client": *Accounts in this organizational directory only*,
+   platform **Mobile and desktop applications** with redirect URI `http://localhost`, and *Allow public client flows*
+   = Yes. API permissions: Microsoft Graph delegated `openid`, `profile`, `email`, `User.Read` (grant admin consent).
+   Exclude nothing; the app needs no roles. Note the **Directory (tenant) ID** and **Application (client) ID**.
 2. Put them in `gate.config.yaml`:
 
    ```yaml

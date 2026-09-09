@@ -468,13 +468,24 @@ def cmd_identity(args: argparse.Namespace) -> int:
         _eprint("identity: the Microsoft Entra application is not configured yet (identity.tenant / identity.client_id in gate.config.yaml); "
                 "sign-in will be enabled by the platform team. Nothing to do now.")
         return EXIT_PASS
+    domains = list(idc.get("allowed_domains") or [])
+    authority = idc.get("authority") or identity_mod.DEFAULT_AUTHORITY
     try:
-        ident = identity_mod.device_code_login(
-            tenant, client_id, allowed_domains=list(idc.get("allowed_domains") or []),
-            authority=idc.get("authority") or identity_mod.DEFAULT_AUTHORITY, open_browser=not args.no_browser,
-        )
+        if args.device_code:
+            ident = identity_mod.device_code_login(tenant, client_id, allowed_domains=domains, authority=authority, open_browser=not args.no_browser)
+        else:
+            try:
+                ident = identity_mod.browser_login(tenant, client_id, allowed_domains=domains, authority=authority)
+            except identity_mod.IdentityError as exc:
+                if "timed out" in str(exc) or args.no_browser:
+                    raise
+                _eprint(f"identity: browser sign-in did not complete ({exc}); trying the device-code sign-in instead")
+                ident = identity_mod.device_code_login(tenant, client_id, allowed_domains=domains, authority=authority, open_browser=not args.no_browser)
     except identity_mod.IdentityError as exc:
         _eprint(f"identity: {exc}")
+        if "53003" in str(exc) or "AADSTS53003" in str(exc) or "does not meet the criteria" in str(exc):
+            _eprint("Your organisation's Conditional Access policy blocks this sign-in application. The platform team must register a dedicated "
+                    "'AI SDLC Gate client' application and put its tenant and client id into gate.config.yaml (see docs/enforcement.md).")
         return EXIT_FAIL
     path = identity_mod.save_identity(ident)
     if not args.no_git:
@@ -579,7 +590,8 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     isub = idp.add_subparsers(dest="icmd", required=True)
     login = isub.add_parser("login", help="sign in with the device-code flow and store the verified e-mail")
     login.add_argument("--tenant"), login.add_argument("--client-id")
-    login.add_argument("--no-browser", action="store_true"), login.add_argument("--no-git", action="store_true", help="do not update git user.email/user.name")
+    login.add_argument("--device-code", action="store_true", help="use the device-code sign-in (for SSH/headless machines) instead of the browser sign-in")
+    login.add_argument("--no-browser", action="store_true", help="do not try to open a browser"), login.add_argument("--no-git", action="store_true", help="do not update git user.email/user.name")
     show = isub.add_parser("show")
     show.add_argument("--quiet", action="store_true", help="print only the e-mail; exit 3 when absent")
     check = isub.add_parser("check", help="exit 0 if an identity exists or none is required yet; 3 if one is required and missing")

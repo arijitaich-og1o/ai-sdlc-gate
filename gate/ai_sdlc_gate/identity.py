@@ -17,14 +17,20 @@ and put its tenant id and client id in `gate.config.yaml` under `identity:`.
 from __future__ import annotations
 
 import base64
+import hashlib
+import http.server
 import json
 import os
 import platform
 import re
+import secrets as _secrets
 import shutil
+import socket
 import stat
 import subprocess
+import threading
 import time
+import urllib.parse
 import webbrowser
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
@@ -242,6 +248,114 @@ def device_code_login(
     finally:
         if client is None:
             http.close()
+
+
+# ---------------------------------------------------------------------------- browser sign-in (auth code + PKCE)
+
+_CALLBACK_HTML = b"""<!doctype html><html><head><meta charset="utf-8"><title>AI SDLC Gate</title></head>
+<body style="font-family:Segoe UI,Helvetica,Arial,sans-serif;background:#0d1117;color:#e6edf3;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+<div style="text-align:center"><h1 style="font-weight:600">Signed in to AI SDLC Gate</h1><p>You can close this window and return to the terminal.</p></div></body></html>"""
+
+
+class _Callback(http.server.BaseHTTPRequestHandler):
+    result: dict[str, str] = {}
+
+    def do_GET(self) -> None:  # noqa: N802 - http.server API
+        query = urllib.parse.urlparse(self.path).query
+        params = {k: v[0] for k, v in urllib.parse.parse_qs(query).items()}
+        type(self).result = params
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(_CALLBACK_HTML)))
+        self.end_headers()
+        self.wfile.write(_CALLBACK_HTML)
+
+    def log_message(self, *args: object) -> None:  # silence the default access log
+        return None
+
+
+def _free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
+def browser_login(
+    tenant: str,
+    client_id: str,
+    allowed_domains: list[str] | None = None,
+    authority: str = DEFAULT_AUTHORITY,
+    out: Callable[[str], None] = _print_out,
+    client: httpx.Client | None = None,
+    browser: Callable[[str], object] = webbrowser.open,
+    timeout_seconds: int = 300,
+    port: int | None = None,
+) -> Identity:
+    """Authorization-code sign-in with PKCE and a loopback redirect: no code to type, one account click."""
+    if not tenant or not client_id:
+        raise IdentityError("identity.tenant and identity.client_id must be configured (see docs/enforcement.md)")
+    http = client or httpx.Client(timeout=30)
+    port = port or _free_port()
+    redirect_uri = f"http://localhost:{port}"
+    state = _secrets.token_urlsafe(24)
+    nonce = _secrets.token_urlsafe(24)
+    verifier = _secrets.token_urlsafe(64)
+    challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest()).rstrip(b"=").decode("ascii")
+    base = f"{authority.rstrip('/')}/{tenant}/oauth2/v2.0"
+    params = {
+        "client_id": client_id, "response_type": "code", "redirect_uri": redirect_uri, "response_mode": "query",
+        "scope": SCOPES, "state": state, "nonce": nonce, "code_challenge": challenge, "code_challenge_method": "S256",
+        "prompt": "select_account",
+    }
+    url = f"{base}/authorize?{urllib.parse.urlencode(params)}"
+    server = http.server.HTTPServer(("127.0.0.1", port), _Callback)
+    server.timeout = timeout_seconds
+    _Callback.result = {}
+    try:
+        out("")
+        out("=" * 66)
+        out("  MICROSOFT SIGN-IN")
+        out("")
+        out("  A browser window is opening. Choose your work account; nothing to type.")
+        out("  Waiting for the sign-in to complete...")
+        out("=" * 66)
+        out("")
+        try:
+            browser(url)
+        except Exception:  # noqa: BLE001 - browser launch is best effort
+            pass
+        server.handle_request()
+        result = dict(_Callback.result)
+    finally:
+        server.server_close()
+        if client is None:
+            http.close()
+    if not result:
+        raise IdentityError("sign-in timed out")
+    if result.get("error"):
+        raise IdentityError(f"sign-in failed: {result.get('error')}: {result.get('error_description', '')[:200]}")
+    if result.get("state") != state or not result.get("code"):
+        raise IdentityError("sign-in response did not match this request")
+    http2 = client or httpx.Client(timeout=30)
+    try:
+        tok = http2.post(f"{base}/token", data={
+            "grant_type": "authorization_code", "client_id": client_id, "code": result["code"],
+            "redirect_uri": redirect_uri, "code_verifier": verifier, "scope": SCOPES,
+        })
+    finally:
+        if client is None:
+            http2.close()
+    if tok.status_code != 200:
+        err = tok.json().get("error_description", "") if tok.headers.get("content-type", "").startswith("application/json") else tok.text
+        raise IdentityError(f"token exchange failed: {str(err)[:200]}")
+    id_token = tok.json().get("id_token")
+    if not id_token:
+        raise IdentityError("token response did not include an id_token")
+    claims = decode_jwt_claims(id_token)
+    if claims.get("nonce") != nonce:
+        raise IdentityError("token nonce does not match this request")
+    out("  Sign-in confirmed.")
+    return _validate_claims(claims, tenant, client_id, authority, allowed_domains or [])
 
 
 def configure_git_identity(identity: Identity) -> None:
