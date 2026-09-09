@@ -17,6 +17,7 @@ if ($cli) {
   foreach ($c in @("py -3", "python")) { & cmd /c "$c -c ""import keyring; keyring.delete_password('ai-sdlc-gate','gateway-config')"" >nul 2>&1"; if ($LASTEXITCODE -eq 0) { Write-Host "gateway configuration removed from Windows Credential Manager"; break } }
 }
 if (Test-Path $home_) { Remove-Item -Recurse -Force $home_; Write-Host "removed $home_" }
-foreach ($c in @("py -3", "python")) { try { & cmd /c "$c -m pip uninstall -y -q ai-sdlc-gate" 2>$null | Out-Null; Write-Host "removed the ai-sdlc-gate package ($c)" } catch {} }
-if (Get-Command pipx -ErrorAction SilentlyContinue) { pipx uninstall ai-sdlc-gate 2>$null | Out-Null }
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -like "*.ai-sdlc-gate\venv\Scripts*") { [Environment]::SetEnvironmentVariable("Path", (($userPath -split ";") | Where-Object { $_ -notlike "*.ai-sdlc-gate\venv\Scripts*" }) -join ";", "User"); Write-Host "PATH entry removed" }
+foreach ($c in @("py -3", "python")) { try { & cmd /c "$c -m pip uninstall -y -q ai-sdlc-gate >nul 2>&1" } catch {} }
 Write-Host "AI SDLC Gate has been removed from this machine."

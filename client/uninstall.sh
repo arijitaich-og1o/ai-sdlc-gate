@@ -16,6 +16,6 @@ else
 fi
 for prof in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zshenv"; do [ -f "$prof" ] && grep -q "# ai-sdlc-gate" "$prof" && sed -i.bak '/# ai-sdlc-gate$/d' "$prof" && rm -f "$prof.bak"; done
 rm -rf "$HOME_DIR" && echo "removed $HOME_DIR"
-for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -m pip uninstall -y -q ai-sdlc-gate >/dev/null 2>&1 && echo "removed the ai-sdlc-gate package ($c)"; done
-command -v pipx >/dev/null 2>&1 && pipx uninstall ai-sdlc-gate >/dev/null 2>&1 && echo "removed the ai-sdlc-gate package (pipx)"
+rm -f "$HOME/.local/bin/ai-sdlc-gate" 2>/dev/null || true
+for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && "$c" -m pip uninstall -y -q ai-sdlc-gate >/dev/null 2>&1 && echo "removed a legacy ai-sdlc-gate package ($c)"; done
 echo "AI SDLC Gate has been removed from this machine."

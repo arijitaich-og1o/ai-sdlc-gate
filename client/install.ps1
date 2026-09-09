@@ -4,7 +4,7 @@
 
 .DESCRIPTION
   1. clones (or refreshes) the central repository to %USERPROFILE%\.ai-sdlc-gate\repo
-  2. installs the `ai-sdlc-gate` CLI for the current user (pipx if available, else pip --user)
+  2. installs the `ai-sdlc-gate` CLI into a private virtual environment (%USERPROFILE%\.ai-sdlc-gate\venv)
   3. installs global git hooks (commit-msg, pre-push) via core.hooksPath. Git for Windows runs hooks with its
      bundled sh, so the same bash hooks work in PowerShell, cmd, VS Code, IntelliJ and any other IDE.
   4. obtains the review configuration from the central repository (key broker) and keeps it in Windows Credential Manager
@@ -48,24 +48,23 @@ if (Test-Path (Join-Path $repo ".git")) {
 }
 Set-Content -Path (Join-Path $home_ "ref") -Value $Ref -Encoding ascii
 
-Say "Installing the ai-sdlc-gate CLI"
-if (Get-Command pipx -ErrorAction SilentlyContinue) {
-  pipx install --force --quiet (Join-Path $repo "gate") | Out-Null
-} else {
-  & cmd /c "$py -m pip install --quiet --user --upgrade ""$(Join-Path $repo 'gate')"""
-  $scripts = & cmd /c "$py -c ""import sysconfig; print(sysconfig.get_path('scripts', 'nt_user'))"""
-  if ($scripts -and -not (Get-Command ai-sdlc-gate -ErrorAction SilentlyContinue)) {
-    Say "Adding $scripts to the user PATH (restart your terminal/IDE afterwards)"
-    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-    if ($userPath -notlike "*$scripts*") { [Environment]::SetEnvironmentVariable("Path", "$userPath;$scripts", "User") }
-    $env:Path = "$env:Path;$scripts"
-  }
-}
+Say "Installing the ai-sdlc-gate CLI (private Python environment)"
+Remove-Item -Recurse -Force (Join-Path $repo "gate\build"), (Join-Path $repo "gate\*.egg-info") -ErrorAction SilentlyContinue
+$venv = Join-Path $home_ "venv"
+$vpy = Join-Path $venv "Scripts\python.exe"
+if (-not (Test-Path $vpy)) { & cmd /c "$py -m venv ""$venv"""; if (-not (Test-Path $vpy)) { throw "Could not create a Python virtual environment in $venv" } }
+& $vpy -m pip install --quiet --upgrade pip setuptools wheel 2>&1 | Out-Null
+& $vpy -m pip install --quiet --upgrade (Join-Path $repo "gate")
+if ($LASTEXITCODE -ne 0) { throw "Could not install the engine into $venv" }
+$vbin = Join-Path $venv "Scripts"
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notlike "*$vbin*") { [Environment]::SetEnvironmentVariable("Path", "$vbin;$userPath", "User"); Say "Added $vbin to your PATH so 'ai-sdlc-gate' works by name (restart terminals/IDEs)." }
+$env:Path = "$vbin;$env:Path"
 
 $config = Join-Path $repo "gate.config.yaml"
 # Native programs that write to stderr make PowerShell 5.1 throw under $ErrorActionPreference = "Stop".
 # Run the CLI through cmd with stderr merged so all output is plain text; the exit code stays in $LASTEXITCODE.
-function GateCmd { if (Get-Command ai-sdlc-gate -ErrorAction SilentlyContinue) { "ai-sdlc-gate" } else { "$py -m ai_sdlc_gate.cli" } }
+function GateCmd { "$vbin\ai-sdlc-gate.exe" }
 function Gate { $q = ($args | ForEach-Object { '"' + $_ + '"' }) -join ' '; & cmd /c "$(GateCmd) $q 2>&1" }
 function GateQuiet { $q = ($args | ForEach-Object { '"' + $_ + '"' }) -join ' '; & cmd /c "$(GateCmd) $q >nul 2>&1" }
 
