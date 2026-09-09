@@ -475,7 +475,8 @@ def cmd_identity(args: argparse.Namespace) -> int:
             ident = identity_mod.device_code_login(tenant, client_id, allowed_domains=domains, authority=authority, open_browser=not args.no_browser)
         else:
             try:
-                ident = identity_mod.browser_login(tenant, client_id, allowed_domains=domains, authority=authority)
+                ident = identity_mod.browser_login(tenant, client_id, allowed_domains=domains, authority=authority,
+                                                   browser=(lambda u: False) if args.no_browser else identity_mod.open_url)
             except identity_mod.IdentityError as exc:
                 if "timed out" in str(exc) or args.no_browser:
                     raise
