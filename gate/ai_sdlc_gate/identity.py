@@ -21,6 +21,7 @@ import hashlib
 import http.server
 import json
 import os
+import pathlib
 import platform
 import re
 import secrets as _secrets
@@ -174,6 +175,30 @@ def _print_out(message: str) -> None:
     print(message, flush=True)
 
 
+def is_wsl() -> bool:
+    try:
+        return "microsoft" in pathlib.Path("/proc/version").read_text(encoding="utf-8", errors="ignore").lower()
+    except OSError:
+        return False
+
+
+def open_url(url: str) -> bool:
+    """Open a URL in the user's browser, including from inside WSL (Windows browser) and headless-safe."""
+    if is_wsl():
+        for cmd in (["wslview", url], ["powershell.exe", "-NoProfile", "-Command", f"Start-Process '{url}'"], ["cmd.exe", "/c", "start", "", url.replace("&", "^&")]):
+            if shutil.which(cmd[0]) or cmd[0].endswith(".exe"):
+                try:
+                    subprocess.run(cmd, check=True, timeout=10, capture_output=True)
+                    return True
+                except Exception:  # noqa: BLE001 - try the next launcher
+                    continue
+        return False
+    try:
+        return bool(webbrowser.open(url))
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def prefilled_login_url(authority: str, verification_uri: str, user_code: str) -> str:
     """Microsoft's device-login page accepts the code as `otc`, so the developer only confirms the account."""
     base = f"{authority.rstrip('/')}/common/oauth2/deviceauth"
@@ -192,7 +217,7 @@ def device_code_login(
     open_browser: bool = True,
     client: httpx.Client | None = None,
     max_wait_seconds: int = 900,
-    browser: Callable[[str], object] = webbrowser.open,
+    browser: Callable[[str], object] = open_url,
 ) -> Identity:
     if not tenant or not client_id:
         raise IdentityError("identity.tenant and identity.client_id must be configured (see docs/enforcement.md)")
@@ -287,7 +312,7 @@ def browser_login(
     authority: str = DEFAULT_AUTHORITY,
     out: Callable[[str], None] = _print_out,
     client: httpx.Client | None = None,
-    browser: Callable[[str], object] = webbrowser.open,
+    browser: Callable[[str], object] = open_url,
     timeout_seconds: int = 300,
     port: int | None = None,
 ) -> Identity:
@@ -312,18 +337,26 @@ def browser_login(
     server.timeout = timeout_seconds
     _Callback.result = {}
     try:
+        opened = False
+        try:
+            opened = bool(browser(url))
+        except Exception:  # noqa: BLE001 - browser launch is best effort
+            opened = False
         out("")
         out("=" * 66)
         out("  MICROSOFT SIGN-IN")
         out("")
-        out("  A browser window is opening. Choose your work account; nothing to type.")
+        if opened:
+            out("  A browser window is opening. Choose your work account; nothing to type.")
+            out("  If it did not open, use this link (Ctrl+click or copy it):")
+        else:
+            out("  Open this link in your browser (Ctrl+click or copy it), then choose your work account:")
+        out("")
+        out(f"  {url}")
+        out("")
         out("  Waiting for the sign-in to complete...")
         out("=" * 66)
         out("")
-        try:
-            browser(url)
-        except Exception:  # noqa: BLE001 - browser launch is best effort
-            pass
         server.handle_request()
         result = dict(_Callback.result)
     finally:

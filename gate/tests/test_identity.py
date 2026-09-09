@@ -208,3 +208,44 @@ def test_browser_login_rejects_wrong_state():
     with pytest.raises(idm.IdentityError) as exc:
         idm.browser_login(TENANT, CLIENT, out=lambda m: None, client=httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(404))), browser=fake_browser, timeout_seconds=10)
     assert "did not match" in str(exc.value)
+
+
+def test_open_url_uses_windows_launcher_inside_wsl(monkeypatch):
+    calls: list[list[str]] = []
+    monkeypatch.setattr(idm, "is_wsl", lambda: True)
+    monkeypatch.setattr(idm.shutil, "which", lambda name: None)
+
+    class R:
+        returncode = 0
+
+    monkeypatch.setattr(idm.subprocess, "run", lambda cmd, **kw: calls.append(cmd) or R())
+    assert idm.open_url("https://login.example/x?a=1&b=2")
+    assert calls and calls[0][0] == "powershell.exe" and "Start-Process" in calls[0][-1]
+
+
+def test_browser_login_prints_link_when_no_browser():
+    import threading, urllib.parse, urllib.request
+
+    shown: list[str] = []
+
+    def no_browser(url: str):
+        q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))
+        cb = f"{q['redirect_uri']}/?code=c&state={q['state']}"
+        threading.Thread(target=lambda: urllib.request.urlopen(cb, timeout=5).read(), daemon=True).start()
+        return False
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/token"):
+            body = dict(urllib.parse.parse_qsl(request.content.decode()))
+            return httpx.Response(200, json={"id_token": _jwt(_claims(nonce=shown_nonce[0]))})
+        return httpx.Response(404)
+
+    shown_nonce: list[str] = []
+    real_no_browser = no_browser
+
+    def capture(url: str):
+        shown_nonce.append(dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))["nonce"])
+        return real_no_browser(url)
+
+    idm.browser_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=shown.append, client=httpx.Client(transport=httpx.MockTransport(handler)), browser=capture, timeout_seconds=10)
+    assert any("Open this link in your browser" in line for line in shown) and any("https://login.microsoftonline.com/" in line for line in shown)
