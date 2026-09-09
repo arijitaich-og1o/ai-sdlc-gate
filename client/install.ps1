@@ -90,9 +90,9 @@ $current = git config --global --get core.hooksPath
 if ($current -and $current -ne $hooksPosix) { Say "core.hooksPath was '$current'; replacing it." }
 git config --global core.hooksPath $hooksPosix
 
-Say "Step 3 of 3: fetching the review configuration from the central repository (uses your GitHub sign-in)"
+Say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
 Gate configure --config $config
-if ($LASTEXITCODE -ne 0) { Say "Could not fetch the configuration yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)." }
+if ($LASTEXITCODE -ne 0) { Say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)." }
 
 Say "Verifying"
 Gate validate-skills --config $config | Select-Object -Last 1

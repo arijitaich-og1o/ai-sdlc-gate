@@ -31,7 +31,7 @@ fi
 [ "$MANAGED" != "true" ] && [ -x "$SDLC_HOME/hooks/refresh-skills" ] && "$SDLC_HOME/hooks/refresh-skills" >/dev/null 2>&1
 
 if ! command -v "$GATE" >/dev/null 2>&1 || [ ! -f "$REPO_DIR/gate.config.yaml" ] || ! "$GATE" configure --check --config "$REPO_DIR/gate.config.yaml" >/dev/null 2>&1; then
-  echo "ai-sdlc-gate: engine, policy or review configuration not available locally (run: ai-sdlc-gate configure)." >&2
+  echo "ai-sdlc-gate: the review engine is not set up (run: ai-sdlc-gate configure)." >&2
   [ "$FAIL_CLOSED" = "1" ] && exit 1
   echo "ai-sdlc-gate: fail-open mode; continuing without a review." >&2
   exit 0
