@@ -294,7 +294,7 @@ def browser_login(
     """Authorization-code sign-in with PKCE and a loopback redirect: no code to type, one account click."""
     if not tenant or not client_id:
         raise IdentityError("identity.tenant and identity.client_id must be configured (see docs/enforcement.md)")
-    http = client or httpx.Client(timeout=30)
+    session = client or httpx.Client(timeout=30)
     port = port or _free_port()
     redirect_uri = f"http://localhost:{port}"
     state = _secrets.token_urlsafe(24)
@@ -329,22 +329,22 @@ def browser_login(
     finally:
         server.server_close()
         if client is None:
-            http.close()
+            session.close()
     if not result:
         raise IdentityError("sign-in timed out")
     if result.get("error"):
         raise IdentityError(f"sign-in failed: {result.get('error')}: {result.get('error_description', '')[:200]}")
     if result.get("state") != state or not result.get("code"):
         raise IdentityError("sign-in response did not match this request")
-    http2 = client or httpx.Client(timeout=30)
+    session2 = client or httpx.Client(timeout=30)
     try:
-        tok = http2.post(f"{base}/token", data={
+        tok = session2.post(f"{base}/token", data={
             "grant_type": "authorization_code", "client_id": client_id, "code": result["code"],
             "redirect_uri": redirect_uri, "code_verifier": verifier, "scope": SCOPES,
         })
     finally:
         if client is None:
-            http2.close()
+            session2.close()
     if tok.status_code != 200:
         err = tok.json().get("error_description", "") if tok.headers.get("content-type", "").startswith("application/json") else tok.text
         raise IdentityError(f"token exchange failed: {str(err)[:200]}")
