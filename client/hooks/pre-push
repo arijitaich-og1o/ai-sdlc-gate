@@ -12,11 +12,17 @@ SDLC_HOME="${AI_SDLC_GATE_HOME:-$HOME/.ai-sdlc-gate}"
 MANAGED="$(git config --system --get ai-sdlc-gate.managed 2>/dev/null || true)"
 PREFIX="$(git config --system --get ai-sdlc-gate.prefix 2>/dev/null || true)"
 REPO_DIR="$SDLC_HOME/repo"
-GATE="ai-sdlc-gate"
+# The engine lives in a private virtual environment; never depend on PATH inside hooks.
+GATE=""
+for cand in "$SDLC_HOME/venv/bin/ai-sdlc-gate" "$SDLC_HOME/venv/Scripts/ai-sdlc-gate.exe" "$HOME/.local/bin/ai-sdlc-gate"; do
+  [ -x "$cand" ] && { GATE="$cand"; break; }
+done
 if [ "$MANAGED" = "true" ] && [ -n "$PREFIX" ] && [ -d "$PREFIX/repo" ]; then
   REPO_DIR="$PREFIX/repo"
   [ -x "$PREFIX/bin/ai-sdlc-gate" ] && GATE="$PREFIX/bin/ai-sdlc-gate"
 fi
+[ -n "$GATE" ] || GATE="$(command -v ai-sdlc-gate 2>/dev/null || true)"
+[ -n "$GATE" ] || GATE="ai-sdlc-gate"
 FAIL_CLOSED=1
 [ "${AI_SDLC_GATE_LOCAL_FAIL_OPEN:-0}" = "1" ] && [ "$MANAGED" != "true" ] && FAIL_CLOSED=0
 
@@ -38,7 +44,7 @@ fi
 [ "$MANAGED" != "true" ] && [ "${AI_SDLC_GATE_LOCAL_PUSH:-1}" = "0" ] && exit 0
 [ "$MANAGED" != "true" ] && [ -x "$SDLC_HOME/hooks/refresh-skills" ] && "$SDLC_HOME/hooks/refresh-skills" >/dev/null 2>&1
 
-if ! command -v "$GATE" >/dev/null 2>&1 || [ ! -f "$REPO_DIR/gate.config.yaml" ] || ! "$GATE" configure --check --config "$REPO_DIR/gate.config.yaml" >/dev/null 2>&1; then
+if ! { [ -x "$GATE" ] || command -v "$GATE" >/dev/null 2>&1; } || [ ! -f "$REPO_DIR/gate.config.yaml" ] || ! "$GATE" configure --check --config "$REPO_DIR/gate.config.yaml" >/dev/null 2>&1; then
   echo "ai-sdlc-gate: the review engine is not set up (run: ai-sdlc-gate configure)." >&2
   [ "$FAIL_CLOSED" = "1" ] && exit 1
   echo "ai-sdlc-gate: fail-open mode; continuing without a review." >&2
