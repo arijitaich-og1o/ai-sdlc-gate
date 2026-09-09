@@ -75,8 +75,8 @@ if [ -n "$CURRENT_HOOKS" ] && [ "$CURRENT_HOOKS" != "$SDLC_HOME/hooks" ]; then
 fi
 git config --global core.hooksPath "$SDLC_HOME/hooks"
 
-say "Step 3 of 3: fetching the review configuration from the central repository (uses your GitHub sign-in)"
-$GATE configure --config "$CONFIG" || say "Could not fetch the configuration yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)."
+say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
+$GATE configure --config "$CONFIG" || say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)."
 
 say "Verifying"
 $GATE validate-skills --config "$CONFIG" | tail -n 1

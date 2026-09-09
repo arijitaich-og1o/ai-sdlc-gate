@@ -58,7 +58,7 @@ def test_fetch_config_end_to_end():
     messages: list[str] = []
     cfg = keybroker.fetch_config("tok", "org/ai-sdlc-gate", out=messages.append, sleep=lambda s: None, client=client)
     assert cfg.api_key == "sk-org-key-abcdefgh" and cfg.base_url == "https://llm.example"
-    assert state["polls"] >= 2 and any("received" in m for m in messages)
+    assert state["polls"] >= 2 and any("Preparing" in m for m in messages)
 
 
 def test_fetch_config_reports_missing_workflow_and_failed_run():

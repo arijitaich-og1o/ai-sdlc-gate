@@ -522,13 +522,13 @@ def cmd_configure(args: argparse.Namespace) -> int:
     if args.check:
         stored = secrets_store.load()
         if stored is None or not stored.base_url:
-            _eprint("no gateway configuration stored; run: ai-sdlc-gate configure")
+            _eprint("the review engine is not set up on this machine; run: ai-sdlc-gate configure")
             return EXIT_FAIL
-        print(f"gateway configuration present ({stored.backend})")
+        print("review engine ready")
         return EXIT_PASS
     if args.clear:
         secrets_store.clear()
-        print("gateway configuration removed")
+        print("review engine configuration removed")
         return EXIT_PASS
     if args.api_key:
         if not args.base_url:
@@ -536,7 +536,7 @@ def cmd_configure(args: argparse.Namespace) -> int:
             return EXIT_FAIL
         models = [m.strip() for m in (args.models or "").split(",") if m.strip()]
         st = secrets_store.store(args.base_url, args.api_key, models=models, mode="manual")
-        print(f"stored gateway configuration in the {st.backend} store")
+        print("Review engine ready.")
         return EXIT_PASS
     cred = ghauth.find_credential(token_env="AI_SDLC_GATE_GITHUB_TOKEN")
     if cred is None:
@@ -552,16 +552,17 @@ def cmd_configure(args: argparse.Namespace) -> int:
         _eprint(f"configure: {exc}")
         return EXIT_FAIL
     if not llm.base_url:
-        _eprint("configure: the central repository did not provide a gateway endpoint (LITELLM_BASE_URL secret missing)")
+        _eprint("configure: the central repository is not fully configured (contact the platform team)")
         return EXIT_FAIL
     problem = _verify_litellm_key(llm.base_url, llm.api_key)
     if problem:
-        _eprint(f"configure: the configuration was received but does not work: {problem}")
-        _eprint("Ask the platform team to check the gateway secrets in the central repository, then run `ai-sdlc-gate configure` again.")
+        _eprint(f"configure: the review engine could not be verified: {problem}")
+        _eprint("Ask the platform team to check the central repository configuration, then run `ai-sdlc-gate configure` again.")
         return EXIT_FAIL
     st = secrets_store.store(llm.base_url, llm.api_key, models=llm.models or [], mode=llm.mode)
-    where = "the operating system credential store" if st.backend == "keyring" else "an encrypted file (no OS credential store is available on this machine)"
-    print(f"Gateway configuration received from {repo}, verified, and stored in {where}.")
+    if st.backend != "keyring":
+        _eprint("note: no operating system credential store is available on this machine; an encrypted file is used instead")
+    print("Review engine ready.", flush=True)
     return EXIT_PASS
 
 

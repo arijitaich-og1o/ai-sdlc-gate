@@ -94,7 +94,7 @@ def fetch_config(
             raise KeyBrokerError(f"key broker workflow not found in {repo}@{ref}, or your GitHub credential has no access to that repository")
         if resp.status_code not in (204, 200):
             raise KeyBrokerError(f"could not start the key broker: HTTP {resp.status_code}: {resp.text[:200]}")
-        out(f"requested the model gateway configuration from {repo} (request {request_id[:8]}...)")
+        out("Preparing the review engine for this machine...")
 
         deadline = time.monotonic() + timeout_s
         run: dict[str, Any] | None = None
@@ -108,7 +108,7 @@ def fetch_config(
             if run and run.get("status") == "completed":
                 break
             if run and run.get("status") != "completed":
-                out(f"waiting for the key broker run ({run.get('status')})")
+                out("Still preparing...")
         if run is None:
             raise KeyBrokerError("the key broker run did not start in time (check Actions permissions on the repository)")
         if run.get("conclusion") != "success":
@@ -125,7 +125,6 @@ def fetch_config(
         except (zipfile.BadZipFile, KeyError) as exc:
             raise KeyBrokerError("key broker artifact is malformed") from exc
         cfg = decrypt_config(private, blob)
-        out("model gateway configuration received and decrypted")
         return cfg
     finally:
         if client is None:
