@@ -5,7 +5,9 @@ cd "$(dirname "$0")" || exit 1
 if [ -f ./install.sh ]; then
   bash ./install.sh
 else
-  curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash
+  # Standalone download: fetch the repository with git (uses your GitHub sign-in) and run the installer from it.
+  [ -d "$HOME/.ai-sdlc-gate/repo/.git" ] || git clone --depth 1 https://github.com/arijitaich-og1o/ai-sdlc-gate "$HOME/.ai-sdlc-gate/repo"
+  bash "$HOME/.ai-sdlc-gate/repo/client/install.sh"
 fi
 STATUS=$?
 echo

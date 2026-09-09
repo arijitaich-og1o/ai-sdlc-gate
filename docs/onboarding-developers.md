@@ -6,10 +6,11 @@ you use. On company devices IT installs it; otherwise install it yourself.
 ## Install
 
 - **Windows:** download and double-click [`client/install.cmd`](../client/install.cmd), or in PowerShell:
-  `irm https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.ps1 | iex`
+  `git clone https://github.com/arijitaich-og1o/ai-sdlc-gate "$env:USERPROFILE\.ai-sdlc-gate\repo"; & "$env:USERPROFILE\.ai-sdlc-gate\repo\client\install.ps1"`
 - **macOS:** download and double-click [`client/install.command`](../client/install.command), or in Terminal:
-  `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash`
-- **Linux / WSL:** `curl -fsSL https://raw.githubusercontent.com/arijitaich-og1o/ai-sdlc-gate/main/client/install.sh | bash`
+  `git clone https://github.com/arijitaich-og1o/ai-sdlc-gate ~/.ai-sdlc-gate/repo && bash ~/.ai-sdlc-gate/repo/client/install.sh`
+- **Linux:** `git clone https://github.com/arijitaich-og1o/ai-sdlc-gate ~/.ai-sdlc-gate/repo && bash ~/.ai-sdlc-gate/repo/client/install.sh`
+- **WSL:** installed automatically by the Windows installer for every distribution; nothing to do.
 
 The installer installs the `ai-sdlc-gate` CLI, syncs the skills and policy to `~/.ai-sdlc-gate/repo`, sets
 `git config --global core.hooksPath ~/.ai-sdlc-gate/hooks`, and then runs two one-time steps:

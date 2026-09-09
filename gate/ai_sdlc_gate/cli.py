@@ -530,6 +530,22 @@ def cmd_configure(args: argparse.Namespace) -> int:
         secrets_store.clear()
         print("review engine configuration removed")
         return EXIT_PASS
+    if args.export_record:
+        stored = secrets_store.load()
+        if stored is None:
+            _eprint("the review engine is not set up on this machine")
+            return EXIT_FAIL
+        print(stored.to_json(), flush=True)
+        return EXIT_PASS
+    if args.import_record:
+        raw = sys.stdin.read()
+        rec = secrets_store.Stored.from_json(raw, "import")
+        if rec is None or not rec.base_url:
+            _eprint("no valid record on standard input")
+            return EXIT_FAIL
+        secrets_store.store(rec.base_url, rec.api_key, models=rec.models, mode=rec.mode)
+        print("Review engine ready.", flush=True)
+        return EXIT_PASS
     if args.api_key:
         if not args.base_url:
             _eprint("--base-url is required together with --api-key")
@@ -612,8 +628,10 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker (with --base-url)")
     cf.add_argument("--models", help="comma separated model names to store with --api-key")
     cf.add_argument("--repo", help="central repository (default from policy)"), cf.add_argument("--ref", help="branch of the central repository (default main)")
-    cf.add_argument("--check", action="store_true", help="exit 0 if a key is available, 1 otherwise")
-    cf.add_argument("--clear", action="store_true", help="remove the stored key")
+    cf.add_argument("--check", action="store_true", help="exit 0 if the review engine is set up, 1 otherwise")
+    cf.add_argument("--clear", action="store_true", help="remove the review engine configuration")
+    cf.add_argument("--export-record", action="store_true", help=argparse.SUPPRESS)
+    cf.add_argument("--import-record", action="store_true", help=argparse.SUPPRESS)
     cf.set_defaults(func=cmd_configure)
 
 
