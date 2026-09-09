@@ -1,33 +1,33 @@
-# SDLC Gate — Organisation Dashboard
+# AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-08T23:35:36+00:00 from 4 gate run(s)._
+_Generated 2026-09-09T00:26:56+00:00 from 5 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 4 |
-| Pass rate | 75% |
-| Runs flagged (findings at/above threshold) | 1 (25%) |
-| Runs blocked | 1 (25%) |
+| Gate runs | 5 |
+| Pass rate | 80% |
+| Runs flagged (findings at/above threshold) | 1 (20%) |
+| Runs blocked | 1 (20%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 1.5 |
+| Findings per run | 1.2 |
 | Runs with local client attestation | 0% |
-| Active developers / repositories | 2 / 1 |
+| Active developers / repositories | 2 / 2 |
 | Top finding categories | missing-negative-tests, hardcoded-credential, hardcoded-configuration |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 4 | 75% | 1 | 0 | 4 | 0 | 2 |
+| 2026-09 | 5 | 80% | 1 | 0 | 4 | 0 | 2 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| @arijitaich-og1o | 3 | 100% | 0 | 0 | 0/0 | 0 | 0.67 | 0% | missing-negative-tests | 2026-09-08 |
+| @arijitaich-og1o | 4 | 100% | 0 | 0 | 0/0 | 0 | 0.5 | 0% | missing-negative-tests | 2026-09-09 |
 | arijit.aich@og1o.in (@arijitaich-og1o) | 1 | 0% | 1 | 1 | 0/0 | 0 | 4.0 | 0% | hardcoded-credential, hardcoded-configuration | 2026-09-08 |
 
 ## Repositories
@@ -35,6 +35,7 @@ _Generated 2026-09-08T23:35:36+00:00 from 4 gate run(s)._
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
 | arijitaich-og1o/hook-demo | 4 | 75% | 1 | 0 | 2 | 1.5 | missing-negative-tests, hardcoded-credential, hardcoded-configuration |
+| unknown/unknown | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
 
 ### Reading this dashboard
 
