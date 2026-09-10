@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="940" height="226" viewBox="0 0 940 226" font-family="Segoe UI, Helvetica, Arial, sans-serif">
-<rect width="940" height="226" rx="10" fill="#0d1117"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="252" viewBox="0 0 940 252" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="940" height="252" rx="10" fill="#0d1117"/>
 <text x="24" y="38" font-size="22" font-weight="700" fill="#e6edf3">AI SDLC Gate — live scoreboard</text>
-<text x="24" y="62" font-size="12" fill="#8b949e">updated 2026-09-09 05:23 UTC · 14 gate runs · 2 developers · 3 repositories</text>
+<text x="24" y="62" font-size="12" fill="#8b949e">updated 2026-09-10 08:30 UTC · 15 gate runs · 3 developers · 4 repositories</text>
 <rect x="24" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="34" y="96" font-size="12" fill="#8b949e">Pass rate</text>
-<text x="184" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">43%</text>
+<text x="184" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">47%</text>
 <rect x="204" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="214" y="96" font-size="12" fill="#8b949e">Blocked</text>
 <text x="364" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">8</text>
@@ -13,7 +13,7 @@
 <text x="544" y="97" font-size="14" font-weight="700" fill="#2ea043" text-anchor="end">0</text>
 <rect x="564" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="574" y="96" font-size="12" fill="#8b949e">Findings / run</text>
-<text x="724" y="97" font-size="14" font-weight="700" fill="#58a6ff" text-anchor="end">4.57</text>
+<text x="724" y="97" font-size="14" font-weight="700" fill="#58a6ff" text-anchor="end">4.47</text>
 <rect x="744" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="754" y="96" font-size="12" fill="#8b949e">Client attested</text>
 <text x="904" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">7%</text>
@@ -26,18 +26,26 @@
 <text x="850" y="136" font-size="12" font-weight="700" fill="#8b949e">Last run</text>
 <line x1="24" y1="144" x2="916" y2="144" stroke="#30363d"/>
 <rect x="16" y="145" width="908" height="26" fill="#161b22" opacity="0.6"/>
-<text x="24" y="162" font-size="13" fill="#e6edf3">@arijitaich-og1o</text>
-<text x="470" y="162" font-size="13" fill="#e6edf3">6</text>
-<text x="540" y="162" font-size="13" font-weight="700" fill="#d4a72c">67%</text>
-<text x="610" y="162" font-size="13" fill="#cf222e">2</text>
+<text x="24" y="162" font-size="13" fill="#e6edf3">felix.theodor@ottogroup.com (@arijitaich-og1o)</text>
+<text x="470" y="162" font-size="13" fill="#e6edf3">1</text>
+<text x="540" y="162" font-size="13" font-weight="700" fill="#2ea043">100%</text>
+<text x="610" y="162" font-size="13" fill="#e6edf3">0</text>
 <text x="690" y="162" font-size="13" fill="#e6edf3">0/0</text>
 <text x="760" y="162" font-size="13" fill="#cf222e">0%</text>
-<text x="850" y="162" font-size="12" fill="#8b949e">2026-09-09</text>
-<text x="24" y="188" font-size="13" fill="#e6edf3">arijit.aich@og1o.in (@arijitaich-og1o)</text>
-<text x="470" y="188" font-size="13" fill="#e6edf3">8</text>
-<text x="540" y="188" font-size="13" font-weight="700" fill="#cf222e">25%</text>
-<text x="610" y="188" font-size="13" fill="#cf222e">6</text>
+<text x="850" y="162" font-size="12" fill="#8b949e">2026-09-10</text>
+<text x="24" y="188" font-size="13" fill="#e6edf3">@arijitaich-og1o</text>
+<text x="470" y="188" font-size="13" fill="#e6edf3">6</text>
+<text x="540" y="188" font-size="13" font-weight="700" fill="#d4a72c">67%</text>
+<text x="610" y="188" font-size="13" fill="#cf222e">2</text>
 <text x="690" y="188" font-size="13" fill="#e6edf3">0/0</text>
-<text x="760" y="188" font-size="13" fill="#cf222e">12%</text>
+<text x="760" y="188" font-size="13" fill="#cf222e">0%</text>
 <text x="850" y="188" font-size="12" fill="#8b949e">2026-09-09</text>
+<rect x="16" y="197" width="908" height="26" fill="#161b22" opacity="0.6"/>
+<text x="24" y="214" font-size="13" fill="#e6edf3">arijit.aich@og1o.in (@arijitaich-og1o)</text>
+<text x="470" y="214" font-size="13" fill="#e6edf3">8</text>
+<text x="540" y="214" font-size="13" font-weight="700" fill="#cf222e">25%</text>
+<text x="610" y="214" font-size="13" fill="#cf222e">6</text>
+<text x="690" y="214" font-size="13" fill="#e6edf3">0/0</text>
+<text x="760" y="214" font-size="13" fill="#cf222e">12%</text>
+<text x="850" y="214" font-size="12" fill="#8b949e">2026-09-09</text>
 </svg>
