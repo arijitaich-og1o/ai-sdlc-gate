@@ -1,27 +1,27 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-09T05:23:22+00:00 from 14 gate run(s)._
+_Generated 2026-09-10T08:30:43+00:00 from 15 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 14 |
-| Pass rate | 43% |
-| Runs flagged (findings at/above threshold) | 8 (57%) |
-| Runs blocked | 8 (57%) |
+| Gate runs | 15 |
+| Pass rate | 47% |
+| Runs flagged (findings at/above threshold) | 8 (53%) |
+| Runs blocked | 8 (53%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 4.57 |
+| Findings per run | 4.47 |
 | Runs with local client attestation | 7% |
-| Active developers / repositories | 2 / 3 |
+| Active developers / repositories | 3 / 4 |
 | Top finding categories | hardcoded-credential, data-protection-design-gap, general, credentials-in-tests, insecure-design |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 14 | 43% | 8 | 0 | 24 | 9 | 19 |
+| 2026-09 | 15 | 47% | 8 | 0 | 24 | 9 | 21 |
 
 ## Developers
 
@@ -29,6 +29,7 @@ _Generated 2026-09-09T05:23:22+00:00 from 14 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 8 | 25% | 6 | 6 | 0/0 | 0 | 5.38 | 12% | hardcoded-credential, data-protection-design-gap, general | 2026-09-09 |
 | @arijitaich-og1o | 6 | 67% | 2 | 2 | 0/0 | 0 | 3.5 | 0% | missing-negative-tests, hardcoded-credential, secret-exposure | 2026-09-09 |
+| felix.theodor@ottogroup.com (@arijitaich-og1o) | 1 | 100% | 0 | 0 | 0/0 | 0 | 3.0 | 0% | authz-design-gap, undocumented-decision, schema-incompatibility | 2026-09-10 |
 
 ## Repositories
 
@@ -36,6 +37,7 @@ _Generated 2026-09-09T05:23:22+00:00 from 14 gate run(s)._
 |---|---|---|---|---|---|---|---|
 | arijitaich-og1o/review-skill | 7 | 29% | 5 | 0 | 1 | 5.57 | data-protection-design-gap, general, hardcoded-credential |
 | arijitaich-og1o/hook-demo | 6 | 50% | 3 | 0 | 2 | 4.17 | hardcoded-credential, hardcoded-configuration, missing-negative-tests |
+| OG-DW/rmscontextual_api | 1 | 100% | 0 | 0 | 1 | 3.0 | authz-design-gap, undocumented-decision, schema-incompatibility |
 | unknown/unknown | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
 
 ### Reading this dashboard
