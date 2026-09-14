@@ -49,34 +49,34 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 3,
-      "attested_rate": 0.3,
-      "block_rate": 0.6,
+      "attested": 4,
+      "attested_rate": 0.364,
+      "block_rate": 0.545,
       "blocked": 6,
       "developers_count": 1,
       "findings": {
         "blocker": 6,
         "high": 8,
         "info": 0,
-        "low": 14,
-        "medium": 21
+        "low": 15,
+        "medium": 23
       },
-      "findings_per_run": 4.9,
+      "findings_per_run": 4.73,
       "first_seen": "2026-09-08T23:07:00+00:00",
-      "flag_rate": 0.6,
+      "flag_rate": 0.545,
       "flagged": 6,
       "intents": {
-        "commit": 10
+        "commit": 11
       },
       "last_seen": "2026-09-10T08:31:17+00:00",
-      "pass_rate": 0.4,
-      "passed": 4,
+      "pass_rate": 0.455,
+      "passed": 5,
       "repos": [
         "OG-DW/rmscontextual_api",
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/review-skill"
       ],
-      "runs": 10,
+      "runs": 11,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -131,43 +131,43 @@
       "waived_findings": 0
     }
   },
-  "events": 17,
-  "generated_at": "2026-09-14T06:08:30+00:00",
+  "events": 18,
+  "generated_at": "2026-09-14T06:09:53+00:00",
   "months": {
     "2026-09": {
       "actors": [
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 3,
-      "attested_rate": 0.176,
-      "block_rate": 0.471,
+      "attested": 4,
+      "attested_rate": 0.222,
+      "block_rate": 0.444,
       "blocked": 8,
       "developers_count": 3,
       "findings": {
         "blocker": 24,
         "high": 9,
         "info": 0,
-        "low": 15,
-        "medium": 25
+        "low": 16,
+        "medium": 27
       },
-      "findings_per_run": 4.29,
+      "findings_per_run": 4.22,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.471,
+      "flag_rate": 0.444,
       "flagged": 8,
       "intents": {
-        "commit": 17
+        "commit": 18
       },
       "last_seen": "2026-09-10T08:31:17+00:00",
-      "pass_rate": 0.529,
-      "passed": 9,
+      "pass_rate": 0.556,
+      "passed": 10,
       "repos": [
         "OG-DW/rmscontextual_api",
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/review-skill",
         "unknown/unknown"
       ],
-      "runs": 17,
+      "runs": 18,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -186,35 +186,35 @@
       "arijitaich-og1o"
     ],
     "actors_count": 1,
-    "attested": 3,
-    "attested_rate": 0.176,
-    "block_rate": 0.471,
+    "attested": 4,
+    "attested_rate": 0.222,
+    "block_rate": 0.444,
     "blocked": 8,
     "developers_count": 3,
     "findings": {
       "blocker": 24,
       "high": 9,
       "info": 0,
-      "low": 15,
-      "medium": 25
+      "low": 16,
+      "medium": 27
     },
-    "findings_per_run": 4.29,
+    "findings_per_run": 4.22,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.471,
+    "flag_rate": 0.444,
     "flagged": 8,
     "intents": {
-      "commit": 17
+      "commit": 18
     },
     "last_seen": "2026-09-10T08:31:17+00:00",
-    "pass_rate": 0.529,
-    "passed": 9,
+    "pass_rate": 0.556,
+    "passed": 10,
     "repos": [
       "OG-DW/rmscontextual_api",
       "arijitaich-og1o/hook-demo",
       "arijitaich-og1o/review-skill",
       "unknown/unknown"
     ],
-    "runs": 17,
+    "runs": 18,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
@@ -233,8 +233,8 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 2,
-      "attested_rate": 0.667,
+      "attested": 3,
+      "attested_rate": 0.75,
       "block_rate": 0.0,
       "blocked": 0,
       "developers_count": 2,
@@ -242,23 +242,23 @@
         "blocker": 0,
         "high": 0,
         "info": 0,
-        "low": 3,
-        "medium": 6
+        "low": 4,
+        "medium": 8
       },
       "findings_per_run": 3.0,
       "first_seen": "2026-09-10T08:30:19+00:00",
       "flag_rate": 0.0,
       "flagged": 0,
       "intents": {
-        "commit": 3
+        "commit": 4
       },
       "last_seen": "2026-09-10T08:31:17+00:00",
       "pass_rate": 1.0,
-      "passed": 3,
+      "passed": 4,
       "repos": [
         "OG-DW/rmscontextual_api"
       ],
-      "runs": 3,
+      "runs": 4,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
