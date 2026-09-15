@@ -24,7 +24,9 @@ SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("Azure storage key", re.compile(r"AccountKey=[A-Za-z0-9+/=]{60,}")),
     (
         "Hard-coded password assignment",
-        re.compile(r"(?i)[A-Za-z0-9_.]*(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token)[A-Za-z0-9_]*\s*[:=]\s*[\"'][^\"'\s]{8,}[\"']"),
+        # Bounded key portion (no unbounded `[A-Za-z0-9_]*` around the keyword) to avoid catastrophic backtracking
+        # on long word-character lines (ReDoS).
+        re.compile(r"(?i)\b\w{0,40}(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|auth[_-]?token)\w{0,20}\s*[:=]\s*[\"'][^\"'\s]{8,}[\"']"),
     ),
     ("Connection string with credentials", re.compile(r"(?i)\b[a-z][a-z0-9+.-]*://[^/\s:@]+:[^@\s]{4,}@[^\s\"']+")),
 ]
@@ -94,7 +96,9 @@ def run_prechecks(cfg: Config, cs: ChangeSet) -> list[dict]:
         return []
     allow = [re.compile(p) for p in cfg.prechecks.get("secret_allow_regexes") or []]
     findings: list[dict] = []
-    for f in cs.files:
+    # Scan model-reviewed files and the files excluded from model review (generated/vendored/large): a secret
+    # must not be hidden by naming a file to match an exclude glob.
+    for f in [*cs.files, *cs.excluded_files]:
         if f.status == "D" or f.binary:
             continue
         if ENV_FILE.search(f.path) and not ENV_FILE_ALLOW.search(f.path):
@@ -119,7 +123,9 @@ def run_prechecks(cfg: Config, cs: ChangeSet) -> list[dict]:
                 if not m:
                     continue
                 token = m.group(0)
-                if PLACEHOLDER_HINTS.search(token) or PLACEHOLDER_HINTS.search(text):
+                # Only treat as a placeholder when the matched secret itself looks like one; a placeholder word
+                # elsewhere on the line (e.g. in a comment) must not suppress a real adjacent secret.
+                if PLACEHOLDER_HINTS.search(token):
                     continue
                 if any(a.search(text) for a in allow):
                     continue

@@ -111,17 +111,27 @@ if (Get-Command wsl.exe -ErrorAction SilentlyContinue) {
   if ($distros.Count -gt 0) {
     $drive = $home_.Substring(0, 1).ToLower()
     $winHomeWsl = "/mnt/$drive" + ($home_.Substring(2) -replace "\\", "/")
+    # Refuse to provision WSL when the install path would break bash quoting (a quote in the path is an
+    # injection vector); such paths are unsupported for the WSL handover.
+    if ($winHomeWsl -match "'") { Say "WSL: skipped; the install path contains a single quote, which is unsupported." } else {
     $record = Join-Path $home_ "handover.json"
+    # The handover carries the review key; write it owner-only and remove it in a finally so it never persists.
     & cmd /c "$(GateCmd) configure --export-record > ""$record"" 2>nul"
-    foreach ($d in $distros) {
-      Say "WSL: installing the gate in '$d'"
-      $cmd = "export AI_SDLC_GATE_NONINTERACTIVE=1 AI_SDLC_GATE_REPO_URL='$winHomeWsl/repo' AI_SDLC_GATE_RECORD_FILE='$winHomeWsl/handover.json'; " +
-             "bash '$winHomeWsl/repo/client/install.sh'; mkdir -p ~/.ai-sdlc-gate; " +
-             "[ -f '$winHomeWsl/identity.json' ] && cp '$winHomeWsl/identity.json' ~/.ai-sdlc-gate/ && chmod 600 ~/.ai-sdlc-gate/identity.json; true"
-      & cmd /c "wsl.exe -d $d -- bash -lc ""$cmd"" 2>&1" | Where-Object { $_ -notmatch "notice|pip is available|To update, run|WARNING: The script" }
-      if ($LASTEXITCODE -ne 0) { Say "WSL '$d': the gate could not be installed there (git and Python 3.10+ are required inside WSL). Run 'bash $winHomeWsl/repo/client/install.sh' inside it later." }
+    try { (Get-Item $record).Attributes = 'Hidden' } catch {}
+    try {
+      foreach ($d in $distros) {
+        if ($d -match "'") { Say "WSL: skipped '$d'; distribution name contains a single quote."; continue }
+        Say "WSL: installing the gate in '$d'"
+        $cmd = "export AI_SDLC_GATE_NONINTERACTIVE=1 AI_SDLC_GATE_REPO_URL='$winHomeWsl/repo' AI_SDLC_GATE_RECORD_FILE='$winHomeWsl/handover.json'; " +
+               "bash '$winHomeWsl/repo/client/install.sh'; mkdir -p ~/.ai-sdlc-gate; " +
+               "[ -f '$winHomeWsl/identity.json' ] && cp '$winHomeWsl/identity.json' ~/.ai-sdlc-gate/ && chmod 600 ~/.ai-sdlc-gate/identity.json; true"
+        & cmd /c "wsl.exe -d $d -- bash -lc ""$cmd"" 2>&1" | Where-Object { $_ -notmatch "notice|pip is available|To update, run|WARNING: The script" }
+        if ($LASTEXITCODE -ne 0) { Say "WSL '$d': the gate could not be installed there (git and Python 3.10+ are required inside WSL). Run 'bash $winHomeWsl/repo/client/install.sh' inside it later." }
+      }
+    } finally {
+      if (Test-Path $record) { Remove-Item -Force $record }
     }
-    if (Test-Path $record) { Remove-Item -Force $record }
+    }
   }
 }
 

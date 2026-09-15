@@ -6,6 +6,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
+from xml.sax.saxutils import quoteattr as _qa
 
 from .changes import ChangeSet, chunk_changeset, render_changeset
 from .config import Config, normalize_severity, severity_rank
@@ -178,19 +179,19 @@ def normalize_findings(raw: Any, phase: int, source: str = "skill") -> list[dict
                 "waived": False,
             }
         )
-        if len(out) >= MAX_FINDINGS_PER_PHASE:
-            break
+    # Sort by severity first, then cap: a blocker emitted late must never be truncated ahead of low-severity noise.
     out.sort(key=lambda f: (-severity_rank(f["severity"]), -f["confidence"]))
-    return out
+    return out[:MAX_FINDINGS_PER_PHASE]
 
 
 def build_user_prompt(skill: Skill, cs: ChangeSet, intent: IntentDecision, budget: int) -> str:
+    # Attributes are XML-quoted: a crafted branch name must not be able to inject or close tags in the prompt.
     ctx = (
-        f'<review_context intent="{intent.intent}" phase="{skill.phase}" branch="{cs.branch}" '
-        f'mode="{cs.mode}" files="{len(cs.files)}" excluded="{len(cs.excluded)}" />'
+        f'<review_context intent={_qa(intent.intent)} phase={_qa(str(skill.phase))} branch={_qa(cs.branch)} '
+        f'mode={_qa(cs.mode)} files={_qa(str(len(cs.files)))} excluded={_qa(str(len(cs.excluded)))} />'
     )
     return (
-        f'<phase_skill name="{skill.name}" version="{skill.version}" phase="{skill.phase}">\n{skill.body}\n</phase_skill>\n\n'
+        f'<phase_skill name={_qa(skill.name)} version={_qa(skill.version)} phase={_qa(str(skill.phase))}>\n{skill.body}\n</phase_skill>\n\n'
         f"{ctx}\n\n<change_set>\n{render_changeset(cs, budget=budget)}\n</change_set>\n\n"
         "Return the JSON object now."
     )
@@ -217,6 +218,9 @@ def review_phase(cfg: Config, llm: Any, skill: Skill, cs: ChangeSet, intent: Int
     except LLMError as exc:
         result.error = str(exc)
         result.verdict = "error"
+    # Re-sort the combined per-chunk findings by severity before the phase cap so a blocker in a later chunk
+    # is never truncated behind lower-severity findings from earlier chunks.
+    findings.sort(key=lambda f: (-severity_rank(f["severity"]), -f.get("confidence", 0.0)))
     result.findings = findings[:MAX_FINDINGS_PER_PHASE]
     result.summary = " ".join(s for s in summaries if s)
     result.duration_s = time.monotonic() - started
@@ -292,7 +296,8 @@ def run_gate(
     verified = [a["email"] for a in attestations if a.get("email") and a["email"] != "anonymous"]
     identity_ctx = {
         "attestations": len(attestations),
-        "client_attested": bool(attestations),
+        # Only a verified (non-anonymous) attestation counts as attested; an anonymous stamp must not claim it.
+        "client_attested": bool(verified),
         "developer_email": (verified[0] if verified else (cs.author_email or "")).lower(),
         "email_verified": bool(verified),
     }

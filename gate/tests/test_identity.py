@@ -21,6 +21,14 @@ def _jwt(claims: dict) -> str:
     return f"{b64({'alg': 'RS256'})}.{b64(claims)}.sig"
 
 
+# Tests fabricate unsigned tokens; stub out the cryptographic verification and exercise claims validation instead.
+def _stub_verify(token: str, tenant: str, client_id: str, authority: str) -> dict:
+    return idm.decode_jwt_claims(token)
+
+
+VERIFY = {"verify_token": _stub_verify}
+
+
 def _claims(**over):
     base = {
         "aud": CLIENT,
@@ -56,7 +64,7 @@ def test_device_code_login_returns_verified_identity(tmp_path, monkeypatch):
     opened: list[str] = []
     shown: list[str] = []
     monkeypatch.setattr(idm, "copy_to_clipboard", lambda text: True)
-    ident = idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=shown.append, sleep=lambda s: None, open_browser=True, client=client, browser=opened.append)
+    ident = idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=shown.append, sleep=lambda s: None, open_browser=True, client=client, browser=opened.append, **VERIFY)
     assert opened == ["https://login.microsoftonline.com/common/oauth2/deviceauth?otc=ABCD"]
     assert any("Your code:   ABCD" in line for line in shown) and any("Sign-in confirmed" in line for line in shown)
     assert ident.email == "arijit.aich@og1o.in" and ident.name == "Arijit Aich" and ident.tid == TENANT
@@ -81,7 +89,7 @@ def test_device_code_login_returns_verified_identity(tmp_path, monkeypatch):
 def test_login_rejects_invalid_tokens(bad, message):
     client = httpx.Client(transport=_transport(_claims(**bad), pending_polls=0))
     with pytest.raises(idm.IdentityError) as exc:
-        idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, sleep=lambda s: None, open_browser=False, client=client)
+        idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, sleep=lambda s: None, open_browser=False, client=client, **VERIFY)
     assert message in str(exc.value)
 
 
@@ -187,7 +195,7 @@ def test_browser_login_pkce_roundtrip():
         cb = f"{q['redirect_uri']}/?code=the-code&state={q['state']}"
         threading.Thread(target=lambda: urllib.request.urlopen(cb, timeout=5).read(), daemon=True).start()
 
-    ident = idm.browser_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, client=httpx.Client(transport=httpx.MockTransport(handler)), browser=fake_browser, timeout_seconds=10)
+    ident = idm.browser_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, client=httpx.Client(transport=httpx.MockTransport(handler)), browser=fake_browser, timeout_seconds=10, **VERIFY)
     assert ident.email == "arijit.aich@og1o.in"
     body = seen["token_request"]
     assert body["grant_type"] == "authorization_code" and body["code"] == "the-code" and body["code_verifier"]
@@ -247,5 +255,5 @@ def test_browser_login_prints_link_when_no_browser():
         shown_nonce.append(dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query))["nonce"])
         return real_no_browser(url)
 
-    idm.browser_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=shown.append, client=httpx.Client(transport=httpx.MockTransport(handler)), browser=capture, timeout_seconds=10)
+    idm.browser_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=shown.append, client=httpx.Client(transport=httpx.MockTransport(handler)), browser=capture, timeout_seconds=10, **VERIFY)
     assert any("Open this link in your browser" in line for line in shown) and any("https://login.microsoftonline.com/" in line for line in shown)

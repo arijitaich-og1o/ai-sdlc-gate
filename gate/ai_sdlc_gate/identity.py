@@ -122,6 +122,42 @@ def decode_jwt_claims(token: str) -> dict[str, Any]:
         raise IdentityError("token from the identity provider could not be decoded") from exc
 
 
+def _verify_id_token(token: str, tenant: str, client_id: str, authority: str) -> dict[str, Any]:
+    """Cryptographically verify the id_token signature, issuer, audience and expiry.
+
+    The token is validated against the tenant's OpenID Connect discovery document and JWKS. This replaces a
+    decode-only read so a token that is not signed by the configured authority is rejected.
+    """
+    try:
+        import jwt
+        from jwt import PyJWKClient
+    except Exception as exc:  # noqa: BLE001
+        raise IdentityError("PyJWT is required to verify sign-in tokens; reinstall the client") from exc
+
+    issuer = f"{authority.rstrip('/')}/{tenant}/v2.0"
+    oidc = f"{authority.rstrip('/')}/{tenant}/v2.0/.well-known/openid-configuration"
+    try:
+        jwks_uri = PyJWKClient(oidc).fetch_data().get("jwks_uri")
+    except Exception as exc:  # noqa: BLE001 - discovery may be unreachable; fall back to the well-known path
+        jwks_uri = None
+    if not jwks_uri:
+        jwks_uri = f"{authority.rstrip('/')}/{tenant}/discovery/v2.0/keys"
+    try:
+        signing_key = PyJWKClient(jwks_uri).get_signing_key_from_jwt(token).key
+        return jwt.decode(
+            token,
+            signing_key,
+            algorithms=["RS256"],
+            audience=client_id,
+            issuer=[issuer, f"{authority.rstrip('/')}/{tenant}"] ,
+        )
+    except jwt.PyJWTError as exc:
+        raise IdentityError(f"sign-in token failed verification: {exc}") from exc
+
+
+_TENANT_UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+
+
 def _validate_claims(claims: dict[str, Any], tenant: str, client_id: str, authority: str, allowed_domains: list[str]) -> Identity:
     now = time.time()
     if claims.get("aud") != client_id:
@@ -133,13 +169,22 @@ def _validate_claims(claims: dict[str, Any], tenant: str, client_id: str, author
     if not iss.startswith(authority.rstrip("/") + "/"):
         raise IdentityError("token issuer is not the configured authority")
     tid = str(claims.get("tid") or "")
-    if re.match(r"^[0-9a-fA-F-]{36}$", tenant) and tid.lower() != tenant.lower():
+    # Enforce tenant binding: a named multi-tenant endpoint (organizations/common/consumers) never matches a
+    # specific tenant, so require a real tenant UUID and compare it to the token's tid.
+    if not _TENANT_UUID.match(tenant):
+        raise IdentityError(
+            "identity.tenant must be your organisation's tenant ID (a GUID), not a multi-tenant endpoint "
+            "such as 'organizations' or 'common'; set it in gate.config.yaml"
+        )
+    if tid.lower() != tenant.lower():
         raise IdentityError("token was issued for a different tenant")
     email = str(claims.get("preferred_username") or claims.get("email") or claims.get("upn") or "").strip().lower()
     if not EMAIL_RE.match(email):
         raise IdentityError("token does not carry a usable e-mail address")
     domain = email.rsplit("@", 1)[1]
-    if allowed_domains and domain not in {d.lower().lstrip("@") for d in allowed_domains}:
+    if not allowed_domains:
+        raise IdentityError("identity.allowed_domains is empty; configure your organisation domain in gate.config.yaml")
+    if domain not in {d.lower().lstrip("@") for d in allowed_domains}:
         raise IdentityError(f"{email} is not in an allowed organisation domain ({', '.join(allowed_domains)})")
     return Identity(
         email=email,
@@ -218,9 +263,11 @@ def device_code_login(
     client: httpx.Client | None = None,
     max_wait_seconds: int = 900,
     browser: Callable[[str], object] = open_url,
+    verify_token: Callable[[str, str, str, str], dict[str, Any]] | None = None,
 ) -> Identity:
     if not tenant or not client_id:
         raise IdentityError("identity.tenant and identity.client_id must be configured (see docs/enforcement.md)")
+    verify = verify_token or _verify_id_token
     http = client or httpx.Client(timeout=30)
     base = f"{authority.rstrip('/')}/{tenant}/oauth2/v2.0"
     try:
@@ -261,7 +308,7 @@ def device_code_login(
                 id_token = tok.json().get("id_token")
                 if not id_token:
                     raise IdentityError("token response did not include an id_token (request the openid scope)")
-                return _validate_claims(decode_jwt_claims(id_token), tenant, client_id, authority, allowed_domains or [])
+                return _validate_claims(verify(id_token, tenant, client_id, authority), tenant, client_id, authority, allowed_domains or [])
             err = tok.json().get("error") if tok.headers.get("content-type", "").startswith("application/json") else ""
             if err == "authorization_pending":
                 continue
@@ -315,10 +362,12 @@ def browser_login(
     browser: Callable[[str], object] = open_url,
     timeout_seconds: int = 300,
     port: int | None = None,
+    verify_token: Callable[[str, str, str, str], dict[str, Any]] | None = None,
 ) -> Identity:
     """Authorization-code sign-in with PKCE and a loopback redirect: no code to type, one account click."""
     if not tenant or not client_id:
         raise IdentityError("identity.tenant and identity.client_id must be configured (see docs/enforcement.md)")
+    verify = verify_token or _verify_id_token
     session = client or httpx.Client(timeout=30)
     port = port or _free_port()
     redirect_uri = f"http://localhost:{port}"
@@ -384,7 +433,7 @@ def browser_login(
     id_token = tok.json().get("id_token")
     if not id_token:
         raise IdentityError("token response did not include an id_token")
-    claims = decode_jwt_claims(id_token)
+    claims = verify(id_token, tenant, client_id, authority)
     if claims.get("nonce") != nonce:
         raise IdentityError("token nonce does not match this request")
     out("  Sign-in confirmed.")
