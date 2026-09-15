@@ -69,23 +69,33 @@ def commit_messages(base: str | None, head: str, cwd: str | Path | None = None) 
 
 
 def _parse_name_status(out: str) -> list[tuple[str, str]]:
+    # NUL-delimited (`-z`) parsing: with --no-renames the stream is status\0path\0status\0path...
+    # so filenames containing tabs, spaces, quotes or newlines are handled without corruption or
+    # path-truncation that could hide a file from the deterministic secret prechecks.
     rows: list[tuple[str, str]] = []
-    for line in out.splitlines():
-        if not line.strip():
+    fields = [f for f in out.split("\x00")]
+    i = 0
+    while i < len(fields):
+        status = fields[i].strip()
+        if not status:
+            i += 1
             continue
-        status, _, path = line.partition("\t")
-        rows.append((status[:1], path.strip()))
+        if i + 1 >= len(fields):
+            break
+        path = fields[i + 1]
+        rows.append((status[:1], path))
+        i += 2
     return rows
 
 
 def name_status(base: str | None, head: str, cwd: str | Path | None = None) -> list[tuple[str, str]]:
-    args = ["diff", "--name-status", "--no-renames"]
+    args = ["diff", "--name-status", "--no-renames", "-z"]
     args.extend([base, head] if base else [EMPTY_TREE, head])
     return _parse_name_status(run_git(args, cwd=cwd))
 
 
 def staged_name_status(cwd: str | Path | None = None) -> list[tuple[str, str]]:
-    return _parse_name_status(run_git(["diff", "--cached", "--name-status", "--no-renames"], cwd=cwd))
+    return _parse_name_status(run_git(["diff", "--cached", "--name-status", "--no-renames", "-z"], cwd=cwd))
 
 
 def file_diff(path: str, base: str | None, head: str, cwd: str | Path | None = None, staged: bool = False) -> str:

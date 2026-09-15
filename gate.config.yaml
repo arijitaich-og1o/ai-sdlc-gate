@@ -139,8 +139,9 @@ skip:
 identity:
   provider: entra
   authority: https://login.microsoftonline.com
-  # Until the platform team registers a dedicated "AI SDLC Gate client" application, the sign-in uses Microsoft's public
-  # Azure CLI client id against the developer's home tenant; only accounts in allowed_domains are accepted.
+  # Tenant must be your organisation's tenant ID (a GUID). A multi-tenant endpoint such as "organizations" or
+  # "common" is rejected at sign-in. Register a dedicated "AI SDLC Gate client" application and put its tenant
+  # and client id here; only accounts in allowed_domains are accepted.
   tenant: organizations
   client_id: 04b07795-8ddb-461a-bbee-02f9e1bf7b46
   allowed_domains: [og1o.in]

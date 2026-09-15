@@ -67,13 +67,40 @@ def _enc_key_path() -> Path:
     return sdlc_home() / ".k"
 
 
+def _lock_down(path: Path) -> None:
+    """Restrict a file/dir to the current user only, on POSIX and Windows."""
+    if os.name == "nt":
+        try:
+            import subprocess
+
+            user = os.environ.get("USERNAME") or ""
+            if user:
+                # Reset inheritance and grant only the current user full control.
+                subprocess.run(
+                    ["icacls", str(path), "/inheritance:r", "/grant:r", f"{user}:F"],
+                    capture_output=True,
+                    check=False,
+                )
+        except Exception:  # noqa: BLE001
+            pass
+    else:
+        try:
+            if path.is_dir():
+                os.chmod(path, stat.S_IRWXU)  # 0700
+            else:
+                os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)  # 0600
+        except OSError:
+            pass
+
+
 def _write_private(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    _lock_down(path.parent)
+    # Create with no bytes first so the restrictive mode is applied before secret data is written.
+    path.write_bytes(b"")
+    _lock_down(path)
     path.write_bytes(data)
-    try:
-        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
-    except OSError:
-        pass
+    _lock_down(path)
 
 
 def _fernet():

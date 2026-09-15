@@ -20,6 +20,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape as _esc, quoteattr as _qa
 
 from .config import Config
 from .evaluate import Evaluation, evaluate_skill
@@ -132,10 +133,10 @@ def judge(
         guards.append("judge model unavailable; decision based on objective scores only")
     else:
         user = (
-            f"<current_skill version=\"{baseline.version}\">\n{baseline.body}\n</current_skill>\n\n"
-            f"<candidate_skill version=\"{candidate.version}\">\n{candidate.body}\n</candidate_skill>\n\n"
-            f"<current_evaluation>\n{json.dumps(_eval_brief(base_eval), indent=1)}\n</current_evaluation>\n\n"
-            f"<candidate_evaluation>\n{json.dumps(_eval_brief(cand_eval), indent=1)}\n</candidate_evaluation>\n\n"
+            f"<current_skill version={_qa(baseline.version)}>\n{_esc(baseline.body)}\n</current_skill>\n\n"
+            f"<candidate_skill version={_qa(candidate.version)}>\n{_esc(candidate.body)}\n</candidate_skill>\n\n"
+            f"<current_evaluation>\n{_esc(json.dumps(_eval_brief(base_eval), indent=1))}\n</current_evaluation>\n\n"
+            f"<candidate_evaluation>\n{_esc(json.dumps(_eval_brief(cand_eval), indent=1))}\n</candidate_evaluation>\n\n"
             f"Minimum improvement required for replace: {min_improvement}. Return the JSON now."
         )
         try:

@@ -38,6 +38,31 @@ class LLMError(RuntimeError):
     pass
 
 
+_BLOCKED_SCHEMES = {"file", "ftp", "gopher", "data", "javascript"}
+# Link-local cloud metadata endpoints that must never receive review traffic.
+_BLOCKED_HOSTS = {"169.254.169.254", "metadata.google.internal", "100.100.100.200"}
+
+
+def validate_base_url(url: str) -> str:
+    """Reject gateway URLs that are not HTTPS to a routable host (blocks file://, IMDS and scheme smuggling)."""
+    from urllib.parse import urlparse
+
+    u = (url or "").strip()
+    parsed = urlparse(u)
+    if parsed.scheme.lower() in _BLOCKED_SCHEMES:
+        raise LLMError(f"gateway base URL scheme '{parsed.scheme}' is not allowed")
+    if parsed.scheme.lower() not in ("https", "http"):
+        raise LLMError("gateway base URL must be http(s)")
+    host = (parsed.hostname or "").lower()
+    if not host:
+        raise LLMError("gateway base URL has no host")
+    if host in _BLOCKED_HOSTS or host.startswith("169.254."):
+        raise LLMError("gateway base URL points at a link-local/metadata address, which is not allowed")
+    if parsed.scheme.lower() == "http" and host not in ("localhost", "127.0.0.1", "::1"):
+        raise LLMError("gateway base URL must use https (http is only allowed for localhost)")
+    return u
+
+
 # Default model for review and arbitration when neither LITELLM_MODELS nor the stored client configuration names one.
 _BUILTIN_MODELS = ["claude-opus-4-8", "claude-opus-4-8"]
 
@@ -51,8 +76,13 @@ def resolve_models(cfg: Config, stored_models: list[str] | None = None) -> tuple
         names = [m for m in (llm.get("review_model"), llm.get("judge_model"), *(llm.get("fallback_models") or [])) if m]
     if not names:
         names = list(_BUILTIN_MODELS)
-    review = os.environ.get("AI_SDLC_GATE_MODEL") or names[0]
-    judge = os.environ.get("AI_SDLC_JUDGE_MODEL") or (names[1] if len(names) > 1 else names[0])
+    # Environment overrides are only honoured when they name a model already in the configured set; this stops
+    # a CI-set variable from silently substituting an arbitrary (and possibly unreviewed) model.
+    known = set(names)
+    env_review = os.environ.get("AI_SDLC_GATE_MODEL", "").strip()
+    review = env_review if env_review in known else names[0]
+    env_judge = os.environ.get("AI_SDLC_JUDGE_MODEL", "").strip()
+    judge = env_judge if env_judge in known else (names[1] if len(names) > 1 else names[0])
     fallbacks = [m for m in names[2:] if m not in (review, judge)] if len(names) > 2 else [m for m in names if m not in (review,)]
     return review, judge, fallbacks
 
@@ -105,7 +135,7 @@ class LLMClient:
             raise LLMError("model gateway base URL is not configured (LITELLM_BASE_URL)")
         if not api_key:
             raise LLMError("model gateway API key is not configured (LITELLM_API_KEY)")
-        self.base_url = base_url.rstrip("/")
+        self.base_url = validate_base_url(base_url).rstrip("/")
         self.api_key = api_key
         self.model = model
         self.fallback_models = [m for m in (fallback_models or []) if m and m != model]
