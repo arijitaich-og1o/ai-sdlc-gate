@@ -4,6 +4,7 @@ from __future__ import annotations
 import fnmatch
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
+from xml.sax.saxutils import escape as _xml_escape, quoteattr as _xml_quoteattr
 
 from . import gitutil
 from .config import Config
@@ -67,6 +68,9 @@ class ChangeSet:
     head: str = ""
     mode: str = "range"
     excluded: list[str] = field(default_factory=list)
+    # Files excluded from model review (generated/vendored/large) but still scanned by deterministic prechecks,
+    # so a secret cannot be hidden by naming a file to match an exclude glob.
+    excluded_files: list[ChangedFile] = field(default_factory=list)
 
     @property
     def paths(self) -> list[str]:
@@ -119,23 +123,31 @@ def collect_staged(cfg: Config, cwd: Path | None = None) -> ChangeSet:
 
 
 def collect_paths(cfg: Config, paths: list[str], root: Path) -> ChangeSet:
-    """Review whole files (used for trials evaluation and ad-hoc scans)."""
+    """Review whole files (used for trials evaluation and ad-hoc scans).
+
+    All paths are confined to `root`; a path that resolves outside the root (absolute path or `..` traversal)
+    is skipped so the reviewer never reads and forwards files from outside the scanned tree.
+    """
     cs = ChangeSet(mode="paths", head="WORKTREE")
     root = root.resolve()
     rows: list[tuple[str, str]] = []
     for raw in paths:
         p = Path(raw) if Path(raw).is_absolute() else (root / raw)
         p = p.resolve()
+        if not p.is_relative_to(root):
+            cs.excluded.append(str(raw))
+            continue
         if p.is_dir():
             for f in sorted(p.rglob("*")):
                 if f.is_file() and not any(part.startswith(".") for part in f.relative_to(root).parts):
                     rows.append(("A", f.relative_to(root).as_posix()))
         elif p.is_file():
-            rel = p.relative_to(root).as_posix() if p.is_relative_to(root) else p.as_posix()
-            rows.append(("A", rel))
+            rows.append(("A", p.relative_to(root).as_posix()))
 
     def read(path: str) -> str | None:
-        fp = root / path if not Path(path).is_absolute() else Path(path)
+        fp = (root / path).resolve()
+        if not fp.is_relative_to(root):
+            return None
         try:
             return fp.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -149,15 +161,16 @@ def _fill(cfg: Config, cs: ChangeSet, rows, diff_fn, content_fn) -> None:
     excludes = DEFAULT_EXCLUDES + list(cfg.gate.get("exclude_globs") or [])
     max_file = int(cfg.gate.get("max_file_bytes", 120_000))
     for status, path in rows:
-        if matches_any(path, excludes):
-            cs.excluded.append(path)
-            continue
+        excluded = matches_any(path, excludes)
         cf = ChangedFile(path=path, status=status)
         if status != "D":
             content = content_fn(path)
             if _is_binary(content):
                 cf.binary = True
-                cs.files.append(cf)
+                if excluded:
+                    cs.excluded.append(path)
+                else:
+                    cs.files.append(cf)
                 continue
             cf.content, t1 = _truncate(content, max_file)
         else:
@@ -165,29 +178,38 @@ def _fill(cfg: Config, cs: ChangeSet, rows, diff_fn, content_fn) -> None:
         diff = diff_fn(path)
         cf.diff, t2 = _truncate(diff, max_file)
         cf.truncated = t1 or t2
-        cs.files.append(cf)
+        if excluded:
+            # Kept out of the model review, but retained so deterministic secret prechecks still see it.
+            cs.excluded.append(path)
+            cs.excluded_files.append(cf)
+        else:
+            cs.files.append(cf)
 
 
 def render_changeset(cs: ChangeSet, include_full_content: bool = True, budget: int | None = None) -> str:
-    """Render the change set for the model, with each file fenced in explicit delimiters."""
+    """Render the change set for the model, with each file fenced in explicit delimiters.
+
+    File names, statuses and bodies are treated as untrusted: attributes are XML-quoted and content is
+    XML-escaped so a crafted path or file body cannot forge or close the surrounding tags.
+    """
     parts: list[str] = []
     if cs.commit_messages:
-        parts.append("<commit_messages>\n" + "\n---\n".join(cs.commit_messages) + "\n</commit_messages>")
+        parts.append("<commit_messages>\n" + _xml_escape("\n---\n".join(cs.commit_messages)) + "\n</commit_messages>")
     used = sum(len(p) for p in parts)
     for f in cs.files:
-        attrs = f' binary="true"' if f.binary else ""
-        block = [f'<file path="{f.path}" status="{f.status}"{attrs}>']
+        attrs = ' binary="true"' if f.binary else ""
+        block = [f'<file path={_xml_quoteattr(f.path)} status={_xml_quoteattr(f.status)}{attrs}>']
         if f.binary:
             block.append("[binary file omitted]")
         else:
             if f.diff:
-                block.append("<diff>\n" + f.diff.rstrip() + "\n</diff>")
+                block.append("<diff>\n" + _xml_escape(f.diff.rstrip()) + "\n</diff>")
             if include_full_content and f.content is not None and f.status != "D":
-                block.append("<content_after_change>\n" + f.content.rstrip() + "\n</content_after_change>")
+                block.append("<content_after_change>\n" + _xml_escape(f.content.rstrip()) + "\n</content_after_change>")
         block.append("</file>")
         text = "\n".join(block)
         if budget is not None and used + len(text) > budget:
-            parts.append(f'<file path="{f.path}" status="{f.status}">[omitted: change set exceeded review budget]</file>')
+            parts.append(f'<file path={_xml_quoteattr(f.path)} status={_xml_quoteattr(f.status)}>[omitted: change set exceeded review budget]</file>')
             continue
         used += len(text)
         parts.append(text)

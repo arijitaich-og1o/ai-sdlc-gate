@@ -22,6 +22,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
+from xml.sax.saxutils import escape as _esc
 
 import yaml
 
@@ -146,9 +147,9 @@ def evaluate_skill(cfg: Config, llm: Any, skill: Skill, trials_root: Path, judge
                 data, _ = judge.chat_json(
                     JUDGE_SYSTEM,
                     "<content>\n" + render_changeset(cs, budget=int(cfg.gate.get("max_diff_bytes", 400_000))) + "\n</content>\n\n"
-                    "<known_defects>\n" + json.dumps([{k: d.get(k) for k in ("id", "title", "file", "severity")} for d in defects], indent=1) + "\n</known_defects>\n\n"
-                    "<extra_findings>\n" + json.dumps([{k: f.get(k) for k in ("id", "severity", "category", "title", "description", "file", "line", "recommendation")} for f in extra], indent=1) + "\n</extra_findings>\n\n"
-                    "<all_findings_for_clarity>\n" + json.dumps([{k: f.get(k) for k in ("title", "description", "recommendation", "file", "line")} for f in result.findings], indent=1) + "\n</all_findings_for_clarity>\n\nReturn the JSON now.",
+                    "<known_defects>\n" + _esc(json.dumps([{k: d.get(k) for k in ("id", "title", "file", "severity")} for d in defects], indent=1)) + "\n</known_defects>\n\n"
+                    "<extra_findings>\n" + _esc(json.dumps([{k: f.get(k) for k in ("id", "severity", "category", "title", "description", "file", "line", "recommendation")} for f in extra], indent=1)) + "\n</extra_findings>\n\n"
+                    "<all_findings_for_clarity>\n" + _esc(json.dumps([{k: f.get(k) for k in ("title", "description", "recommendation", "file", "line")} for f in result.findings], indent=1)) + "\n</all_findings_for_clarity>\n\nReturn the JSON now.",
                 )
                 verdicts = data.get("legitimate") or {}
                 legit = sum(1 for f in extra if bool(verdicts.get(f["id"])))

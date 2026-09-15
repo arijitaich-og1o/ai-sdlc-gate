@@ -74,6 +74,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "secret-exposure",
             "hardcoded-credential",
             "known-vulnerable-dependency",
+            "gate-manipulation",
         ],
         "never_skippable_phases": [],
         "require_approval_for_phases": [],
@@ -87,10 +88,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "identity": {
         "provider": "entra",
         "authority": "https://login.microsoftonline.com",
-        "tenant": "organizations",
-        "client_id": "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
-        "allowed_domains": ["og1o.in"],
-        "required": False,
+        # Tenant must be your organisation's tenant GUID; a named multi-tenant endpoint is rejected at sign-in.
+        "tenant": "",
+        "client_id": "",
+        "allowed_domains": [],
+        "required": True,
     },
     "challenge": {
         "min_improvement": 0.02,
@@ -213,4 +215,6 @@ def normalize_severity(sev: str | None) -> str:
         "suggestion": "info",
     }
     s = aliases.get(s, s)
-    return s if s in SEVERITY_RANK else "medium"
+    # Fail safe: an unrecognised severity is escalated to "blocker" rather than silently downgraded to
+    # "medium", so a malformed or adversarial severity value cannot let a finding slip past the gate.
+    return s if s in SEVERITY_RANK else "blocker"
