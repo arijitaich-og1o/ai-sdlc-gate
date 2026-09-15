@@ -17,6 +17,7 @@ from .gitutil import GitError, repo_root
 from . import identity as identity_mod
 from . import ghauth
 from . import keybroker
+from . import llm as llm_mod
 from . import secrets_store
 from .intent import detect_intent
 from .judge import apply_decision, decision_markdown, judge
@@ -552,12 +553,22 @@ def cmd_configure(args: argparse.Namespace) -> int:
         if rec is None or not rec.base_url:
             _eprint("no valid record on standard input")
             return EXIT_FAIL
+        try:
+            llm_mod.validate_base_url(rec.base_url)
+        except llm_mod.LLMError as exc:
+            _eprint(f"configure: refusing to store the record: {exc}")
+            return EXIT_FAIL
         secrets_store.store(rec.base_url, rec.api_key, models=rec.models, mode=rec.mode)
         print("Review engine ready.", flush=True)
         return EXIT_PASS
     if args.api_key:
         if not args.base_url:
             _eprint("--base-url is required together with --api-key")
+            return EXIT_FAIL
+        try:
+            llm_mod.validate_base_url(args.base_url)
+        except llm_mod.LLMError as exc:
+            _eprint(f"configure: {exc}")
             return EXIT_FAIL
         models = [m.strip() for m in (args.models or "").split(",") if m.strip()]
         st = secrets_store.store(args.base_url, args.api_key, models=models, mode="manual")
@@ -596,7 +607,7 @@ def _verify_litellm_key(base_url: str, api_key: str) -> str | None:
     import httpx
 
     if not api_key.startswith("sk-"):
-        return f"the API key must start with 'sk-' but starts with '{api_key[:5]}...' (the secret includes a label or prefix)"
+        return "the API key must start with 'sk-' (the secret includes a label or prefix)"
     url = base_url.rstrip("/")
     url = f"{url}/models" if url.endswith("/v1") else f"{url}/v1/models"
     try:

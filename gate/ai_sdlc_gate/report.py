@@ -11,23 +11,40 @@ SEV_ICON = {"blocker": "🟥", "high": "🟧", "medium": "🟨", "low": "🟦", 
 VERDICT_ICON = {"pass": "✅", "fail": "❌", "waived": "⚠️", "error": "💥"}
 
 
+def _md(text: object, limit: int = 2000) -> str:
+    """Neutralise attacker-controlled finding text before it is embedded in a Markdown PR comment.
+
+    Finding titles/descriptions/recommendations originate from the (untrusted) reviewed change or model
+    output, so we strip HTML/comment markers and line breaks and escape Markdown control characters to stop
+    a crafted finding from injecting fake headings, HTML, or a forged gate verdict into the report.
+    """
+    s = str(text if text is not None else "")
+    s = s.replace("\r", " ").replace("\n", " ")
+    # Remove HTML comment / tag markers so no raw HTML (or a second report marker) can be smuggled in.
+    s = s.replace("<!--", "").replace("-->", "").replace("<", "\\<").replace(">", "\\>")
+    for ch in ("`", "*", "_", "|", "#", "[", "]"):
+        s = s.replace(ch, "\\" + ch)
+    s = s.strip()
+    return (s[:limit] + "…") if len(s) > limit else s
+
+
 def _loc(f: dict) -> str:
     if not f.get("file"):
         return ""
-    return f"`{f['file']}`" + (f":{f['line']}" if f.get("line") else "")
+    return f"`{_md(f['file'], 400)}`" + (f":{int(f['line'])}" if str(f.get('line') or '').isdigit() else "")
 
 
 def _finding_line(f: dict) -> str:
     waived = " _(waived)_" if f.get("waived") else ""
     loc = _loc(f)
-    head = f"- {SEV_ICON.get(f['severity'], '')} **{f['severity'].upper()}** `{f['category']}` {f['title']}{waived}"
+    head = f"- {SEV_ICON.get(f['severity'], '')} **{_md(f['severity'], 20).upper()}** `{_md(f['category'], 60)}` {_md(f['title'], 300)}{waived}"
     if loc:
         head += f" — {loc}"
     body = []
     if f.get("description"):
-        body.append(f"  {f['description']}")
+        body.append(f"  {_md(f['description'])}")
     if f.get("recommendation"):
-        body.append(f"  **Fix:** {f['recommendation']}")
+        body.append(f"  **Fix:** {_md(f['recommendation'])}")
     return "\n".join([head, *body])
 
 
@@ -74,7 +91,7 @@ def to_markdown(report: GateReport, cfg=None, compact: bool = False) -> str:
         lines.append("### Skip request")
         if report.skip.valid:
             lines.append(f"Phases **{', '.join(map(str, report.skip.valid_phases))}** were waived with justification:")
-            lines.append(f"> {report.skip.reason}")
+            lines.append(f"> {_md(report.skip.reason)}")
             lines.append("")
             lines.append("_Waived findings are still recorded in the organisation metrics._")
         else:
@@ -99,7 +116,7 @@ def to_markdown(report: GateReport, cfg=None, compact: bool = False) -> str:
                 continue
             lines.append(f"### Phase {p.phase} · {p.phase_name}")
             if p.summary:
-                lines.append(f"_{p.summary}_")
+                lines.append(f"_{_md(p.summary)}_")
                 lines.append("")
             lines.extend(_finding_line(f) for f in active)
             if waived:

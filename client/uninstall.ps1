@@ -4,6 +4,13 @@
 #>
 $ErrorActionPreference = "Continue"
 $home_ = if ($env:AI_SDLC_GATE_HOME) { $env:AI_SDLC_GATE_HOME } else { Join-Path $env:USERPROFILE ".ai-sdlc-gate" }
+# Guard the Remove-Item -Recurse -Force below: refuse an empty, root, or non-ai-sdlc-gate target.
+$homeFull = try { [System.IO.Path]::GetFullPath($home_) } catch { $null }
+if (-not $homeFull -or $homeFull -notmatch '[\\/]\.ai-sdlc-gate[\\/]?$' -or $homeFull -eq $env:USERPROFILE) {
+  Write-Error "refusing to remove unsafe path: '$home_'"
+  exit 1
+}
+$home_ = $homeFull
 $current = git config --global --get core.hooksPath
 if ($current -like "*.ai-sdlc-gate/hooks*") { git config --global --unset core.hooksPath; Write-Host "global git hooks path removed" }
 if (([Environment]::GetEnvironmentVariable("GIT_CONFIG_PARAMETERS", "User")) -like "*ai-sdlc-gate*") { [Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $null, "User"); Write-Host "git environment override removed" }

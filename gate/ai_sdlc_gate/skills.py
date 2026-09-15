@@ -31,10 +31,15 @@ SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 FORBIDDEN_PATTERNS = [
     re.compile(p, re.I)
     for p in (
-        r"ignore (all|any|the) (previous|prior|above) instructions",
-        r"always (return|report) (zero|no) findings",
-        r"never (fail|block) (the )?(gate|commit|push)",
-        r"set\s+phase_verdict\s*(to|=)\s*[\"']?pass",
+        r"ignore\s+(all|any|the)?\s*(previous|prior|above|following|system)\s+(instructions?|prompts?|rules?)",
+        r"disregard\s+(all|any|the)?\s*(previous|prior|above|system)",
+        r"(always|please)?\s*(return|report|output|emit)\s+(zero|no|an empty|empty)\s+(findings?|issues?|problems?)",
+        r"never\s+(fail|block|reject|stop)\s+(the\s+)?(gate|commit|push|review|change)",
+        r"(set|mark|force)\s+(the\s+)?(phase_)?verdict\s*(to|=|:)?\s*[\"']?(pass|approved?|ok)",
+        r"(mark|treat|consider)\s+(this|the\s+change|it)\s+(as\s+)?(pass|approved?|safe|clean)",
+        r"you\s+are\s+now\b",
+        r"new\s+(system\s+)?(instructions?|prompt)",
+        r"</?(phase_skill|change_set|review_context|system)\b",
     )
 ]
 
@@ -60,7 +65,10 @@ def split_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     m = re.match(r"^---\s*\n(.*?)\n---\s*\n?(.*)$", text, flags=re.S)
     if not m:
         raise ValueError("SKILL.md must start with a YAML front matter block delimited by ---")
-    fm = yaml.safe_load(m.group(1)) or {}
+    try:
+        fm = yaml.safe_load(m.group(1)) or {}
+    except yaml.YAMLError as exc:
+        raise ValueError(f"Front matter is not valid YAML: {exc}") from exc
     if not isinstance(fm, dict):
         raise ValueError("Front matter must be a mapping")
     return fm, m.group(2)

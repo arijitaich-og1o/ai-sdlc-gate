@@ -2,6 +2,14 @@
 # AI SDLC Gate — remove the self-service client from this machine (Linux, macOS, WSL, Git Bash).
 set -u
 HOME_DIR="${AI_SDLC_GATE_HOME:-$HOME/.ai-sdlc-gate}"
+# Guard the rm -rf below: refuse to delete an empty, root, or otherwise implausible target.
+case "$HOME_DIR" in
+  ""|"/"|"//"|"$HOME"|"$HOME/") echo "refusing to remove unsafe path: '$HOME_DIR'" >&2; exit 1;;
+esac
+case "$HOME_DIR" in
+  */.ai-sdlc-gate|*/.ai-sdlc-gate/) ;;
+  *) echo "refusing to remove '$HOME_DIR': not an ai-sdlc-gate home directory" >&2; exit 1;;
+esac
 CURRENT="$(git config --global --get core.hooksPath 2>/dev/null || true)"
 case "$CURRENT" in *".ai-sdlc-gate/hooks"*) git config --global --unset core.hooksPath && echo "global git hooks path removed";; esac
 CLI=""
