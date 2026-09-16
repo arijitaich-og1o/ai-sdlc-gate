@@ -31,7 +31,12 @@ def trials_root() -> Path:
 
 
 def git(*args: str, cwd: Path) -> str:
-    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout
+    # The developer's installed gate enforces its hooks path through GIT_CONFIG_PARAMETERS; tests must not run it.
+    import os
+
+    env = {k: v for k, v in os.environ.items() if k not in ("GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT")}
+    env["GIT_CONFIG_PARAMETERS"] = "'core.hooksPath=/dev/null'"
+    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True, env=env).stdout
 
 
 @pytest.fixture

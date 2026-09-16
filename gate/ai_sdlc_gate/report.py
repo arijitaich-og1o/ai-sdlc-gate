@@ -35,7 +35,7 @@ def _loc(f: dict) -> str:
 
 
 def _finding_line(f: dict) -> str:
-    waived = " _(waived)_" if f.get("waived") else ""
+    waived = " _(waived)_" if f.get("waived") else (" _(late, advisory)_" if f.get("late") else "")
     loc = _loc(f)
     head = f"- {SEV_ICON.get(f['severity'], '')} **{_md(f['severity'], 20).upper()}** `{_md(f['category'], 60)}` {_md(f['title'], 300)}{waived}"
     if loc:
@@ -159,8 +159,9 @@ def to_text(report: GateReport, full_report_path: str | None = None, max_finding
         lines.append("")
         lines.append("Why:")
         lines.extend(f"  - {r}" for r in report.fail_reasons)
-    blocking = [f for f in report.all_findings() if severity_rank(f["severity"]) >= thr and not f.get("waived")]
-    advisory = [f for f in report.all_findings() if f not in blocking]
+    blocking = [f for f in report.all_findings() if severity_rank(f["severity"]) >= thr and not f.get("waived") and not f.get("late")]
+    late = [f for f in report.all_findings() if f.get("late")]
+    advisory = [f for f in report.all_findings() if f not in blocking and f not in late]
     if blocking:
         lines.append("")
         lines.append("Findings that block this change:")
@@ -174,9 +175,21 @@ def to_text(report: GateReport, full_report_path: str | None = None, max_finding
                     lines.append(f"            {w}")
         if len(blocking) > max_findings:
             lines.append(f"  ... and {len(blocking) - max_findings} more blocking finding(s) in the full report")
+    if late:
+        lines.append("")
+        lines.append(f"Late findings (advisory): {len(late)} on code already reviewed in the previous run and not flagged then:")
+        for f in late[:10]:
+            loc = f"{f['file']}:{f['line']}" if f.get("file") and f.get("line") else (f.get("file") or "-")
+            lines.append(f"  [{f['severity'].upper():7}] {loc}  {f['title']}")
+        if len(late) > 10:
+            lines.append(f"  ... and {len(late) - 10} more in the full report")
     if advisory:
         lines.append("")
         lines.append(f"Advisory findings below the threshold: {len(advisory)} (see the full report)")
+    st = report.stats.get("stability") or {}
+    if report.stats.get("ledger_runs", 0) > 1 and st:
+        lines.append("")
+        lines.append(f"Compared with the previous run: {st.get('known', 0)} still open, {st.get('resolved', 0)} fixed, {st.get('new', 0)} new, {st.get('late', 0)} late")
     if report.skip.requested:
         lines.append("")
         if report.skip.valid:

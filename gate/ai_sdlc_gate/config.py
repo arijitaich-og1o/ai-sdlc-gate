@@ -59,6 +59,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "max_diff_bytes": 400_000,
         "max_file_bytes": 120_000,
         "exclude_globs": [],
+        "review": {
+            "passes": 2,                 # 1 = single pass; 2 = add a second-look sweep for what the first pass missed
+            "late_findings": "advisory", # advisory | block: findings on code already reviewed in the previous run
+            "ledger": True,              # remember findings and reviewed code per repository/branch
+        },
     },
     "prechecks": {
         "enabled": True,
