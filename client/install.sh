@@ -43,13 +43,14 @@ say "Syncing central repository ($REF) to $SDLC_HOME/repo"
 # The repository is private: cloning uses the developer's existing GitHub sign-in (credential helper). Inside WSL the
 # Windows installer passes the already-synced Windows copy as REPO_URL, so no credential is needed there.
 if [ -d "$SDLC_HOME/repo/.git" ]; then
+  case "$REPO_URL" in /*) REPO_URL="file://$REPO_URL";; esac   # local path (WSL from the Windows copy): file:// keeps shallow fetches working
   git -C "$SDLC_HOME/repo" remote set-url origin "$REPO_URL" 2>/dev/null || true
-  git -C "$SDLC_HOME/repo" fetch --quiet origin -- "$REF"
+  git -C "$SDLC_HOME/repo" fetch --quiet --depth 1 origin -- "$REF"
   git -C "$SDLC_HOME/repo" reset --quiet --hard FETCH_HEAD
 else
   rm -rf "$SDLC_HOME/repo"
-  DEPTH="--depth 1"; case "$REPO_URL" in /*|[A-Za-z]:*) DEPTH="";; esac
-  git clone --quiet $DEPTH --branch "$REF" -- "$REPO_URL" "$SDLC_HOME/repo" || die "Could not clone the AI SDLC Gate repository. Sign in to GitHub in your browser once (a credential prompt should have appeared) and run the installer again."
+  case "$REPO_URL" in /*) REPO_URL="file://$REPO_URL";; esac
+  git clone --quiet --depth 1 --branch "$REF" -- "$REPO_URL" "$SDLC_HOME/repo" || die "Could not clone the AI SDLC Gate repository. Sign in to GitHub in your browser once (a credential prompt should have appeared) and run the installer again."
 fi
 printf '%s\n' "$REF" > "$SDLC_HOME/ref"
 

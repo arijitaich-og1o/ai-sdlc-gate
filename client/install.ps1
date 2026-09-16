@@ -122,7 +122,7 @@ if (Get-Command wsl.exe -ErrorAction SilentlyContinue) {
       foreach ($d in $distros) {
         if ($d -match "'") { Say "WSL: skipped '$d'; distribution name contains a single quote."; continue }
         Say "WSL: installing the gate in '$d'"
-        $cmd = "export AI_SDLC_GATE_NONINTERACTIVE=1 AI_SDLC_GATE_REPO_URL='$winHomeWsl/repo' AI_SDLC_GATE_RECORD_FILE='$winHomeWsl/handover.json'; " +
+        $cmd = "export AI_SDLC_GATE_NONINTERACTIVE=1 AI_SDLC_GATE_REPO_URL='file://$winHomeWsl/repo' AI_SDLC_GATE_RECORD_FILE='$winHomeWsl/handover.json'; " +
                "bash '$winHomeWsl/repo/client/install.sh'; mkdir -p ~/.ai-sdlc-gate; " +
                "[ -f '$winHomeWsl/identity.json' ] && cp '$winHomeWsl/identity.json' ~/.ai-sdlc-gate/ && chmod 600 ~/.ai-sdlc-gate/identity.json; true"
         & cmd /c "wsl.exe -d $d -- bash -lc ""$cmd"" 2>&1" | Where-Object { $_ -notmatch "notice|pip is available|To update, run|WARNING: The script" }

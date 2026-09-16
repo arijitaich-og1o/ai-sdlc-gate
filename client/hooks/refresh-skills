@@ -13,7 +13,7 @@ if [ -f "$STAMP" ]; then
   [ $((NOW - LAST)) -lt "$MAX_AGE_SECONDS" ] && exit 0
 fi
 REF="$(cat "$SDLC_HOME/ref" 2>/dev/null || echo main)"
-if git -C "$REPO_DIR" fetch --quiet origin "$REF" 2>/dev/null && git -C "$REPO_DIR" reset --quiet --hard FETCH_HEAD; then
+if git -C "$REPO_DIR" fetch --quiet --depth 1 origin "$REF" 2>/dev/null && git -C "$REPO_DIR" reset --quiet --hard FETCH_HEAD; then
   if [ -f "$REPO_DIR/gate/pyproject.toml" ]; then
     for vpy in "$SDLC_HOME/venv/bin/python" "$SDLC_HOME/venv/Scripts/python.exe"; do
       [ -x "$vpy" ] && { "$vpy" -m pip install --quiet --upgrade "$REPO_DIR/gate" >/dev/null 2>&1 || true; break; }
