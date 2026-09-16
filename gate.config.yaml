@@ -110,6 +110,17 @@ gate:
     - '**/testdata/**'
     - '**/__snapshots__/**'
     - '**/*.generated.*'
+  # Completeness and stability of the review.
+  review:
+    # 1 = single pass. 2 = after the first pass, a second look receives what was found and hunts for what was missed
+    # (file by file, taxonomy categories not yet covered). Results are merged and de-duplicated. Doubles model calls.
+    passes: 2
+    # Findings on code the gate already reviewed in the previous run but did not flag then. `advisory` reports them
+    # without blocking (secrets, credentials, vulnerable dependencies and blockers still block); `block` treats them
+    # like any other finding.
+    late_findings: advisory
+    # Remember findings and reviewed code per repository and branch on the developer's machine.
+    ledger: true
 
 prechecks:
   enabled: true

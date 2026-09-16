@@ -57,6 +57,14 @@ lefthook) keep working: the gate runs first and then hands over to them.
 
 ## Working with findings
 
+The gate is designed to give you the complete list in one go and then stay consistent:
+
+- Each review runs two passes: the second pass receives what the first found and hunts for what was missed, so the
+  first report is as complete as the model can make it.
+- The gate remembers what it reported on your branch and which code it has already reviewed. Fixed findings
+  disappear; findings it notices later on code it had already reviewed are shown as **late** and do not block
+  (except secrets, credentials and known-vulnerable dependencies). New code is always reviewed in full.
+
 A blocked commit prints a compact list of the blocking findings with file, line and fix. The full report of the
 last run is kept at `~/.ai-sdlc-gate/last-report.md`; `ai-sdlc-gate last` shows it again (`--md` for the full
 markdown, `--json` for the raw data).

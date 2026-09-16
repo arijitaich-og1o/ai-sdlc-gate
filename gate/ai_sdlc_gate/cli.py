@@ -15,6 +15,7 @@ from .config import Config
 from .evaluate import evaluate_skill
 from .gitutil import GitError, repo_root
 from . import identity as identity_mod
+from . import ledger as ledger_mod
 from . import ghauth
 from . import keybroker
 from . import llm as llm_mod
@@ -128,10 +129,19 @@ def cmd_run(args: argparse.Namespace) -> int:
     except LLMError as exc:
         _eprint(f"LLM configuration error: {exc}")
         return EXIT_ERROR
+    ledger = None
+    ledger_file = None
+    use_ledger = bool((cfg.gate.get("review") or {}).get("ledger", True)) and not args.no_ledger and not os.environ.get("GITHUB_ACTIONS")
+    if use_ledger:
+        ledger_file = ledger_mod.ledger_path(context["repo"] or str(root), context["ref"] or cs.branch)
+        ledger = ledger_mod.Ledger.load(ledger_file)
+        ledger.repo, ledger.branch = context["repo"] or str(root), context["ref"] or cs.branch
     try:
-        report = run_gate(cfg, llm, skills, cs, intent, skip, fail_on=args.fail_on, context=context)
+        report = run_gate(cfg, llm, skills, cs, intent, skip, fail_on=args.fail_on, context=context, ledger=ledger)
     finally:
         llm.close()
+    if ledger is not None and ledger_file is not None:
+        ledger.save(ledger_file)
 
     md = to_markdown(report, cfg)
     _write(args.output_md, md)
@@ -370,6 +380,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--run-id"), r.add_argument("--run-url"), r.add_argument("--event-name"), r.add_argument("--pr-number")
     r.add_argument("--output-json"), r.add_argument("--output-md"), r.add_argument("--output-text", help="write the compact terminal rendering here")
     r.add_argument("--text", action="store_true", help="print the compact terminal rendering instead of markdown")
+    r.add_argument("--no-ledger", action="store_true", help="do not use the per-repository memory of previous runs")
     r.add_argument("--offline", action="store_true", help="do not call the model (pre-checks only; for tests)")
     r.add_argument("--quiet", action="store_true")
     r.set_defaults(func=cmd_run)

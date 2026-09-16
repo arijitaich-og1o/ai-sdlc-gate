@@ -98,6 +98,8 @@ def test_judge_replaces_when_candidate_clearly_better(cfg, skills_dir, trials_ro
     def responder(system, user):
         if "<extra_findings>" in user:
             return {"legitimate": {}, "clarity": 0.9, "notes": ""}
+        if "<review_pass" in user:
+            return {"summary": "", "findings": []}
         calls["n"] += 1
         # first evaluation = baseline (weak), second = candidate (strong)
         return {"summary": "s", "findings": full[:3] if calls["n"] == 1 else full}
@@ -144,6 +146,8 @@ def test_apply_decision_writes_skill_and_credits(cfg, skills_dir, trials_root, t
     def responder(system, user):
         if "<extra_findings>" in user:
             return {"legitimate": {}, "clarity": 0.9, "notes": ""}
+        if "<review_pass" in user:
+            return {"summary": "", "findings": []}
         n["i"] += 1
         return {"summary": "s", "findings": full[:2] if n["i"] == 1 else full}
 
