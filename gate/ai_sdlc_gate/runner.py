@@ -241,7 +241,7 @@ def merge_findings(existing: list[dict[str, Any]], incoming: list[dict[str, Any]
             same_cat = f.get("category") == g.get("category")
             near = close or (fl is None and gl is None)
             # Same finding: same place and either the same category with a related title, or a near-identical title.
-            if near and ((same_cat and sim >= 0.5) or sim >= 0.85):
+            if near and ((same_cat and sim >= 0.65) or sim >= 0.85):
                 dup = g
                 break
         if dup is None:
