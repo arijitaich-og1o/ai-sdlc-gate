@@ -1,34 +1,34 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-16T10:10:16+00:00 from 20 gate run(s)._
+_Generated 2026-09-16T10:11:19+00:00 from 21 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 20 |
-| Pass rate | 55% |
-| Runs flagged (findings at/above threshold) | 9 (45%) |
-| Runs blocked | 9 (45%) |
+| Gate runs | 21 |
+| Pass rate | 52% |
+| Runs flagged (findings at/above threshold) | 10 (48%) |
+| Runs blocked | 10 (48%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 5.15 |
-| Runs with local client attestation | 25% |
+| Findings per run | 5.57 |
+| Runs with local client attestation | 24% |
 | Active developers / repositories | 3 / 5 |
-| Top finding categories | hardcoded-credential, data-protection-design-gap, authz-design-gap, insecure-design, general |
+| Top finding categories | hardcoded-credential, data-protection-design-gap, general, authz-design-gap, observability-gap |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 20 | 55% | 9 | 0 | 32 | 14 | 36 |
+| 2026-09 | 21 | 52% | 10 | 0 | 32 | 16 | 44 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 12 | 50% | 6 | 6 | 0/0 | 0 | 4.58 | 42% | hardcoded-credential, data-protection-design-gap, general | 2026-09-10 |
-| @arijitaich-og1o | 7 | 57% | 3 | 3 | 0/0 | 0 | 6.43 | 0% | missing-negative-tests, hardcoded-credential, insecure-design | 2026-09-16 |
+| @arijitaich-og1o | 8 | 50% | 4 | 4 | 0/0 | 0 | 7.38 | 0% | missing-negative-tests, hardcoded-credential, insecure-design | 2026-09-16 |
 | felix.theodor@ottogroup.com (@arijitaich-og1o) | 1 | 100% | 0 | 0 | 0/0 | 0 | 3.0 | 0% | authz-design-gap, undocumented-decision, schema-incompatibility | 2026-09-10 |
 
 ## Repositories
@@ -38,7 +38,7 @@ _Generated 2026-09-16T10:10:16+00:00 from 20 gate run(s)._
 | arijitaich-og1o/review-skill | 7 | 29% | 5 | 0 | 1 | 5.57 | data-protection-design-gap, general, hardcoded-credential |
 | arijitaich-og1o/hook-demo | 6 | 50% | 3 | 0 | 2 | 4.17 | hardcoded-credential, hardcoded-configuration, missing-negative-tests |
 | OG-DW/rmscontextual_api | 5 | 100% | 0 | 0 | 2 | 3.0 | authz-design-gap, undocumented-decision, observability-gap |
-| arijitaich-og1o/ledger-demo | 1 | 0% | 1 | 0 | 1 | 24.0 | hardcoded-credential, insecure-design, hardcoded-configuration |
+| arijitaich-og1o/ledger-demo | 2 | 0% | 2 | 0 | 1 | 19.0 | hardcoded-configuration, missing-negative-tests, observability-gap |
 | unknown/unknown | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
 
 ### Reading this dashboard
