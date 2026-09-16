@@ -264,7 +264,8 @@ def test_identity_is_trusted_for_90_days_and_legacy_records_are_extended(tmp_pat
 
     monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
     client = httpx.Client(transport=_transport(_claims(exp=time.time() + 3600), pending_polls=0))
-    ident = idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, sleep=lambda s: None, open_browser=False, client=client)
+    ident = idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, sleep=lambda s: None, open_browser=False, client=client,
+                                  verify_token=lambda token, *a, **k: idm.decode_jwt_claims(token))
     assert (datetime.fromisoformat(ident.expires_at) - datetime.now(timezone.utc)) > timedelta(days=89)
     # legacy record: token expiry one hour after issue -> extended on load
     now = datetime.now(timezone.utc) - timedelta(days=3)
