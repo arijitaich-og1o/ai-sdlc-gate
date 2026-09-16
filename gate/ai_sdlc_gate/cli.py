@@ -682,9 +682,10 @@ def cmd_update(args: argparse.Namespace) -> int:
     origin = subprocess.run(["git", "-C", str(repo), "remote", "get-url", "origin"], capture_output=True, text=True).stdout.strip()
     ref = (home / "ref").read_text(encoding="utf-8").strip() if (home / "ref").is_file() else "main"
     # Inside WSL the source is the Windows copy; refresh that first with Windows git (which holds the GitHub sign-in).
-    if identity_mod.is_wsl() and origin.startswith("/mnt/"):
-        drive = origin[5]
-        win_path = f"{drive.upper()}:" + origin[6:].replace("/", "\\")
+    local = origin[7:] if origin.startswith("file://") else origin
+    if identity_mod.is_wsl() and local.startswith("/mnt/"):
+        drive = local[5]
+        win_path = f"{drive.upper()}:" + local[6:].replace("/", "\\")
         for exe in ("git.exe", "/mnt/c/Program Files/Git/cmd/git.exe"):
             r = subprocess.run([exe, "-C", win_path, "pull", "--ff-only", "--quiet"], capture_output=True, text=True)
             if r.returncode == 0:
