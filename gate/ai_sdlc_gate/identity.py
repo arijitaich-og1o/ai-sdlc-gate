@@ -34,7 +34,7 @@ import time
 import urllib.parse
 import webbrowser
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -42,6 +42,7 @@ import httpx
 
 DEFAULT_AUTHORITY = "https://login.microsoftonline.com"
 SCOPES = "openid profile email"
+IDENTITY_VALID_DAYS = 90  # how long a sign-in is trusted on this machine before the developer signs in again
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
@@ -91,6 +92,16 @@ def load_identity(home: Path | None = None) -> Identity | None:
         return None
     if not EMAIL_RE.match(ident.email or ""):
         return None
+    # Earlier versions stored the sign-in token's own expiry (about an hour). A sign-in is trusted for
+    # IDENTITY_VALID_DAYS on this machine; extend legacy records accordingly.
+    try:
+        issued = datetime.fromisoformat(ident.issued_at) if ident.issued_at else None
+        expires = datetime.fromisoformat(ident.expires_at) if ident.expires_at else None
+    except ValueError:
+        issued, expires = None, None
+    if issued is not None and (expires is None or (expires - issued).total_seconds() < 86400):
+        ident.expires_at = (issued + timedelta(days=IDENTITY_VALID_DAYS)).isoformat(timespec="seconds")
+        save_identity(ident, home)
     return ident
 
 
@@ -192,7 +203,7 @@ def _validate_claims(claims: dict[str, Any], tenant: str, client_id: str, author
         oid=str(claims.get("oid") or ""),
         tid=tid,
         issued_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        expires_at=datetime.fromtimestamp(float(exp), tz=timezone.utc).isoformat(timespec="seconds"),
+        expires_at=(datetime.now(timezone.utc) + timedelta(days=IDENTITY_VALID_DAYS)).isoformat(timespec="seconds"),
     )
 
 

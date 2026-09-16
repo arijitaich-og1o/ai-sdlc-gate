@@ -257,3 +257,19 @@ def test_browser_login_prints_link_when_no_browser():
 
     idm.browser_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=shown.append, client=httpx.Client(transport=httpx.MockTransport(handler)), browser=capture, timeout_seconds=10, **VERIFY)
     assert any("Open this link in your browser" in line for line in shown) and any("https://login.microsoftonline.com/" in line for line in shown)
+
+
+def test_identity_is_trusted_for_90_days_and_legacy_records_are_extended(tmp_path, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
+    client = httpx.Client(transport=_transport(_claims(exp=time.time() + 3600), pending_polls=0))
+    ident = idm.device_code_login(TENANT, CLIENT, allowed_domains=["og1o.in"], out=lambda m: None, sleep=lambda s: None, open_browser=False, client=client)
+    assert (datetime.fromisoformat(ident.expires_at) - datetime.now(timezone.utc)) > timedelta(days=89)
+    # legacy record: token expiry one hour after issue -> extended on load
+    now = datetime.now(timezone.utc) - timedelta(days=3)
+    legacy = idm.Identity(email="dev@og1o.in", name="Dev", oid="o", tid=TENANT, issued_at=now.isoformat(timespec="seconds"), expires_at=(now + timedelta(hours=1)).isoformat(timespec="seconds"))
+    idm.save_identity(legacy)
+    loaded = idm.load_identity()
+    assert loaded is not None and not loaded.expired
+    assert (datetime.fromisoformat(loaded.expires_at) - now) > timedelta(days=89)
