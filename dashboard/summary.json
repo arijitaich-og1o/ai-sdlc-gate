@@ -7,32 +7,32 @@
       "actors_count": 1,
       "attested": 0,
       "attested_rate": 0.0,
-      "block_rate": 0.429,
-      "blocked": 3,
+      "block_rate": 0.5,
+      "blocked": 4,
       "developers_count": 1,
       "findings": {
         "blocker": 26,
-        "high": 6,
+        "high": 8,
         "info": 0,
-        "low": 4,
-        "medium": 9
+        "low": 8,
+        "medium": 17
       },
-      "findings_per_run": 6.43,
+      "findings_per_run": 7.38,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.429,
-      "flagged": 3,
+      "flag_rate": 0.5,
+      "flagged": 4,
       "intents": {
-        "commit": 7
+        "commit": 8
       },
-      "last_seen": "2026-09-16T10:09:59+00:00",
-      "pass_rate": 0.571,
+      "last_seen": "2026-09-16T10:11:03+00:00",
+      "pass_rate": 0.5,
       "passed": 4,
       "repos": [
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/ledger-demo",
         "unknown/unknown"
       ],
-      "runs": 7,
+      "runs": 8,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -40,8 +40,8 @@
         "missing-negative-tests",
         "hardcoded-credential",
         "insecure-design",
-        "secret-exposure",
-        "hardcoded-configuration"
+        "hardcoded-configuration",
+        "secret-exposure"
       ],
       "waived_findings": 0
     },
@@ -132,8 +132,8 @@
       "waived_findings": 0
     }
   },
-  "events": 20,
-  "generated_at": "2026-09-16T10:10:16+00:00",
+  "events": 21,
+  "generated_at": "2026-09-16T10:11:19+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -141,26 +141,26 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.25,
-      "block_rate": 0.45,
-      "blocked": 9,
+      "attested_rate": 0.238,
+      "block_rate": 0.476,
+      "blocked": 10,
       "developers_count": 3,
       "findings": {
         "blocker": 32,
-        "high": 14,
+        "high": 16,
         "info": 0,
-        "low": 21,
-        "medium": 36
+        "low": 25,
+        "medium": 44
       },
-      "findings_per_run": 5.15,
+      "findings_per_run": 5.57,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.45,
-      "flagged": 9,
+      "flag_rate": 0.476,
+      "flagged": 10,
       "intents": {
-        "commit": 20
+        "commit": 21
       },
-      "last_seen": "2026-09-16T10:09:59+00:00",
-      "pass_rate": 0.55,
+      "last_seen": "2026-09-16T10:11:03+00:00",
+      "pass_rate": 0.524,
       "passed": 11,
       "repos": [
         "OG-DW/rmscontextual_api",
@@ -169,16 +169,16 @@
         "arijitaich-og1o/review-skill",
         "unknown/unknown"
       ],
-      "runs": 20,
+      "runs": 21,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "hardcoded-credential",
         "data-protection-design-gap",
+        "general",
         "authz-design-gap",
-        "insecure-design",
-        "general"
+        "observability-gap"
       ],
       "waived_findings": 0
     }
@@ -189,26 +189,26 @@
     ],
     "actors_count": 1,
     "attested": 5,
-    "attested_rate": 0.25,
-    "block_rate": 0.45,
-    "blocked": 9,
+    "attested_rate": 0.238,
+    "block_rate": 0.476,
+    "blocked": 10,
     "developers_count": 3,
     "findings": {
       "blocker": 32,
-      "high": 14,
+      "high": 16,
       "info": 0,
-      "low": 21,
-      "medium": 36
+      "low": 25,
+      "medium": 44
     },
-    "findings_per_run": 5.15,
+    "findings_per_run": 5.57,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.45,
-    "flagged": 9,
+    "flag_rate": 0.476,
+    "flagged": 10,
     "intents": {
-      "commit": 20
+      "commit": 21
     },
-    "last_seen": "2026-09-16T10:09:59+00:00",
-    "pass_rate": 0.55,
+    "last_seen": "2026-09-16T10:11:03+00:00",
+    "pass_rate": 0.524,
     "passed": 11,
     "repos": [
       "OG-DW/rmscontextual_api",
@@ -217,16 +217,16 @@
       "arijitaich-og1o/review-skill",
       "unknown/unknown"
     ],
-    "runs": 20,
+    "runs": 21,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
     "top_categories": [
       "hardcoded-credential",
       "data-protection-design-gap",
+      "general",
       "authz-design-gap",
-      "insecure-design",
-      "general"
+      "observability-gap"
     ],
     "waived_findings": 0
   },
@@ -324,38 +324,38 @@
       "attested": 0,
       "attested_rate": 0.0,
       "block_rate": 1.0,
-      "blocked": 1,
+      "blocked": 2,
       "developers_count": 1,
       "findings": {
         "blocker": 8,
-        "high": 5,
+        "high": 7,
         "info": 0,
-        "low": 4,
-        "medium": 7
+        "low": 8,
+        "medium": 15
       },
-      "findings_per_run": 24.0,
+      "findings_per_run": 19.0,
       "first_seen": "2026-09-16T10:09:59+00:00",
       "flag_rate": 1.0,
-      "flagged": 1,
+      "flagged": 2,
       "intents": {
-        "commit": 1
+        "commit": 2
       },
-      "last_seen": "2026-09-16T10:09:59+00:00",
+      "last_seen": "2026-09-16T10:11:03+00:00",
       "pass_rate": 0.0,
       "passed": 0,
       "repos": [
         "arijitaich-og1o/ledger-demo"
       ],
-      "runs": 1,
+      "runs": 2,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
-        "hardcoded-credential",
-        "insecure-design",
         "hardcoded-configuration",
-        "missing-security-tests",
-        "missing-negative-tests"
+        "missing-negative-tests",
+        "observability-gap",
+        "hardcoded-credential",
+        "insecure-design"
       ],
       "waived_findings": 0
     },
