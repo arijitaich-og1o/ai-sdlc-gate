@@ -51,33 +51,35 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.417,
-      "block_rate": 0.5,
-      "blocked": 6,
+      "attested_rate": 0.385,
+      "block_rate": 0.538,
+      "blocked": 7,
       "developers_count": 1,
       "findings": {
         "blocker": 6,
         "high": 8,
         "info": 0,
         "low": 16,
-        "medium": 25
+        "medium": 26
       },
-      "findings_per_run": 4.58,
+      "findings_per_run": 4.31,
       "first_seen": "2026-09-08T23:07:00+00:00",
-      "flag_rate": 0.5,
+      "flag_rate": 0.462,
       "flagged": 6,
       "intents": {
-        "commit": 12
+        "commit": 12,
+        "deploy": 1
       },
-      "last_seen": "2026-09-10T08:31:17+00:00",
-      "pass_rate": 0.5,
+      "last_seen": "2026-09-18T05:14:31+00:00",
+      "pass_rate": 0.462,
       "passed": 6,
       "repos": [
         "OG-DW/rmscontextual_api",
+        "OG-DW/sofa_poc_fabro",
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/review-skill"
       ],
-      "runs": 12,
+      "runs": 13,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -132,8 +134,8 @@
       "waived_findings": 0
     }
   },
-  "events": 23,
-  "generated_at": "2026-09-16T10:15:17+00:00",
+  "events": 24,
+  "generated_at": "2026-09-18T05:14:47+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -141,35 +143,37 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.217,
-      "block_rate": 0.522,
-      "blocked": 12,
+      "attested_rate": 0.208,
+      "block_rate": 0.542,
+      "blocked": 13,
       "developers_count": 3,
       "findings": {
         "blocker": 32,
         "high": 18,
         "info": 0,
         "low": 25,
-        "medium": 46
+        "medium": 47
       },
-      "findings_per_run": 5.26,
+      "findings_per_run": 5.08,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.522,
+      "flag_rate": 0.5,
       "flagged": 12,
       "intents": {
-        "commit": 23
+        "commit": 23,
+        "deploy": 1
       },
-      "last_seen": "2026-09-16T10:14:54+00:00",
-      "pass_rate": 0.478,
+      "last_seen": "2026-09-18T05:14:31+00:00",
+      "pass_rate": 0.458,
       "passed": 11,
       "repos": [
         "OG-DW/rmscontextual_api",
+        "OG-DW/sofa_poc_fabro",
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/ledger-demo",
         "arijitaich-og1o/review-skill",
         "unknown/unknown"
       ],
-      "runs": 23,
+      "runs": 24,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -177,8 +181,8 @@
         "hardcoded-credential",
         "data-protection-design-gap",
         "missing-negative-tests",
-        "general",
-        "missing-tests"
+        "insecure-design",
+        "general"
       ],
       "waived_findings": 0
     }
@@ -189,35 +193,37 @@
     ],
     "actors_count": 1,
     "attested": 5,
-    "attested_rate": 0.217,
-    "block_rate": 0.522,
-    "blocked": 12,
+    "attested_rate": 0.208,
+    "block_rate": 0.542,
+    "blocked": 13,
     "developers_count": 3,
     "findings": {
       "blocker": 32,
       "high": 18,
       "info": 0,
       "low": 25,
-      "medium": 46
+      "medium": 47
     },
-    "findings_per_run": 5.26,
+    "findings_per_run": 5.08,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.522,
+    "flag_rate": 0.5,
     "flagged": 12,
     "intents": {
-      "commit": 23
+      "commit": 23,
+      "deploy": 1
     },
-    "last_seen": "2026-09-16T10:14:54+00:00",
-    "pass_rate": 0.478,
+    "last_seen": "2026-09-18T05:14:31+00:00",
+    "pass_rate": 0.458,
     "passed": 11,
     "repos": [
       "OG-DW/rmscontextual_api",
+      "OG-DW/sofa_poc_fabro",
       "arijitaich-og1o/hook-demo",
       "arijitaich-og1o/ledger-demo",
       "arijitaich-og1o/review-skill",
       "unknown/unknown"
     ],
-    "runs": 23,
+    "runs": 24,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
@@ -225,8 +231,8 @@
       "hardcoded-credential",
       "data-protection-design-gap",
       "missing-negative-tests",
-      "general",
-      "missing-tests"
+      "insecure-design",
+      "general"
     ],
     "waived_findings": 0
   },
@@ -270,6 +276,45 @@
         "undocumented-decision",
         "observability-gap",
         "schema-incompatibility"
+      ],
+      "waived_findings": 0
+    },
+    "OG-DW/sofa_poc_fabro": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 0,
+      "attested_rate": 0.0,
+      "block_rate": 1.0,
+      "blocked": 1,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 0,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 1
+      },
+      "findings_per_run": 1.0,
+      "first_seen": "2026-09-18T05:14:31+00:00",
+      "flag_rate": 0.0,
+      "flagged": 0,
+      "intents": {
+        "deploy": 1
+      },
+      "last_seen": "2026-09-18T05:14:31+00:00",
+      "pass_rate": 0.0,
+      "passed": 0,
+      "repos": [
+        "OG-DW/sofa_poc_fabro"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [
+        "insecure-design"
       ],
       "waived_findings": 0
     },
