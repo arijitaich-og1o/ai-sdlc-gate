@@ -1,19 +1,19 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-18T05:25:01+00:00 from 26 gate run(s)._
+_Generated 2026-09-18T06:09:40+00:00 from 27 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 26 |
-| Pass rate | 42% |
-| Runs flagged (findings at/above threshold) | 12 (46%) |
-| Runs blocked | 15 (58%) |
+| Gate runs | 27 |
+| Pass rate | 41% |
+| Runs flagged (findings at/above threshold) | 13 (48%) |
+| Runs blocked | 16 (59%) |
 | Skips requested / granted | 1 / 1 |
 | Findings waived via skips | 0 |
-| Findings per run | 4.69 |
-| Runs with local client attestation | 19% |
+| Findings per run | 4.63 |
+| Runs with local client attestation | 18% |
 | Active developers / repositories | 3 / 6 |
 | Top finding categories | hardcoded-credential, data-protection-design-gap, missing-negative-tests, insecure-design, general |
 
@@ -21,13 +21,13 @@ _Generated 2026-09-18T05:25:01+00:00 from 26 gate run(s)._
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 26 | 42% | 15 | 1 | 32 | 18 | 47 |
+| 2026-09 | 27 | 41% | 16 | 1 | 35 | 18 | 47 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 15 | 40% | 6 | 9 | 1/1 | 0 | 3.73 | 33% | hardcoded-credential, data-protection-design-gap, general | 2026-09-18 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 16 | 38% | 7 | 10 | 1/1 | 0 | 3.69 | 31% | hardcoded-credential, data-protection-design-gap, general | 2026-09-18 |
 | @arijitaich-og1o | 10 | 40% | 6 | 6 | 0/0 | 0 | 6.3 | 0% | missing-negative-tests, hardcoded-credential, insecure-design | 2026-09-16 |
 | felix.theodor@ottogroup.com (@arijitaich-og1o) | 1 | 100% | 0 | 0 | 0/0 | 0 | 3.0 | 0% | authz-design-gap, undocumented-decision, schema-incompatibility | 2026-09-10 |
 
@@ -38,7 +38,7 @@ _Generated 2026-09-18T05:25:01+00:00 from 26 gate run(s)._
 | arijitaich-og1o/hook-demo | 8 | 38% | 5 | 0 | 2 | 3.62 | missing-negative-tests, hardcoded-credential, hardcoded-configuration |
 | arijitaich-og1o/review-skill | 7 | 29% | 5 | 0 | 1 | 5.57 | data-protection-design-gap, general, hardcoded-credential |
 | OG-DW/rmscontextual_api | 5 | 100% | 0 | 0 | 2 | 3.0 | authz-design-gap, undocumented-decision, observability-gap |
-| OG-DW/sofa_poc_fabro | 3 | 0% | 3 | 1 | 1 | 0.33 | insecure-design |
+| OG-DW/sofa_poc_fabro | 4 | 0% | 4 | 1 | 1 | 1.0 | insecure-design, secret-exposure, hardcoded-credential |
 | arijitaich-og1o/ledger-demo | 2 | 0% | 2 | 0 | 1 | 19.0 | hardcoded-configuration, missing-negative-tests, observability-gap |
 | unknown/unknown | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
 
