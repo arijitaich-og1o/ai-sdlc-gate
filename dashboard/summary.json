@@ -51,27 +51,27 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.263,
-      "block_rate": 0.684,
-      "blocked": 13,
+      "attested_rate": 0.25,
+      "block_rate": 0.7,
+      "blocked": 14,
       "developers_count": 1,
       "findings": {
-        "blocker": 16,
+        "blocker": 17,
         "high": 8,
         "info": 0,
         "low": 16,
         "medium": 26
       },
-      "findings_per_run": 3.47,
+      "findings_per_run": 3.35,
       "first_seen": "2026-09-08T23:07:00+00:00",
-      "flag_rate": 0.526,
-      "flagged": 10,
+      "flag_rate": 0.55,
+      "flagged": 11,
       "intents": {
-        "commit": 16,
+        "commit": 17,
         "deploy": 3
       },
       "last_seen": "2026-09-18T06:17:17+00:00",
-      "pass_rate": 0.316,
+      "pass_rate": 0.3,
       "passed": 6,
       "repos": [
         "OG-DW/rmscontextual_api",
@@ -79,16 +79,16 @@
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/review-skill"
       ],
-      "runs": 19,
-      "skip_rate": 0.105,
-      "skips_granted": 2,
-      "skips_requested": 2,
+      "runs": 20,
+      "skip_rate": 0.15,
+      "skips_granted": 3,
+      "skips_requested": 3,
       "top_categories": [
         "hardcoded-credential",
+        "secret-exposure",
         "data-protection-design-gap",
         "general",
-        "credentials-in-tests",
-        "secret-exposure"
+        "credentials-in-tests"
       ],
       "waived_findings": 0
     },
@@ -134,8 +134,8 @@
       "waived_findings": 0
     }
   },
-  "events": 30,
-  "generated_at": "2026-09-18T06:17:29+00:00",
+  "events": 31,
+  "generated_at": "2026-09-19T03:40:00+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -143,27 +143,27 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.167,
-      "block_rate": 0.633,
-      "blocked": 19,
+      "attested_rate": 0.161,
+      "block_rate": 0.645,
+      "blocked": 20,
       "developers_count": 3,
       "findings": {
-        "blocker": 42,
+        "blocker": 43,
         "high": 18,
         "info": 0,
         "low": 25,
         "medium": 47
       },
-      "findings_per_run": 4.4,
+      "findings_per_run": 4.29,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.533,
-      "flagged": 16,
+      "flag_rate": 0.548,
+      "flagged": 17,
       "intents": {
-        "commit": 27,
+        "commit": 28,
         "deploy": 3
       },
       "last_seen": "2026-09-18T06:17:17+00:00",
-      "pass_rate": 0.367,
+      "pass_rate": 0.355,
       "passed": 11,
       "repos": [
         "OG-DW/rmscontextual_api",
@@ -173,14 +173,14 @@
         "arijitaich-og1o/review-skill",
         "unknown/unknown"
       ],
-      "runs": 30,
-      "skip_rate": 0.067,
-      "skips_granted": 2,
-      "skips_requested": 2,
+      "runs": 31,
+      "skip_rate": 0.097,
+      "skips_granted": 3,
+      "skips_requested": 3,
       "top_categories": [
         "hardcoded-credential",
-        "data-protection-design-gap",
         "secret-exposure",
+        "data-protection-design-gap",
         "missing-negative-tests",
         "insecure-design"
       ],
@@ -193,27 +193,27 @@
     ],
     "actors_count": 1,
     "attested": 5,
-    "attested_rate": 0.167,
-    "block_rate": 0.633,
-    "blocked": 19,
+    "attested_rate": 0.161,
+    "block_rate": 0.645,
+    "blocked": 20,
     "developers_count": 3,
     "findings": {
-      "blocker": 42,
+      "blocker": 43,
       "high": 18,
       "info": 0,
       "low": 25,
       "medium": 47
     },
-    "findings_per_run": 4.4,
+    "findings_per_run": 4.29,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.533,
-    "flagged": 16,
+    "flag_rate": 0.548,
+    "flagged": 17,
     "intents": {
-      "commit": 27,
+      "commit": 28,
       "deploy": 3
     },
     "last_seen": "2026-09-18T06:17:17+00:00",
-    "pass_rate": 0.367,
+    "pass_rate": 0.355,
     "passed": 11,
     "repos": [
       "OG-DW/rmscontextual_api",
@@ -223,14 +223,14 @@
       "arijitaich-og1o/review-skill",
       "unknown/unknown"
     ],
-    "runs": 30,
-    "skip_rate": 0.067,
-    "skips_granted": 2,
-    "skips_requested": 2,
+    "runs": 31,
+    "skip_rate": 0.097,
+    "skips_granted": 3,
+    "skips_requested": 3,
     "top_categories": [
       "hardcoded-credential",
-      "data-protection-design-gap",
       "secret-exposure",
+      "data-protection-design-gap",
       "missing-negative-tests",
       "insecure-design"
     ],
@@ -287,21 +287,21 @@
       "attested": 0,
       "attested_rate": 0.0,
       "block_rate": 1.0,
-      "blocked": 7,
+      "blocked": 8,
       "developers_count": 1,
       "findings": {
-        "blocker": 10,
+        "blocker": 11,
         "high": 0,
         "info": 0,
         "low": 0,
         "medium": 1
       },
-      "findings_per_run": 1.57,
+      "findings_per_run": 1.5,
       "first_seen": "2026-09-18T05:14:31+00:00",
-      "flag_rate": 0.571,
-      "flagged": 4,
+      "flag_rate": 0.625,
+      "flagged": 5,
       "intents": {
-        "commit": 4,
+        "commit": 5,
         "deploy": 3
       },
       "last_seen": "2026-09-18T06:17:17+00:00",
@@ -310,10 +310,10 @@
       "repos": [
         "OG-DW/sofa_poc_fabro"
       ],
-      "runs": 7,
-      "skip_rate": 0.286,
-      "skips_granted": 2,
-      "skips_requested": 2,
+      "runs": 8,
+      "skip_rate": 0.375,
+      "skips_granted": 3,
+      "skips_requested": 3,
       "top_categories": [
         "secret-exposure",
         "hardcoded-credential",
