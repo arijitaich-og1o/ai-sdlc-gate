@@ -51,9 +51,9 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.25,
-      "block_rate": 0.7,
-      "blocked": 14,
+      "attested_rate": 0.238,
+      "block_rate": 0.714,
+      "blocked": 15,
       "developers_count": 1,
       "findings": {
         "blocker": 17,
@@ -62,16 +62,16 @@
         "low": 16,
         "medium": 26
       },
-      "findings_per_run": 3.35,
+      "findings_per_run": 3.19,
       "first_seen": "2026-09-08T23:07:00+00:00",
-      "flag_rate": 0.55,
+      "flag_rate": 0.524,
       "flagged": 11,
       "intents": {
         "commit": 17,
-        "deploy": 3
+        "deploy": 4
       },
-      "last_seen": "2026-09-18T06:17:17+00:00",
-      "pass_rate": 0.3,
+      "last_seen": "2026-09-19T03:45:37+00:00",
+      "pass_rate": 0.286,
       "passed": 6,
       "repos": [
         "OG-DW/rmscontextual_api",
@@ -79,8 +79,8 @@
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/review-skill"
       ],
-      "runs": 20,
-      "skip_rate": 0.15,
+      "runs": 21,
+      "skip_rate": 0.143,
       "skips_granted": 3,
       "skips_requested": 3,
       "top_categories": [
@@ -134,8 +134,8 @@
       "waived_findings": 0
     }
   },
-  "events": 31,
-  "generated_at": "2026-09-19T03:40:00+00:00",
+  "events": 32,
+  "generated_at": "2026-09-19T03:45:54+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -143,9 +143,9 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.161,
-      "block_rate": 0.645,
-      "blocked": 20,
+      "attested_rate": 0.156,
+      "block_rate": 0.656,
+      "blocked": 21,
       "developers_count": 3,
       "findings": {
         "blocker": 43,
@@ -154,16 +154,16 @@
         "low": 25,
         "medium": 47
       },
-      "findings_per_run": 4.29,
+      "findings_per_run": 4.16,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.548,
+      "flag_rate": 0.531,
       "flagged": 17,
       "intents": {
         "commit": 28,
-        "deploy": 3
+        "deploy": 4
       },
-      "last_seen": "2026-09-18T06:17:17+00:00",
-      "pass_rate": 0.355,
+      "last_seen": "2026-09-19T03:45:37+00:00",
+      "pass_rate": 0.344,
       "passed": 11,
       "repos": [
         "OG-DW/rmscontextual_api",
@@ -173,8 +173,8 @@
         "arijitaich-og1o/review-skill",
         "unknown/unknown"
       ],
-      "runs": 31,
-      "skip_rate": 0.097,
+      "runs": 32,
+      "skip_rate": 0.094,
       "skips_granted": 3,
       "skips_requested": 3,
       "top_categories": [
@@ -193,9 +193,9 @@
     ],
     "actors_count": 1,
     "attested": 5,
-    "attested_rate": 0.161,
-    "block_rate": 0.645,
-    "blocked": 20,
+    "attested_rate": 0.156,
+    "block_rate": 0.656,
+    "blocked": 21,
     "developers_count": 3,
     "findings": {
       "blocker": 43,
@@ -204,16 +204,16 @@
       "low": 25,
       "medium": 47
     },
-    "findings_per_run": 4.29,
+    "findings_per_run": 4.16,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.548,
+    "flag_rate": 0.531,
     "flagged": 17,
     "intents": {
       "commit": 28,
-      "deploy": 3
+      "deploy": 4
     },
-    "last_seen": "2026-09-18T06:17:17+00:00",
-    "pass_rate": 0.355,
+    "last_seen": "2026-09-19T03:45:37+00:00",
+    "pass_rate": 0.344,
     "passed": 11,
     "repos": [
       "OG-DW/rmscontextual_api",
@@ -223,8 +223,8 @@
       "arijitaich-og1o/review-skill",
       "unknown/unknown"
     ],
-    "runs": 31,
-    "skip_rate": 0.097,
+    "runs": 32,
+    "skip_rate": 0.094,
     "skips_granted": 3,
     "skips_requested": 3,
     "top_categories": [
@@ -287,7 +287,7 @@
       "attested": 0,
       "attested_rate": 0.0,
       "block_rate": 1.0,
-      "blocked": 8,
+      "blocked": 9,
       "developers_count": 1,
       "findings": {
         "blocker": 11,
@@ -296,22 +296,22 @@
         "low": 0,
         "medium": 1
       },
-      "findings_per_run": 1.5,
+      "findings_per_run": 1.33,
       "first_seen": "2026-09-18T05:14:31+00:00",
-      "flag_rate": 0.625,
+      "flag_rate": 0.556,
       "flagged": 5,
       "intents": {
         "commit": 5,
-        "deploy": 3
+        "deploy": 4
       },
-      "last_seen": "2026-09-18T06:17:17+00:00",
+      "last_seen": "2026-09-19T03:45:37+00:00",
       "pass_rate": 0.0,
       "passed": 0,
       "repos": [
         "OG-DW/sofa_poc_fabro"
       ],
-      "runs": 8,
-      "skip_rate": 0.375,
+      "runs": 9,
+      "skip_rate": 0.333,
       "skips_granted": 3,
       "skips_requested": 3,
       "top_categories": [
