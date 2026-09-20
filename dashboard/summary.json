@@ -140,8 +140,8 @@
       "actors_count": 1,
       "attested": 0,
       "attested_rate": 0.0,
-      "block_rate": 0.5,
-      "blocked": 1,
+      "block_rate": 0.667,
+      "blocked": 2,
       "developers_count": 1,
       "findings": {
         "blocker": 0,
@@ -156,15 +156,15 @@
       "flagged": 0,
       "intents": {
         "commit": 1,
-        "deploy": 1
+        "deploy": 2
       },
-      "last_seen": "2026-09-20T20:14:32+00:00",
-      "pass_rate": 0.5,
+      "last_seen": "2026-09-20T20:34:57+00:00",
+      "pass_rate": 0.333,
       "passed": 1,
       "repos": [
         "oneo-dice/oggpt-x-backend"
       ],
-      "runs": 2,
+      "runs": 3,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -172,8 +172,8 @@
       "waived_findings": 0
     }
   },
-  "events": 34,
-  "generated_at": "2026-09-20T20:14:56+00:00",
+  "events": 35,
+  "generated_at": "2026-09-20T20:35:16+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -181,9 +181,9 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.147,
-      "block_rate": 0.647,
-      "blocked": 22,
+      "attested_rate": 0.143,
+      "block_rate": 0.657,
+      "blocked": 23,
       "developers_count": 4,
       "findings": {
         "blocker": 43,
@@ -192,16 +192,16 @@
         "low": 25,
         "medium": 47
       },
-      "findings_per_run": 3.91,
+      "findings_per_run": 3.8,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.5,
+      "flag_rate": 0.486,
       "flagged": 17,
       "intents": {
         "commit": 29,
-        "deploy": 5
+        "deploy": 6
       },
-      "last_seen": "2026-09-20T20:14:32+00:00",
-      "pass_rate": 0.353,
+      "last_seen": "2026-09-20T20:34:57+00:00",
+      "pass_rate": 0.343,
       "passed": 12,
       "repos": [
         "OG-DW/rmscontextual_api",
@@ -212,8 +212,8 @@
         "oneo-dice/oggpt-x-backend",
         "unknown/unknown"
       ],
-      "runs": 34,
-      "skip_rate": 0.088,
+      "runs": 35,
+      "skip_rate": 0.086,
       "skips_granted": 3,
       "skips_requested": 3,
       "top_categories": [
@@ -232,9 +232,9 @@
     ],
     "actors_count": 1,
     "attested": 5,
-    "attested_rate": 0.147,
-    "block_rate": 0.647,
-    "blocked": 22,
+    "attested_rate": 0.143,
+    "block_rate": 0.657,
+    "blocked": 23,
     "developers_count": 4,
     "findings": {
       "blocker": 43,
@@ -243,16 +243,16 @@
       "low": 25,
       "medium": 47
     },
-    "findings_per_run": 3.91,
+    "findings_per_run": 3.8,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.5,
+    "flag_rate": 0.486,
     "flagged": 17,
     "intents": {
       "commit": 29,
-      "deploy": 5
+      "deploy": 6
     },
-    "last_seen": "2026-09-20T20:14:32+00:00",
-    "pass_rate": 0.353,
+    "last_seen": "2026-09-20T20:34:57+00:00",
+    "pass_rate": 0.343,
     "passed": 12,
     "repos": [
       "OG-DW/rmscontextual_api",
@@ -263,8 +263,8 @@
       "oneo-dice/oggpt-x-backend",
       "unknown/unknown"
     ],
-    "runs": 34,
-    "skip_rate": 0.088,
+    "runs": 35,
+    "skip_rate": 0.086,
     "skips_granted": 3,
     "skips_requested": 3,
     "top_categories": [
@@ -497,8 +497,8 @@
       "actors_count": 1,
       "attested": 0,
       "attested_rate": 0.0,
-      "block_rate": 0.5,
-      "blocked": 1,
+      "block_rate": 0.667,
+      "blocked": 2,
       "developers_count": 1,
       "findings": {
         "blocker": 0,
@@ -513,15 +513,15 @@
       "flagged": 0,
       "intents": {
         "commit": 1,
-        "deploy": 1
+        "deploy": 2
       },
-      "last_seen": "2026-09-20T20:14:32+00:00",
-      "pass_rate": 0.5,
+      "last_seen": "2026-09-20T20:34:57+00:00",
+      "pass_rate": 0.333,
       "passed": 1,
       "repos": [
         "oneo-dice/oggpt-x-backend"
       ],
-      "runs": 2,
+      "runs": 3,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
