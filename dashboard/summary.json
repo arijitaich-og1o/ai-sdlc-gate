@@ -132,10 +132,47 @@
         "schema-incompatibility"
       ],
       "waived_findings": 0
+    },
+    "marlene.graefe@og1o.de": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 0,
+      "attested_rate": 0.0,
+      "block_rate": 1.0,
+      "blocked": 1,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 0,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 0
+      },
+      "findings_per_run": 0.0,
+      "first_seen": "2026-09-20T20:14:25+00:00",
+      "flag_rate": 0.0,
+      "flagged": 0,
+      "intents": {
+        "deploy": 1
+      },
+      "last_seen": "2026-09-20T20:14:25+00:00",
+      "pass_rate": 0.0,
+      "passed": 0,
+      "repos": [
+        "oneo-dice/oggpt-x-backend"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [],
+      "waived_findings": 0
     }
   },
-  "events": 32,
-  "generated_at": "2026-09-19T03:45:54+00:00",
+  "events": 33,
+  "generated_at": "2026-09-20T20:14:41+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -143,10 +180,10 @@
       ],
       "actors_count": 1,
       "attested": 5,
-      "attested_rate": 0.156,
-      "block_rate": 0.656,
-      "blocked": 21,
-      "developers_count": 3,
+      "attested_rate": 0.152,
+      "block_rate": 0.667,
+      "blocked": 22,
+      "developers_count": 4,
       "findings": {
         "blocker": 43,
         "high": 18,
@@ -154,16 +191,16 @@
         "low": 25,
         "medium": 47
       },
-      "findings_per_run": 4.16,
+      "findings_per_run": 4.03,
       "first_seen": "2026-09-08T23:06:43+00:00",
-      "flag_rate": 0.531,
+      "flag_rate": 0.515,
       "flagged": 17,
       "intents": {
         "commit": 28,
-        "deploy": 4
+        "deploy": 5
       },
-      "last_seen": "2026-09-19T03:45:37+00:00",
-      "pass_rate": 0.344,
+      "last_seen": "2026-09-20T20:14:25+00:00",
+      "pass_rate": 0.333,
       "passed": 11,
       "repos": [
         "OG-DW/rmscontextual_api",
@@ -171,10 +208,11 @@
         "arijitaich-og1o/hook-demo",
         "arijitaich-og1o/ledger-demo",
         "arijitaich-og1o/review-skill",
+        "oneo-dice/oggpt-x-backend",
         "unknown/unknown"
       ],
-      "runs": 32,
-      "skip_rate": 0.094,
+      "runs": 33,
+      "skip_rate": 0.091,
       "skips_granted": 3,
       "skips_requested": 3,
       "top_categories": [
@@ -193,10 +231,10 @@
     ],
     "actors_count": 1,
     "attested": 5,
-    "attested_rate": 0.156,
-    "block_rate": 0.656,
-    "blocked": 21,
-    "developers_count": 3,
+    "attested_rate": 0.152,
+    "block_rate": 0.667,
+    "blocked": 22,
+    "developers_count": 4,
     "findings": {
       "blocker": 43,
       "high": 18,
@@ -204,16 +242,16 @@
       "low": 25,
       "medium": 47
     },
-    "findings_per_run": 4.16,
+    "findings_per_run": 4.03,
     "first_seen": "2026-09-08T23:06:43+00:00",
-    "flag_rate": 0.531,
+    "flag_rate": 0.515,
     "flagged": 17,
     "intents": {
       "commit": 28,
-      "deploy": 4
+      "deploy": 5
     },
-    "last_seen": "2026-09-19T03:45:37+00:00",
-    "pass_rate": 0.344,
+    "last_seen": "2026-09-20T20:14:25+00:00",
+    "pass_rate": 0.333,
     "passed": 11,
     "repos": [
       "OG-DW/rmscontextual_api",
@@ -221,10 +259,11 @@
       "arijitaich-og1o/hook-demo",
       "arijitaich-og1o/ledger-demo",
       "arijitaich-og1o/review-skill",
+      "oneo-dice/oggpt-x-backend",
       "unknown/unknown"
     ],
-    "runs": 32,
-    "skip_rate": 0.094,
+    "runs": 33,
+    "skip_rate": 0.091,
     "skips_granted": 3,
     "skips_requested": 3,
     "top_categories": [
@@ -448,6 +487,43 @@
         "credentials-in-tests",
         "real-data-in-fixtures"
       ],
+      "waived_findings": 0
+    },
+    "oneo-dice/oggpt-x-backend": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 0,
+      "attested_rate": 0.0,
+      "block_rate": 1.0,
+      "blocked": 1,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 0,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 0
+      },
+      "findings_per_run": 0.0,
+      "first_seen": "2026-09-20T20:14:25+00:00",
+      "flag_rate": 0.0,
+      "flagged": 0,
+      "intents": {
+        "deploy": 1
+      },
+      "last_seen": "2026-09-20T20:14:25+00:00",
+      "pass_rate": 0.0,
+      "passed": 0,
+      "repos": [
+        "oneo-dice/oggpt-x-backend"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [],
       "waived_findings": 0
     },
     "unknown/unknown": {
