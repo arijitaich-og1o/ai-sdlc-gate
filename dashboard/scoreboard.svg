@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="940" height="278" viewBox="0 0 940 278" font-family="Segoe UI, Helvetica, Arial, sans-serif">
 <rect width="940" height="278" rx="10" fill="#0d1117"/>
 <text x="24" y="38" font-size="22" font-weight="700" fill="#e6edf3">AI SDLC Gate — live scoreboard</text>
-<text x="24" y="62" font-size="12" fill="#8b949e">updated 2026-09-20 20:35 UTC · 35 gate runs · 4 developers · 7 repositories</text>
+<text x="24" y="62" font-size="12" fill="#8b949e">updated 2026-09-21 09:10 UTC · 35 gate runs · 4 developers · 7 repositories</text>
 <rect x="24" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="34" y="96" font-size="12" fill="#8b949e">Pass rate</text>
 <text x="184" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">34%</text>
