@@ -93,17 +93,19 @@ is recommended before the roll-out in any case:
 
 ## The review configuration: who sees what
 
-The developer's machine talks to the organisation's model gateway directly, so the machine must hold a usable key.
-A developer who is determined enough can extract a key their own processes use; no client-side technique changes
-that. The design therefore limits what is exposed and to whom:
+The developer's machine talks to the organisation's model backend directly, so the machine must hold a usable
+credential. The backend is either Anthropic on Google Vertex AI (authenticated with a service account, from which
+the client mints short-lived access tokens) or an OpenAI-compatible gateway (a bearer key). A developer who is
+determined enough can extract a credential their own processes use; no client-side technique changes that. The
+design therefore limits what is exposed and to whom:
 
 | Control | How |
 |---|---|
-| **Nothing readable on disk** | Endpoint, key and model names are stored as one record in the OS credential store: Windows Credential Manager (DPAPI, bound to the signed-in user), macOS Keychain, Linux Secret Service. `~/.ai-sdlc-gate` contains no configuration at all. Headless Linux without a secret service falls back to a file encrypted with a random key kept in a user-only file, and the client says so. |
-| **Not in the repository** | The endpoint and the model names live only in the repository secrets (`LITELLM_BASE_URL`, `LITELLM_API_KEY`, `LITELLM_MODELS`). Policy, skills, workflows and documentation never name them. Developers cannot learn which gateway or which models are used by reading the repository or their own installation folder. |
-| **Encrypted in transit** | The broker encrypts the record to an RSA key pair generated on the requesting machine; the artifact expires after one day; only people with access to this repository can request it. |
-| **Spend limit and rotation** | The shared key should be a gateway virtual key with a spend limit. Rotate it by updating the secret; clients pick the new value up with `ai-sdlc-gate configure`. Gateway logs attribute usage to the key, not to a person; per-person attribution comes from the gate's own metrics. |
-| **Never logged** | The engine never prints the key or the endpoint; error messages are reduced to status codes. |
+| **Nothing readable on disk** | The whole configuration (for Vertex: project, region, model names and the service-account key; for a gateway: endpoint, key and model names) is stored as one record in the OS credential store: Windows Credential Manager (DPAPI, bound to the signed-in user), macOS Keychain, Linux Secret Service. `~/.ai-sdlc-gate` contains no configuration at all. Headless Linux without a secret service falls back to a file encrypted with a random key kept in a user-only file, and the client says so. |
+| **Not in the repository** | The endpoint, project, region and model names live only in the repository secrets (`VERTEX_*` or `LITELLM_*`). Policy, skills, workflows and documentation never name them. Developers cannot learn which model or backend is used by reading the repository or their own installation folder. |
+| **Encrypted in transit** | The broker seals the record with a random AES-256-GCM key that is itself wrapped with RSA-OAEP to a key pair generated on the requesting machine; the artifact expires after one day; only people with access to this repository can request it. |
+| **Least privilege, spend and rotation** | The Vertex service account holds only `roles/aiplatform.user` on the one project, so it cannot reach other workloads; a gateway key should be a virtual key with a spend limit. Rotate by updating the secret; clients pick the new value up with `ai-sdlc-gate configure`. Backend logs attribute usage to the credential, not to a person; per-person attribution comes from the gate's own metrics. |
+| **Never logged** | The engine never prints the credential, the endpoint, the project or the model; error messages are reduced to a cause and a status. |
 
 ## Metrics from the client
 

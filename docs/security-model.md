@@ -22,15 +22,15 @@
 - A sufficiently subtle defect can pass a model review. Skills improve continuously through challenges; the trials
   codebase is the regression suite.
 - Repository admins can still push directly if the ruleset is misconfigured; audit ruleset changes.
-- The model gateway sees the code under review. Keep it inside the organisation's boundary and apply its
-  retention policy.
+- The model backend (Vertex AI or the gateway) sees the code under review. Keep it inside the organisation's
+  boundary and apply its retention policy; the Vertex service account holds only `roles/aiplatform.user` on the one project.
 
 ## Hardening checklist for operators
 
 - [ ] Managed client deployed to all company devices; attested share on the scoreboard near 100 %.
 - [ ] `identity.required: true` and Entra app configured.
-- [ ] Secrets in this repository only; per-developer gateway keys with spend limits.
+- [ ] Secrets in this repository only; Vertex service account limited to `roles/aiplatform.user`, or gateway keys with spend limits.
 - [ ] Auto-merge enabled here; squash only.
 - [ ] `metrics` branch protected from human pushes (ruleset: only the workflow's token / app may push).
 - [ ] Dependabot PRs for actions merged promptly.
-- [ ] Rotation calendar for `LITELLM_API_KEY` and `AI_SDLC_GATE_TOKEN`.
+- [ ] Rotation calendar for the model credential (`VERTEX_SA_KEY` or `LITELLM_API_KEY`) and `AI_SDLC_GATE_TOKEN`.
