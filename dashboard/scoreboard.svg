@@ -1,22 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="940" height="304" viewBox="0 0 940 304" font-family="Segoe UI, Helvetica, Arial, sans-serif">
-<rect width="940" height="304" rx="10" fill="#0d1117"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="174" viewBox="0 0 940 174" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="940" height="174" rx="10" fill="#0d1117"/>
 <text x="24" y="38" font-size="22" font-weight="700" fill="#e6edf3">AI SDLC Gate — live scoreboard</text>
-<text x="24" y="62" font-size="12" fill="#8b949e">updated 2026-09-22 03:44 UTC · 36 gate runs · 5 developers · 8 repositories</text>
+<text x="24" y="62" font-size="12" fill="#8b949e">updated 2026-09-22 10:09 UTC · 0 gate runs · 0 developers · 0 repositories</text>
 <rect x="24" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="34" y="96" font-size="12" fill="#8b949e">Pass rate</text>
-<text x="184" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">33%</text>
+<text x="184" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">0%</text>
 <rect x="204" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="214" y="96" font-size="12" fill="#8b949e">Blocked</text>
-<text x="364" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">24</text>
+<text x="364" y="97" font-size="14" font-weight="700" fill="#2ea043" text-anchor="end">0</text>
 <rect x="384" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="394" y="96" font-size="12" fill="#8b949e">Skips granted</text>
-<text x="544" y="97" font-size="14" font-weight="700" fill="#d4a72c" text-anchor="end">3</text>
+<text x="544" y="97" font-size="14" font-weight="700" fill="#2ea043" text-anchor="end">0</text>
 <rect x="564" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="574" y="96" font-size="12" fill="#8b949e">Findings / run</text>
-<text x="724" y="97" font-size="14" font-weight="700" fill="#58a6ff" text-anchor="end">3.69</text>
+<text x="724" y="97" font-size="14" font-weight="700" fill="#58a6ff" text-anchor="end">0.0</text>
 <rect x="744" y="74" width="170" height="34" rx="6" fill="#161b22" stroke="#30363d"/>
 <text x="754" y="96" font-size="12" fill="#8b949e">Client attested</text>
-<text x="904" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">14%</text>
+<text x="904" y="97" font-size="14" font-weight="700" fill="#cf222e" text-anchor="end">0%</text>
 <text x="24" y="136" font-size="12" font-weight="700" fill="#8b949e">Developer</text>
 <text x="470" y="136" font-size="12" font-weight="700" fill="#8b949e">Runs</text>
 <text x="540" y="136" font-size="12" font-weight="700" fill="#8b949e">Pass</text>
@@ -25,42 +25,5 @@
 <text x="760" y="136" font-size="12" font-weight="700" fill="#8b949e">Attested</text>
 <text x="850" y="136" font-size="12" font-weight="700" fill="#8b949e">Last run</text>
 <line x1="24" y1="144" x2="916" y2="144" stroke="#30363d"/>
-<rect x="16" y="145" width="908" height="26" fill="#161b22" opacity="0.6"/>
-<text x="24" y="162" font-size="13" fill="#e6edf3">felix.theodor@ottogroup.com (@arijitaich-og1o)</text>
-<text x="470" y="162" font-size="13" fill="#e6edf3">1</text>
-<text x="540" y="162" font-size="13" font-weight="700" fill="#2ea043">100%</text>
-<text x="610" y="162" font-size="13" fill="#e6edf3">0</text>
-<text x="690" y="162" font-size="13" fill="#e6edf3">0/0</text>
-<text x="760" y="162" font-size="13" fill="#cf222e">0%</text>
-<text x="850" y="162" font-size="12" fill="#8b949e">2026-09-10</text>
-<text x="24" y="188" font-size="13" fill="#e6edf3">@arijitaich-og1o</text>
-<text x="470" y="188" font-size="13" fill="#e6edf3">10</text>
-<text x="540" y="188" font-size="13" font-weight="700" fill="#cf222e">40%</text>
-<text x="610" y="188" font-size="13" fill="#cf222e">6</text>
-<text x="690" y="188" font-size="13" fill="#e6edf3">0/0</text>
-<text x="760" y="188" font-size="13" fill="#cf222e">0%</text>
-<text x="850" y="188" font-size="12" fill="#8b949e">2026-09-16</text>
-<rect x="16" y="197" width="908" height="26" fill="#161b22" opacity="0.6"/>
-<text x="24" y="214" font-size="13" fill="#e6edf3">marlene.graefe@og1o.de (@arijitaich-og1o)</text>
-<text x="470" y="214" font-size="13" fill="#e6edf3">3</text>
-<text x="540" y="214" font-size="13" font-weight="700" fill="#cf222e">33%</text>
-<text x="610" y="214" font-size="13" fill="#cf222e">2</text>
-<text x="690" y="214" font-size="13" fill="#e6edf3">0/0</text>
-<text x="760" y="214" font-size="13" fill="#cf222e">0%</text>
-<text x="850" y="214" font-size="12" fill="#8b949e">2026-09-20</text>
-<text x="24" y="240" font-size="13" fill="#e6edf3">arijit.aich@og1o.in (@arijitaich-og1o)</text>
-<text x="470" y="240" font-size="13" fill="#e6edf3">21</text>
-<text x="540" y="240" font-size="13" font-weight="700" fill="#cf222e">29%</text>
-<text x="610" y="240" font-size="13" fill="#cf222e">15</text>
-<text x="690" y="240" font-size="13" fill="#e6edf3">3/3</text>
-<text x="760" y="240" font-size="13" fill="#cf222e">24%</text>
-<text x="850" y="240" font-size="12" fill="#8b949e">2026-09-19</text>
-<rect x="16" y="249" width="908" height="26" fill="#161b22" opacity="0.6"/>
-<text x="24" y="266" font-size="13" fill="#e6edf3">aich@ornakala.com (@arijitaich-og1o)</text>
-<text x="470" y="266" font-size="13" fill="#e6edf3">1</text>
-<text x="540" y="266" font-size="13" font-weight="700" fill="#cf222e">0%</text>
-<text x="610" y="266" font-size="13" fill="#cf222e">1</text>
-<text x="690" y="266" font-size="13" fill="#e6edf3">0/0</text>
-<text x="760" y="266" font-size="13" fill="#cf222e">0%</text>
-<text x="850" y="266" font-size="12" fill="#8b949e">2026-09-22</text>
+<text x="24" y="162" font-size="13" fill="#8b949e">No gate runs recorded yet.</text>
 </svg>
