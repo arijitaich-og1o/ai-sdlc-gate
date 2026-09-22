@@ -1,7 +1,7 @@
 # Skill challenge
 
-The seven skills are the organisation's shared review standard. Anyone may try to improve one; the repository
-decides objectively and credits the contributor. The repository never contains more or fewer than seven skills.
+The eight skills are the organisation's shared review standard. Anyone may try to improve one; the repository
+decides objectively and credits the contributor. The repository never contains more or fewer than eight skills.
 
 ## How to challenge
 

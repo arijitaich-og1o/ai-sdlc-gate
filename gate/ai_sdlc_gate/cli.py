@@ -412,7 +412,7 @@ def build_parser() -> argparse.ArgumentParser:
     i.add_argument("--base"), i.add_argument("--head"), i.add_argument("--intent"), i.add_argument("--ref")
     i.set_defaults(func=cmd_intent)
 
-    v = sub.add_parser("validate-skills", help="verify the repository holds exactly 7 valid phase skills")
+    v = sub.add_parser("validate-skills", help="verify the repository holds exactly 8 valid phase skills")
     common(v)
     v.set_defaults(func=cmd_validate_skills)
 
