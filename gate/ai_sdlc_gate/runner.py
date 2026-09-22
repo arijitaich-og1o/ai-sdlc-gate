@@ -392,15 +392,35 @@ def run_gate(
 
     verdict = "fail" if fail_reasons else "pass"
     usage = dict(getattr(llm, "total_usage", {}) or {})
+    ctx_in = context or {}
     attestations = parse_attestations(cs.commit_messages)
     verified = [a["email"] for a in attestations if a.get("email") and a["email"] != "anonymous"]
-    identity_ctx = {
-        "attestations": len(attestations),
-        # Only a verified (non-anonymous) attestation counts as attested; an anonymous stamp must not claim it.
-        "client_attested": bool(verified),
-        "developer_email": (verified[0] if verified else (cs.author_email or "")).lower(),
-        "email_verified": bool(verified),
-    }
+    # The committing developer is the person signed in on this machine. Their verified identity is the only source
+    # of attribution; the author e-mail of HEAD and any attestation trailers in the change may belong to commits
+    # pulled in from another repository and must never be credited to whoever runs this gate.
+    local_email = str(ctx_in.get("verified_email") or "").strip().lower()
+    local_name = str(ctx_in.get("verified_name") or "").strip()
+    if local_email:
+        author_name = local_name or cs.author_name
+        author_email = local_email
+        identity_ctx = {
+            "attestations": len(attestations),
+            # The run is being produced right now by a signed-in client, so it is attested regardless of what
+            # trailers the pulled-in history happens to carry.
+            "client_attested": True,
+            "developer_email": local_email,
+            "email_verified": True,
+        }
+    else:
+        # No local sign-in (server-side CI runs): fall back to the change's own attestation, then the git author.
+        author_name = cs.author_name
+        author_email = cs.author_email
+        identity_ctx = {
+            "attestations": len(attestations),
+            "client_attested": bool(verified),
+            "developer_email": (verified[0] if verified else (cs.author_email or "")).lower(),
+            "email_verified": bool(verified),
+        }
     return GateReport(
         intent=intent,
         phases=results,
@@ -421,6 +441,6 @@ def run_gate(
             "stability": stability,
             "ledger_runs": ledger.runs if ledger is not None else 0,
         },
-        context={**(context or {}), "author_name": cs.author_name, "author_email": cs.author_email, **identity_ctx},
+        context={**ctx_in, "author_name": author_name, "author_email": author_email, **identity_ctx},
         llm_usage=usage,
     )
