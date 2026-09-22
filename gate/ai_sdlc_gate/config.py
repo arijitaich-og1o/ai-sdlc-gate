@@ -46,7 +46,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "release": [3, 4, 5, 6, 7, 8],
         "deploy": [3, 4, 5, 6, 7, 8],
         "hotfix": [4, 5, 6, 7, 8],
-        "maintenance": [4, 5, 7],
+        "maintenance": [4, 5, 7, 8],
     },
     "intent_detection": {
         "trailer": "SDLC-Intent",

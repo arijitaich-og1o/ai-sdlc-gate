@@ -35,7 +35,7 @@ intents:
   release:     [3, 4, 5, 6, 7, 8]
   deploy:      [3, 4, 5, 6, 7, 8]
   hotfix:      [4, 5, 6, 7, 8]
-  maintenance: [4, 5, 7]
+  maintenance: [4, 5, 7, 8]
 
 # How the intent is detected when not given explicitly (first match wins, in this order):
 #   1. commit-message / PR-body trailer   `SDLC-Intent: deploy`
