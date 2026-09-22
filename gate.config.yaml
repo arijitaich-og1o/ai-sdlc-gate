@@ -3,9 +3,10 @@
 version: 1
 
 llm:
-  # The model gateway (endpoint, key and model names) is never written into this repository. Workflows read it from
-  # the repository secrets LITELLM_BASE_URL / LITELLM_API_KEY / LITELLM_MODELS; installed clients receive the same
-  # values through the key broker and keep them in the operating system credential store.
+  # The model backend is never written into this repository. It is Anthropic on Google Vertex AI (repository secrets
+  # VERTEX_SA_KEY / VERTEX_PROJECT / VERTEX_LOCATION / VERTEX_MODELS) or an OpenAI-compatible gateway (LITELLM_BASE_URL
+  # / LITELLM_API_KEY / LITELLM_MODELS). Installed clients receive the whole configuration through the key broker and
+  # keep it in the operating system credential store; the endpoint, project and model names stay out of the repo.
   base_url_env: LITELLM_BASE_URL
   api_key_env: LITELLM_API_KEY
   models_env: LITELLM_MODELS      # comma separated: review model, judge model, fallback models...

@@ -299,6 +299,201 @@ class LLMClient:
         self._client.close()
 
 
+class VertexClient:
+    """Anthropic Claude on Google Vertex AI, with the same surface as LLMClient.
+
+    Authentication uses a Google service account (delivered by the key broker and kept in the OS credential store,
+    never on disk in the clear); the client mints short-lived access tokens from it locally. The endpoint, project,
+    region and model name all live inside the encrypted record, so a developer cannot learn which model or gateway
+    is used by reading the repository or their installation. Requests use the native Anthropic Messages format on
+    the `:rawPredict` endpoint; all output is treated as untrusted data and parsed as JSON by the caller.
+    """
+
+    ANTHROPIC_VERSION = "vertex-2023-10-16"
+    SCOPES = ("https://www.googleapis.com/auth/cloud-platform",)
+
+    def __init__(
+        self,
+        project: str,
+        location: str,
+        credentials: dict,
+        model: str,
+        fallback_models: list[str] | None = None,
+        timeout: float = 180.0,
+        max_retries: int = 3,
+        temperature: float = 0.0,
+        max_output_tokens: int = 8000,
+        transport: httpx.BaseTransport | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+        token_fn: Callable[[], tuple[str, float]] | None = None,
+    ) -> None:
+        if not project:
+            raise LLMError("the review engine is not configured (no project); run: ai-sdlc-gate configure")
+        if not credentials:
+            raise LLMError("the review engine credential is missing; run: ai-sdlc-gate configure")
+        self.project = project
+        self.location = (location or "us-east5").strip()
+        self.credentials = credentials
+        self.model = model
+        self.fallback_models = [m for m in (fallback_models or []) if m and m != model]
+        self.timeout = timeout
+        self.max_retries = max(0, int(max_retries))
+        self.temperature = temperature
+        self.max_output_tokens = max_output_tokens
+        self._sleep = sleep
+        self._client = httpx.Client(timeout=httpx.Timeout(timeout), transport=transport)
+        self._token_fn = token_fn
+        self._tok: str | None = None
+        self._tok_exp: float = 0.0
+        self.total_usage: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0}
+
+    # ------------------------------------------------------------------ factory
+    @classmethod
+    def from_config(cls, cfg: Config, stored: Any, model: str | None = None, **kwargs: Any) -> "VertexClient":
+        review, judge, fallbacks = resolve_models(cfg, getattr(stored, "models", None) or None)
+        chosen = judge if model == "judge" else (model or review)
+        d = getattr(stored, "data", None) or {}
+        llm = cfg.llm
+        return cls(
+            project=str(d.get("project") or ""),
+            location=str(d.get("location") or "us-east5"),
+            credentials=d.get("credentials") or {},
+            model=chosen,
+            fallback_models=fallbacks,
+            timeout=float(llm.get("timeout_seconds", 180)),
+            max_retries=int(llm.get("max_retries", 3)),
+            temperature=float(llm.get("temperature", 0)),
+            max_output_tokens=int(llm.get("max_output_tokens", 8000)),
+            **kwargs,
+        )
+
+    # ------------------------------------------------------------------ auth
+    def _mint_token(self) -> tuple[str, float]:
+        # google-auth is imported lazily so the package is only needed on machines that use the Vertex provider.
+        from google.auth.transport.requests import Request
+        from google.oauth2 import service_account
+
+        creds = service_account.Credentials.from_service_account_info(self.credentials, scopes=list(self.SCOPES))
+        creds.refresh(Request())
+        exp = creds.expiry.timestamp() if getattr(creds, "expiry", None) else time.time() + 3000
+        if not creds.token:
+            raise LLMError("could not obtain an access token for the review service")
+        return creds.token, exp
+
+    def _token(self) -> str:
+        now = time.time()
+        if self._tok and now < self._tok_exp - 60:
+            return self._tok
+        try:
+            self._tok, self._tok_exp = (self._token_fn or self._mint_token)()
+        except LLMError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - never leak credential internals
+            raise LLMError("the review engine credential was rejected; run: ai-sdlc-gate configure") from exc
+        return self._tok
+
+    # ------------------------------------------------------------------ helpers
+    def _host(self) -> str:
+        return "aiplatform.googleapis.com" if self.location == "global" else f"{self.location}-aiplatform.googleapis.com"
+
+    def _url(self, model: str) -> str:
+        return (
+            f"https://{self._host()}/v1/projects/{self.project}/locations/{self.location}"
+            f"/publishers/anthropic/models/{model}:rawPredict"
+        )
+
+    def _post(self, model: str, payload: dict[str, Any]) -> httpx.Response:
+        return self._client.post(
+            self._url(model),
+            headers={
+                "Authorization": f"Bearer {self._token()}",
+                "Content-Type": "application/json; charset=utf-8",
+                "User-Agent": "ai-sdlc-gate/1.0",
+            },
+            json=payload,
+        )
+
+    def _attempt(self, model: str, system: str, user: str, json_mode: bool) -> LLMResponse:
+        label = "review model" if model == self.model else "fallback model"
+        messages: list[dict[str, Any]] = [{"role": "user", "content": user}]
+        if json_mode:
+            # Prefill the assistant turn with "{" so the model must emit a JSON object (Anthropic has no json mode).
+            messages.append({"role": "assistant", "content": "{"})
+        payload: dict[str, Any] = {
+            "anthropic_version": self.ANTHROPIC_VERSION,
+            "max_tokens": self.max_output_tokens,
+            "messages": messages,
+            "temperature": self.temperature,
+        }
+        if system:
+            payload["system"] = system
+        last_error: Exception | None = None
+        for attempt in range(self.max_retries + 1):
+            started = time.monotonic()
+            try:
+                resp = self._post(model, payload)
+            except httpx.HTTPError as exc:
+                last_error = LLMError(f"could not reach the review service ({exc.__class__.__name__})")
+            else:
+                if resp.status_code == 400 and "temperature" in payload and "temperature" in resp.text.lower():
+                    payload.pop("temperature", None)
+                    continue
+                if resp.status_code >= 400 and _is_final(resp.status_code, resp.text):
+                    raise LLMError(f"{label}: {describe_failure(resp.status_code, resp.text)}")
+                if resp.status_code in RETRY_STATUSES:
+                    last_error = LLMError(describe_failure(resp.status_code, resp.text))
+                elif resp.status_code >= 400:
+                    raise LLMError(f"{label}: {describe_failure(resp.status_code, resp.text)}")
+                else:
+                    data = resp.json()
+                    blocks = data.get("content") or []
+                    text = "".join(b.get("text", "") for b in blocks if isinstance(b, dict) and b.get("type") == "text")
+                    if json_mode:
+                        text = text if text.lstrip().startswith("{") else "{" + text
+                    usage = data.get("usage") or {}
+                    self.total_usage["prompt_tokens"] += int(usage.get("input_tokens") or 0)
+                    self.total_usage["completion_tokens"] += int(usage.get("output_tokens") or 0)
+                    return LLMResponse(content=text or "", model=model, usage=usage, latency_s=time.monotonic() - started)
+            if attempt < self.max_retries:
+                self._sleep(min(30.0, 2.0 ** attempt))
+        raise LLMError(f"{label}: gave up after {self.max_retries + 1} attempts: {last_error}")
+
+    # ------------------------------------------------------------------ public
+    def chat(self, system: str, user: str, json_mode: bool = True) -> LLMResponse:
+        errors: list[str] = []
+        for model in [self.model, *self.fallback_models]:
+            try:
+                return self._attempt(model, system, user, json_mode)
+            except LLMError as exc:
+                errors.append(str(exc))
+        unique: list[str] = []
+        for e in errors:
+            if e not in unique:
+                unique.append(e)
+        raise LLMError("; ".join(unique))
+
+    def chat_json(self, system: str, user: str) -> tuple[dict[str, Any], LLMResponse]:
+        resp = self.chat(system, user, json_mode=True)
+        data = extract_json(resp.content)
+        if not isinstance(data, dict):
+            raise LLMError("Model returned JSON that is not an object")
+        return data, resp
+
+    def close(self) -> None:
+        self._client.close()
+
+
+def build_client(cfg: Config, model: str | None = None, **kwargs: Any) -> Any:
+    """Return the review client for the configured provider (Vertex AI or an OpenAI-compatible gateway)."""
+    from . import secrets_store  # local import: keyring is optional at import time
+
+    stored = secrets_store.load()
+    if stored is not None and stored.provider == "vertex":
+        return VertexClient.from_config(cfg, stored, model=model, **kwargs)
+    return LLMClient.from_config(cfg, model=model, **kwargs)
+
+
+
 class StaticLLM:
     """Deterministic stand-in used by tests and `--offline` dry runs."""
 

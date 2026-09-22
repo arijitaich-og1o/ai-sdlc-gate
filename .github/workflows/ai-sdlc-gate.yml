@@ -21,10 +21,20 @@ on:
         type: string
         default: "3.12"
     secrets:
+      # Provide EITHER the Vertex AI service account OR the OpenAI-compatible gateway. With secrets: inherit the
+      # caller passes whichever is configured; the engine selects the backend from what is present.
+      VERTEX_SA_KEY:
+        required: false
+      VERTEX_PROJECT:
+        required: false
+      VERTEX_LOCATION:
+        required: false
+      VERTEX_MODELS:
+        required: false
       LITELLM_API_KEY:
-        required: true
+        required: false
       LITELLM_BASE_URL:
-        required: true
+        required: false
       LITELLM_MODELS:
         description: "Comma separated model names: review, judge, fallbacks (kept out of the repository)."
         required: false
@@ -128,6 +138,10 @@ jobs:
       - name: Run the AI SDLC Gate
         id: gate
         env:
+          VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
+          VERTEX_PROJECT: ${{ secrets.VERTEX_PROJECT }}
+          VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
+          VERTEX_MODELS: ${{ secrets.VERTEX_MODELS }}
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
           LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
           LITELLM_MODELS: ${{ secrets.LITELLM_MODELS }}

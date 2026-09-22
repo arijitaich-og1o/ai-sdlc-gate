@@ -98,6 +98,10 @@ jobs:
       - name: Arbitrate each challenged skill
         if: steps.state.outputs.resolved == 'false'
         env:
+          VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
+          VERTEX_PROJECT: ${{ secrets.VERTEX_PROJECT }}
+          VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
+          VERTEX_MODELS: ${{ secrets.VERTEX_MODELS }}
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
           LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
           LITELLM_MODELS: ${{ secrets.LITELLM_MODELS }}

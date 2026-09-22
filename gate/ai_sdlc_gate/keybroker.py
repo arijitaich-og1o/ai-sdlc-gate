@@ -34,11 +34,13 @@ class KeyBrokerError(RuntimeError):
 
 @dataclass
 class LiteLLMConfig:
-    base_url: str
-    api_key: str
+    base_url: str = ""
+    api_key: str = ""
     mode: str = ""
     developer: str = ""
     models: list[str] | None = None
+    provider: str = "openai"
+    data: dict | None = None
 
 
 def _headers(token: str) -> dict[str, str]:
@@ -56,17 +58,52 @@ def generate_keypair() -> tuple[rsa.RSAPrivateKey, str]:
     return private, pem
 
 
+def _rsa_decrypt(private: rsa.RSAPrivateKey, blob: bytes) -> bytes:
+    return private.decrypt(blob, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
+
+
+def _decrypt_blob(private: rsa.RSAPrivateKey, blob: bytes) -> bytes:
+    """Decrypt a broker artifact.
+
+    Two formats are accepted. A hybrid envelope (JSON with base64 `key`/`nonce`/`ct`) wraps a random AES-256-GCM
+    key with RSA-OAEP and encrypts the payload with that key; it is used because a service-account credential is
+    far larger than RSA can wrap directly. A raw RSA-OAEP blob is the legacy small-payload format. Both keep the
+    plaintext on the runner and the requesting machine only.
+    """
+    import base64
+
+    try:
+        env = json.loads(blob.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        env = None
+    if isinstance(env, dict) and env.get("key") and env.get("ct") and env.get("nonce"):
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+        aes_key = _rsa_decrypt(private, base64.b64decode(env["key"]))
+        return AESGCM(aes_key).decrypt(base64.b64decode(env["nonce"]), base64.b64decode(env["ct"]), None)
+    return _rsa_decrypt(private, blob)
+
+
 def decrypt_config(private: rsa.RSAPrivateKey, blob: bytes) -> LiteLLMConfig:
     try:
-        plain = private.decrypt(blob, padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()), algorithm=hashes.SHA256(), label=None))
+        plain = _decrypt_blob(private, blob)
         data = json.loads(plain.decode("utf-8"))
-    except (ValueError, json.JSONDecodeError) as exc:
+    except (ValueError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise KeyBrokerError("could not decrypt the configuration returned by the key broker") from exc
+    provider = str(data.get("provider") or "openai")
+    models = [str(m) for m in data.get("models") or []]
+    developer = str(data.get("developer") or "")
+    mode = str(data.get("mode") or "")
+    if provider == "vertex":
+        d = data.get("data") if isinstance(data.get("data"), dict) else {}
+        if not (d.get("credentials") and d.get("project")):
+            raise KeyBrokerError("key broker returned an incomplete Vertex configuration")
+        return LiteLLMConfig(provider="vertex", data=d, models=models, developer=developer, mode=mode)
     key = str(data.get("api_key") or "").strip()
     if not key:
         raise KeyBrokerError("key broker returned an empty API key")
-    return LiteLLMConfig(base_url=str(data.get("base_url") or "").strip(), api_key=key, mode=str(data.get("mode") or ""),
-                         developer=str(data.get("developer") or ""), models=[str(m) for m in data.get("models") or []])
+    return LiteLLMConfig(base_url=str(data.get("base_url") or "").strip(), api_key=key, mode=mode,
+                         developer=developer, models=models, provider="openai")
 
 
 def fetch_config(

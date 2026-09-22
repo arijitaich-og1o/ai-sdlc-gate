@@ -1,9 +1,14 @@
-# Key broker: gives an installed client the model-gateway configuration (endpoint, key, model names) held in this
-# repository's secrets, without any of it appearing in plaintext outside the runner and the requesting machine.
+# Key broker: gives an installed client the model-backend configuration held in this repository's secrets, without
+# any of it appearing in plaintext outside the runner and the requesting machine.
 #
 # The client generates an RSA key pair, triggers this workflow with the PUBLIC key using the developer's GitHub
-# credential, and downloads the artifact. The artifact is the configuration encrypted to that public key
-# (RSA-OAEP/SHA-256); the client decrypts it and stores it in the operating system credential store.
+# credential, and downloads the artifact. The artifact is a hybrid envelope: a random AES-256-GCM key encrypts the
+# configuration, and that key is wrapped with RSA-OAEP/SHA-256 to the requester's public key. The client decrypts
+# it and stores it in the operating system credential store.
+#
+# Backend selection (scripts/broker_payload.py): if the VERTEX_SA_KEY secret is present, the client is configured
+# for Anthropic on Vertex AI (secrets VERTEX_SA_KEY, VERTEX_PROJECT, optional VERTEX_LOCATION, VERTEX_MODELS).
+# Otherwise the OpenAI-compatible gateway is used (LITELLM_API_KEY, LITELLM_BASE_URL, optional LITELLM_MODELS).
 name: Key Broker
 
 run-name: "key-broker ${{ inputs.request_id }}"
@@ -30,6 +35,9 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Check out the broker scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
       - name: Validate the request
         env:
           REQUEST_ID: ${{ inputs.request_id }}
@@ -42,33 +50,28 @@ jobs:
           BITS="$(openssl pkey -pubin -in "$RUNNER_TEMP/pub.pem" -text -noout | grep -Eo 'Public-Key: \([0-9]+ bit\)' | grep -Eo '[0-9]+')"
           [ "${BITS:-0}" -ge 2048 ] || { echo "::error::public key too small"; exit 1; }
 
-      - name: Encrypt the configuration for the requester
+      - name: Assemble the configuration
         env:
           LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
           LITELLM_BASE_URL: ${{ secrets.LITELLM_BASE_URL }}
           LITELLM_MODELS: ${{ secrets.LITELLM_MODELS }}
+          VERTEX_SA_KEY: ${{ secrets.VERTEX_SA_KEY }}
+          VERTEX_PROJECT: ${{ secrets.VERTEX_PROJECT }}
+          VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
+          VERTEX_MODELS: ${{ secrets.VERTEX_MODELS }}
           DEVELOPER: ${{ github.actor }}
         run: |
           set -euo pipefail
-          [ -n "${LITELLM_API_KEY:-}" ] || { echo "::error::the LITELLM_API_KEY secret is not configured"; exit 1; }
-          [ -n "${LITELLM_BASE_URL:-}" ] || { echo "::error::the LITELLM_BASE_URL secret is not configured"; exit 1; }
-          # Accept a key pasted together with its display name and keep only the token.
-          KEY="$(printf '%s' "$LITELLM_API_KEY" | grep -Eo 'sk-[A-Za-z0-9_-]{16,}' | head -n1 || true)"
-          [ -n "$KEY" ] || { echo "::error::LITELLM_API_KEY does not contain a gateway key (expected a token starting with 'sk-')"; exit 1; }
-          [ "$KEY" = "$LITELLM_API_KEY" ] || echo "::warning::LITELLM_API_KEY contained extra text around the key; only the key token was used."
-          if [ -z "${LITELLM_MODELS:-}" ]; then
-            echo "::warning::the LITELLM_MODELS secret is not set; clients will use the engine's built-in model list. Set it (comma separated: review,judge,fallback,...) to keep model names out of the repository."
-          fi
+          python3 scripts/broker_payload.py > "$RUNNER_TEMP/plain.json"
+
+      - name: Encrypt the configuration for the requester
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet 'cryptography>=42.0'
           mkdir -p "$RUNNER_TEMP/out"
-          KEY="$KEY" python3 -c 'import json, os
-          models = [m.strip() for m in os.environ.get("LITELLM_MODELS", "").split(",") if m.strip()]
-          print(json.dumps({"base_url": os.environ["LITELLM_BASE_URL"].rstrip("/"), "api_key": os.environ["KEY"], "models": models,
-                            "mode": "shared", "developer": os.environ["DEVELOPER"]}))' > "$RUNNER_TEMP/plain.json"
-          openssl pkeyutl -encrypt -pubin -inkey "$RUNNER_TEMP/pub.pem" \
-            -pkeyopt rsa_padding_mode:oaep -pkeyopt rsa_oaep_md:sha256 -pkeyopt rsa_mgf1_md:sha256 \
-            -in "$RUNNER_TEMP/plain.json" -out "$RUNNER_TEMP/out/config.enc"
+          python3 scripts/broker_seal.py "$RUNNER_TEMP/pub.pem" "$RUNNER_TEMP/plain.json" "$RUNNER_TEMP/out/config.enc"
           rm -f "$RUNNER_TEMP/plain.json"
-          echo "encrypted configuration issued to $DEVELOPER"
+          echo "encrypted configuration issued"
 
       - name: Publish the encrypted configuration
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
