@@ -645,13 +645,13 @@ def _verify_vertex(data: dict) -> str | None:
     if not (isinstance(creds, dict) and data.get("project")):
         return "the review configuration is incomplete"
     try:
-        from google.auth.transport.requests import Request
-        from google.oauth2 import service_account
-
-        c = service_account.Credentials.from_service_account_info(creds, scopes=["https://www.googleapis.com/auth/cloud-platform"])
-        c.refresh(Request())
-        if not c.token:
-            return "could not obtain an access token from the service account"
+        client = llm_mod.VertexClient(project=str(data.get("project")), location=str(data.get("location") or "us-east5"),
+                                      credentials=creds, model="verify", max_retries=0)
+        try:
+            if not client._token():
+                return "could not obtain an access token from the service account"
+        finally:
+            client.close()
     except Exception:  # noqa: BLE001 - never surface credential internals
         return "the service account was rejected when obtaining an access token"
     return None

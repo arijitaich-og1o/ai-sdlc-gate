@@ -46,8 +46,7 @@ def test_vertex_client_calls_rawpredict_and_parses_json():
         seen["url"] = str(request.url)
         seen["auth"] = request.headers.get("authorization")
         seen["body"] = json.loads(request.content)
-        # With JSON prefill the model continues after "{"; return the remainder of the object.
-        return _anthropic_ok('"summary": "ok", "findings": []}')
+        return _anthropic_ok('{"summary": "ok", "findings": []}')
 
     client = VertexClient(
         project="ogcs-mjnq-ai-ic-network", location="us-east5", credentials=_fake_sa(),
@@ -59,7 +58,8 @@ def test_vertex_client_calls_rawpredict_and_parses_json():
     assert seen["url"] == "https://us-east5-aiplatform.googleapis.com/v1/projects/ogcs-mjnq-ai-ic-network/locations/us-east5/publishers/anthropic/models/claude-opus-4-8:rawPredict"
     assert seen["auth"] == "Bearer tok-123"
     assert seen["body"]["anthropic_version"] == "vertex-2023-10-16" and seen["body"]["system"] == "system rules"
-    assert seen["body"]["messages"][-1] == {"role": "assistant", "content": "{"}  # JSON prefill
+    assert seen["body"]["messages"] == [{"role": "user", "content": "review this diff"}]  # ends with the user turn
+    assert "temperature" not in seen["body"]  # deprecated for this model
     assert client.total_usage == {"prompt_tokens": 11, "completion_tokens": 7}
     client.close()
 
@@ -68,7 +68,7 @@ def test_vertex_global_location_uses_global_host():
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.host == "aiplatform.googleapis.com"
         assert "/locations/global/" in str(request.url)
-        return _anthropic_ok('"summary": "", "findings": []}')
+        return _anthropic_ok('{"summary": "", "findings": []}')
 
     client = VertexClient(project="p", location="global", credentials=_fake_sa(), model="claude-opus-4-8",
                           transport=httpx.MockTransport(handler), token_fn=lambda: ("t", time.time() + 3600))
