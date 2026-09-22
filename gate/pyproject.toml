@@ -15,8 +15,7 @@ dependencies = [
   "PyYAML>=6.0,<7.0",
   "cryptography>=42.0",
   "keyring>=25.0",
-  "PyJWT>=2.8,<3.0",
-  "google-auth>=2.23,<3.0",   # mint short-lived access tokens from a service account for Vertex AI
+  "PyJWT>=2.8,<3.0",   # RS256 signing for Vertex service-account tokens and Entra id_token verification
 ]
 
 [project.optional-dependencies]

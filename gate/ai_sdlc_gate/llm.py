@@ -368,17 +368,35 @@ class VertexClient:
         )
 
     # ------------------------------------------------------------------ auth
-    def _mint_token(self) -> tuple[str, float]:
-        # google-auth is imported lazily so the package is only needed on machines that use the Vertex provider.
-        from google.auth.transport.requests import Request
-        from google.oauth2 import service_account
+    TOKEN_URI = "https://oauth2.googleapis.com/token"
 
-        creds = service_account.Credentials.from_service_account_info(self.credentials, scopes=list(self.SCOPES))
-        creds.refresh(Request())
-        exp = creds.expiry.timestamp() if getattr(creds, "expiry", None) else time.time() + 3000
-        if not creds.token:
+    def _mint_token(self) -> tuple[str, float]:
+        # Mint a GCP access token from the service account with the JWT-bearer flow, using only PyJWT (RS256) and
+        # httpx so no extra runtime dependency is needed. The signed assertion never leaves this process except as
+        # the standard OAuth grant to Google's token endpoint.
+        import jwt  # PyJWT
+
+        info = self.credentials
+        token_uri = str(info.get("token_uri") or self.TOKEN_URI)
+        now = int(time.time())
+        assertion = jwt.encode(
+            {"iss": info["client_email"], "scope": " ".join(self.SCOPES), "aud": token_uri, "iat": now, "exp": now + 3600},
+            info["private_key"],
+            algorithm="RS256",
+            headers={"kid": info["private_key_id"]} if info.get("private_key_id") else None,
+        )
+        resp = self._client.post(
+            token_uri,
+            data={"grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": assertion},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        if resp.status_code != 200:
             raise LLMError("could not obtain an access token for the review service")
-        return creds.token, exp
+        tok = resp.json()
+        access = tok.get("access_token")
+        if not access:
+            raise LLMError("could not obtain an access token for the review service")
+        return access, time.time() + int(tok.get("expires_in", 3600))
 
     def _token(self) -> str:
         now = time.time()
@@ -415,15 +433,13 @@ class VertexClient:
 
     def _attempt(self, model: str, system: str, user: str, json_mode: bool) -> LLMResponse:
         label = "review model" if model == self.model else "fallback model"
-        messages: list[dict[str, Any]] = [{"role": "user", "content": user}]
-        if json_mode:
-            # Prefill the assistant turn with "{" so the model must emit a JSON object (Anthropic has no json mode).
-            messages.append({"role": "assistant", "content": "{"})
+        # Claude Opus 4.8 on Vertex does not accept `temperature` and does not allow an assistant prefill, so the
+        # conversation ends with the user turn and JSON is obtained from the system prompt's instruction plus
+        # extract_json(), exactly as on the gateway path.
         payload: dict[str, Any] = {
             "anthropic_version": self.ANTHROPIC_VERSION,
             "max_tokens": self.max_output_tokens,
-            "messages": messages,
-            "temperature": self.temperature,
+            "messages": [{"role": "user", "content": user}],
         }
         if system:
             payload["system"] = system
@@ -435,9 +451,6 @@ class VertexClient:
             except httpx.HTTPError as exc:
                 last_error = LLMError(f"could not reach the review service ({exc.__class__.__name__})")
             else:
-                if resp.status_code == 400 and "temperature" in payload and "temperature" in resp.text.lower():
-                    payload.pop("temperature", None)
-                    continue
                 if resp.status_code >= 400 and _is_final(resp.status_code, resp.text):
                     raise LLMError(f"{label}: {describe_failure(resp.status_code, resp.text)}")
                 if resp.status_code in RETRY_STATUSES:
@@ -448,8 +461,6 @@ class VertexClient:
                     data = resp.json()
                     blocks = data.get("content") or []
                     text = "".join(b.get("text", "") for b in blocks if isinstance(b, dict) and b.get("type") == "text")
-                    if json_mode:
-                        text = text if text.lstrip().startswith("{") else "{" + text
                     usage = data.get("usage") or {}
                     self.total_usage["prompt_tokens"] += int(usage.get("input_tokens") or 0)
                     self.total_usage["completion_tokens"] += int(usage.get("output_tokens") or 0)
