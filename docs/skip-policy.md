@@ -14,7 +14,7 @@ SDLC-Skip-Reason: Legacy module is deleted in LEG-201 next sprint; the flagged c
   changed. Ticket has the risk acceptance from the product owner.
 ```
 
-- Phases are numbers 1–7 (or `all`). The reason may continue on indented lines.
+- Phases are numbers 1–8 (or `all`). The reason may continue on indented lines.
 - The reason must be at least 40 characters (`skip.min_reason_chars`) and should reference a ticket.
 
 ## Rules (from `gate.config.yaml`)

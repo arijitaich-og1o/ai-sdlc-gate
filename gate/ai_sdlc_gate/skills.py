@@ -1,4 +1,4 @@
-"""Loading and validating the seven phase skills.
+"""Loading and validating the eight phase skills.
 
 A skill is a directory `skills/<NN-slug>/` containing `SKILL.md` with YAML front matter:
 
@@ -10,7 +10,7 @@ A skill is a directory `skills/<NN-slug>/` containing `SKILL.md` with YAML front
     ---
     <review instructions the model follows>
 
-The repository must contain exactly one skill per SDLC phase (7 in total).
+The repository must contain exactly one skill per SDLC phase (8 in total).
 """
 from __future__ import annotations
 
@@ -87,9 +87,9 @@ def parse_skill(text: str, path: Path | None = None, slug: str | None = None) ->
     try:
         phase = int(fm["phase"])
     except (TypeError, ValueError) as exc:
-        raise ValueError("Front matter `phase` must be an integer 1-7") from exc
-    if phase < 1 or phase > 7:
-        raise ValueError("Front matter `phase` must be between 1 and 7")
+        raise ValueError("Front matter `phase` must be an integer 1-8") from exc
+    if phase < 1 or phase > 8:
+        raise ValueError("Front matter `phase` must be between 1 and 8")
     version = str(fm["version"])
     if not SEMVER.match(version):
         raise ValueError(f"Front matter `version` must be semver (x.y.z), got {version!r}")
@@ -128,7 +128,7 @@ def validate_skills_dir(skills_dir: Path, cfg: Config) -> tuple[dict[int, Skill]
     expected_slugs = set(expected.values())
     found_slugs = {d.name for d in dirs}
     for extra in sorted(found_slugs - expected_slugs):
-        errors.append(f"unexpected skill directory `{extra}`; only the 7 SDLC phase skills are allowed")
+        errors.append(f"unexpected skill directory `{extra}`; only the 8 SDLC phase skills are allowed")
     for missing in sorted(expected_slugs - found_slugs):
         errors.append(f"missing skill directory `{missing}`")
     for d in dirs:
@@ -154,8 +154,8 @@ def validate_skills_dir(skills_dir: Path, cfg: Config) -> tuple[dict[int, Skill]
             errors.append(f"duplicate skill for phase {skill.phase}")
             continue
         skills[skill.phase] = skill
-    if not errors and len(skills) != 7:
-        errors.append(f"expected exactly 7 skills, found {len(skills)}")
+    if not errors and len(skills) != 8:
+        errors.append(f"expected exactly 8 skills, found {len(skills)}")
     return skills, errors
 
 

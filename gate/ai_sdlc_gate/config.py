@@ -19,6 +19,7 @@ DEFAULT_PHASES = {
     5: {"slug": "05-testing", "name": "Testing"},
     6: {"slug": "06-deployment", "name": "Deployment"},
     7: {"slug": "07-maintenance", "name": "Maintenance"},
+    8: {"slug": "08-security", "name": "Security"},
 }
 
 DEFAULT_CONFIG: dict[str, Any] = {
@@ -39,13 +40,13 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "intents": {
         "plan": [1, 2],
         "design": [2, 3],
-        "commit": [3, 4, 5],
-        "push": [3, 4, 5],
-        "pr": [3, 4, 5],
-        "release": [3, 4, 5, 6, 7],
-        "deploy": [3, 4, 5, 6, 7],
-        "hotfix": [4, 5, 6, 7],
-        "maintenance": [4, 5, 7],
+        "commit": [3, 4, 5, 8],
+        "push": [3, 4, 5, 8],
+        "pr": [3, 4, 5, 8],
+        "release": [3, 4, 5, 6, 7, 8],
+        "deploy": [3, 4, 5, 6, 7, 8],
+        "hotfix": [4, 5, 6, 7, 8],
+        "maintenance": [4, 5, 7, 8],
     },
     "intent_detection": {
         "trailer": "SDLC-Intent",

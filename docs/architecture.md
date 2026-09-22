@@ -21,7 +21,7 @@ config.py     Config (YAML + defaults), severities
 changes.py    ChangeSet collection (git range / staged index / paths), exclusions, truncation, chunking, rendering
 intent.py     explicit → trailer → branch → paths → default
 prechecks.py  deterministic secret / credential / dotenv detection on added lines
-skills.py     SKILL.md parsing + directory validation (exactly 7, forbidden instruction patterns)
+skills.py     SKILL.md parsing + directory validation (exactly 8, forbidden instruction patterns)
 runner.py     system prompt, per-phase review, waiver application, GateReport
 report.py     Markdown rendering (PR comment, step summary)
 skip.py       SDLC-Skip / SDLC-Skip-Reason parsing and policy
