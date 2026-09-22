@@ -1,38 +1,166 @@
 {
-  "developers": {},
-  "events": 0,
-  "generated_at": "2026-09-22T10:09:26+00:00",
-  "months": {},
+  "developers": {
+    "arijit.aich@og1o.in": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 0,
+      "attested_rate": 0.0,
+      "block_rate": 1.0,
+      "blocked": 1,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 1,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 0
+      },
+      "findings_per_run": 1.0,
+      "first_seen": "2026-09-22T10:56:08+00:00",
+      "flag_rate": 1.0,
+      "flagged": 1,
+      "intents": {
+        "commit": 1
+      },
+      "last_seen": "2026-09-22T10:56:08+00:00",
+      "pass_rate": 0.0,
+      "passed": 0,
+      "repos": [
+        "arijitaich-og1o/ai-sdlc-gate"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [
+        "hardcoded-credential"
+      ],
+      "waived_findings": 0
+    }
+  },
+  "events": 1,
+  "generated_at": "2026-09-22T10:56:32+00:00",
+  "months": {
+    "2026-09": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 0,
+      "attested_rate": 0.0,
+      "block_rate": 1.0,
+      "blocked": 1,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 1,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 0
+      },
+      "findings_per_run": 1.0,
+      "first_seen": "2026-09-22T10:56:08+00:00",
+      "flag_rate": 1.0,
+      "flagged": 1,
+      "intents": {
+        "commit": 1
+      },
+      "last_seen": "2026-09-22T10:56:08+00:00",
+      "pass_rate": 0.0,
+      "passed": 0,
+      "repos": [
+        "arijitaich-og1o/ai-sdlc-gate"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [
+        "hardcoded-credential"
+      ],
+      "waived_findings": 0
+    }
+  },
   "organisation": {
-    "actors": [],
-    "actors_count": 0,
+    "actors": [
+      "arijitaich-og1o"
+    ],
+    "actors_count": 1,
     "attested": 0,
     "attested_rate": 0.0,
-    "block_rate": 0.0,
-    "blocked": 0,
-    "developers_count": 0,
+    "block_rate": 1.0,
+    "blocked": 1,
+    "developers_count": 1,
     "findings": {
-      "blocker": 0,
+      "blocker": 1,
       "high": 0,
       "info": 0,
       "low": 0,
       "medium": 0
     },
-    "findings_per_run": 0.0,
-    "first_seen": null,
-    "flag_rate": 0.0,
-    "flagged": 0,
-    "intents": {},
-    "last_seen": null,
+    "findings_per_run": 1.0,
+    "first_seen": "2026-09-22T10:56:08+00:00",
+    "flag_rate": 1.0,
+    "flagged": 1,
+    "intents": {
+      "commit": 1
+    },
+    "last_seen": "2026-09-22T10:56:08+00:00",
     "pass_rate": 0.0,
     "passed": 0,
-    "repos": [],
-    "runs": 0,
+    "repos": [
+      "arijitaich-og1o/ai-sdlc-gate"
+    ],
+    "runs": 1,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
-    "top_categories": [],
+    "top_categories": [
+      "hardcoded-credential"
+    ],
     "waived_findings": 0
   },
-  "repositories": {}
+  "repositories": {
+    "arijitaich-og1o/ai-sdlc-gate": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 0,
+      "attested_rate": 0.0,
+      "block_rate": 1.0,
+      "blocked": 1,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 1,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 0
+      },
+      "findings_per_run": 1.0,
+      "first_seen": "2026-09-22T10:56:08+00:00",
+      "flag_rate": 1.0,
+      "flagged": 1,
+      "intents": {
+        "commit": 1
+      },
+      "last_seen": "2026-09-22T10:56:08+00:00",
+      "pass_rate": 0.0,
+      "passed": 0,
+      "repos": [
+        "arijitaich-og1o/ai-sdlc-gate"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [
+        "hardcoded-credential"
+      ],
+      "waived_findings": 0
+    }
+  }
 }

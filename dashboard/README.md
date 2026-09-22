@@ -1,36 +1,39 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-22T10:09:26+00:00 from 0 gate run(s)._
+_Generated 2026-09-22T10:56:32+00:00 from 1 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 0 |
+| Gate runs | 1 |
 | Pass rate | 0% |
-| Runs flagged (findings at/above threshold) | 0 (0%) |
-| Runs blocked | 0 (0%) |
+| Runs flagged (findings at/above threshold) | 1 (100%) |
+| Runs blocked | 1 (100%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 0.0 |
+| Findings per run | 1.0 |
 | Runs with local client attestation | 0% |
-| Active developers / repositories | 0 / 0 |
-| Top finding categories | - |
+| Active developers / repositories | 1 / 1 |
+| Top finding categories | hardcoded-credential |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
+| 2026-09 | 1 | 0% | 1 | 0 | 1 | 0 | 0 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
+| arijit.aich@og1o.in (@arijitaich-og1o) | 1 | 0% | 1 | 1 | 0/0 | 0 | 1.0 | 0% | hardcoded-credential | 2026-09-22 |
 
 ## Repositories
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
+| arijitaich-og1o/ai-sdlc-gate | 1 | 0% | 1 | 0 | 1 | 1.0 | hardcoded-credential |
 
 ### Reading this dashboard
 
