@@ -63,11 +63,11 @@ def _skills_dir(args: argparse.Namespace, cfg: Config) -> Path:
 def _make_llm(cfg: Config, offline: bool, model: str | None = None) -> Any:
     if offline:
         return StaticLLM()
-    return LLMClient.from_config(cfg, model=model)
+    return llm_mod.build_client(cfg, model=model)
 
 
 def _judge_llm(cfg: Config, offline: bool) -> Any | None:
-    return None if offline else LLMClient.from_config(cfg, model="judge")
+    return None if offline else llm_mod.build_client(cfg, model="judge")
 
 
 def _parse_phases(raw: str | None) -> list[int]:
@@ -558,7 +558,7 @@ def cmd_configure(args: argparse.Namespace) -> int:
     cfg = Config.load(args.config)
     if args.check:
         stored = secrets_store.load()
-        if stored is None or not stored.base_url:
+        if stored is None or not stored.is_ready():
             _eprint("the review engine is not set up on this machine; run: ai-sdlc-gate configure")
             return EXIT_FAIL
         print("review engine ready")
@@ -577,15 +577,17 @@ def cmd_configure(args: argparse.Namespace) -> int:
     if args.import_record:
         raw = sys.stdin.read()
         rec = secrets_store.Stored.from_json(raw, "import")
-        if rec is None or not rec.base_url:
+        if rec is None or not rec.is_ready():
             _eprint("no valid record on standard input")
             return EXIT_FAIL
-        try:
-            llm_mod.validate_base_url(rec.base_url)
-        except llm_mod.LLMError as exc:
-            _eprint(f"configure: refusing to store the record: {exc}")
-            return EXIT_FAIL
-        secrets_store.store(rec.base_url, rec.api_key, models=rec.models, mode=rec.mode)
+        if rec.provider == "openai":
+            try:
+                llm_mod.validate_base_url(rec.base_url)
+            except llm_mod.LLMError as exc:
+                _eprint(f"configure: refusing to store the record: {exc}")
+                return EXIT_FAIL
+        secrets_store.store(rec.base_url, rec.api_key, models=rec.models, mode=rec.mode,
+                            provider=rec.provider, data=rec.data)
         print("Review engine ready.", flush=True)
         return EXIT_PASS
     if args.api_key:
@@ -614,19 +616,45 @@ def cmd_configure(args: argparse.Namespace) -> int:
     except keybroker.KeyBrokerError as exc:
         _eprint(f"configure: {exc}")
         return EXIT_FAIL
-    if not llm.base_url:
-        _eprint("configure: the central repository is not fully configured (contact the platform team)")
-        return EXIT_FAIL
-    problem = _verify_litellm_key(llm.base_url, llm.api_key)
-    if problem:
-        _eprint(f"configure: the review engine could not be verified: {problem}")
-        _eprint("Ask the platform team to check the central repository configuration, then run `ai-sdlc-gate configure` again.")
-        return EXIT_FAIL
-    st = secrets_store.store(llm.base_url, llm.api_key, models=llm.models or [], mode=llm.mode)
+    if llm.provider == "vertex":
+        problem = _verify_vertex(llm.data or {})
+        if problem:
+            _eprint(f"configure: the review engine could not be verified: {problem}")
+            _eprint("Ask the platform team to check the central repository configuration, then run `ai-sdlc-gate configure` again.")
+            return EXIT_FAIL
+        st = secrets_store.store(models=llm.models or [], mode=llm.mode, provider="vertex", data=llm.data or {})
+    else:
+        if not llm.base_url:
+            _eprint("configure: the central repository is not fully configured (contact the platform team)")
+            return EXIT_FAIL
+        problem = _verify_litellm_key(llm.base_url, llm.api_key)
+        if problem:
+            _eprint(f"configure: the review engine could not be verified: {problem}")
+            _eprint("Ask the platform team to check the central repository configuration, then run `ai-sdlc-gate configure` again.")
+            return EXIT_FAIL
+        st = secrets_store.store(llm.base_url, llm.api_key, models=llm.models or [], mode=llm.mode)
     if st.backend != "keyring":
         _eprint("note: no operating system credential store is available on this machine; an encrypted file is used instead")
     print("Review engine ready.", flush=True)
     return EXIT_PASS
+
+
+def _verify_vertex(data: dict) -> str | None:
+    """Confirm the delivered service account can mint an access token for the review service. Never logs details."""
+    creds = data.get("credentials")
+    if not (isinstance(creds, dict) and data.get("project")):
+        return "the review configuration is incomplete"
+    try:
+        from google.auth.transport.requests import Request
+        from google.oauth2 import service_account
+
+        c = service_account.Credentials.from_service_account_info(creds, scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        c.refresh(Request())
+        if not c.token:
+            return "could not obtain an access token from the service account"
+    except Exception:  # noqa: BLE001 - never surface credential internals
+        return "the service account was rejected when obtaining an access token"
+    return None
 
 
 def _verify_litellm_key(base_url: str, api_key: str) -> str | None:

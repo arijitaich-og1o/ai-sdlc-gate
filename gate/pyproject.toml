@@ -16,6 +16,7 @@ dependencies = [
   "cryptography>=42.0",
   "keyring>=25.0",
   "PyJWT>=2.8,<3.0",
+  "google-auth>=2.23,<3.0",   # mint short-lived access tokens from a service account for Vertex AI
 ]
 
 [project.optional-dependencies]
