@@ -149,6 +149,13 @@ def store(base_url: str = "", api_key: str = "", models: list[str] | None = None
             return rec
         except Exception:  # noqa: BLE001 - fall back to the encrypted file
             pass
+    # Windows Credential Manager caps a single entry at ~2.5 KB, which a Vertex service-account record exceeds, so the
+    # write falls back to the encrypted file. Remove any earlier keyring entry so a stale record cannot shadow this one.
+    if kr is not None:
+        try:
+            kr.delete_password(SERVICE, ACCOUNT)
+        except Exception:  # noqa: BLE001
+            pass
     _write_private(_enc_path(), _fernet().encrypt(rec.to_json().encode("utf-8")))
     legacy = sdlc_home() / "env"
     if legacy.exists():
