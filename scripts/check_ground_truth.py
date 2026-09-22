@@ -17,8 +17,8 @@ def main(argv: list[str]) -> int:
     for gt in sorted(root.glob("*/GROUND_TRUTH.yaml")):
         data = yaml.safe_load(gt.read_text(encoding="utf-8")) or {}
         phase = data.get("phase")
-        if not isinstance(phase, int) or not 1 <= phase <= 7:
-            errors.append(f"{gt}: `phase` must be an int 1-7")
+        if not isinstance(phase, int) or not 1 <= phase <= 8:
+            errors.append(f"{gt}: `phase` must be an int 1-8")
         elif phase in seen_phases:
             errors.append(f"{gt}: duplicate phase {phase}")
         else:
@@ -45,8 +45,8 @@ def main(argv: list[str]) -> int:
         other_files = [p for p in gt.parent.rglob("*") if p.is_file() and p.name not in {"GROUND_TRUTH.yaml", "README.md"}]
         if not other_files:
             errors.append(f"{gt}: phase directory has no content to review")
-    if seen_phases != set(range(1, 8)):
-        errors.append(f"expected ground truth for phases 1-7, found {sorted(seen_phases)}")
+    if seen_phases != set(range(1, 9)):
+        errors.append(f"expected ground truth for phases 1-8, found {sorted(seen_phases)}")
     if errors:
         print("Ground truth validation FAILED:")
         for e in errors:

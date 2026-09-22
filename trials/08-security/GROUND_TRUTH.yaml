@@ -1,0 +1,52 @@
+phase: 8
+defects:
+  - id: hardcoded-partner-key
+    title: Partner live API key hard-coded in source
+    file: 08-security/service.py
+    severity: blocker
+    keywords: [hardcoded-credential, secret-exposure, api key, hard-coded, hardcoded, partner_api_key]
+  - id: sql-injection-search
+    title: Order search query built with an f-string from request input
+    file: 08-security/service.py
+    severity: blocker
+    keywords: [sql-injection, sql injection, f-string, parameteri, prepared statement]
+  - id: idor-order-lookup
+    title: /orders/<id> returns any order (incl. Aadhaar) with no authorisation check
+    file: 08-security/service.py
+    severity: high
+    keywords: [idor, missing-authorization, authoris, authoriz, access control, ownership, any order, aadhaar]
+  - id: ssrf-fetch-invoice
+    title: /fetch-invoice fetches an attacker-supplied URL with no allowlist
+    file: 08-security/service.py
+    severity: high
+    keywords: [ssrf, server-side request forgery, allowlist, user-supplied url, metadata]
+  - id: command-injection-export
+    title: Export uses subprocess with shell=True and a user-controlled filename
+    file: 08-security/service.py
+    severity: blocker
+    keywords: [command-injection, command injection, shell=true, subprocess, shell injection]
+  - id: pickle-deserialization-import
+    title: pickle.loads on the request body enables remote code execution
+    file: 08-security/service.py
+    severity: blocker
+    keywords: [unsafe-deserialization, pickle, deserializ, deserialis, remote code, rce]
+  - id: md5-password-hashing
+    title: Passwords hashed with unsalted MD5
+    file: 08-security/service.py
+    severity: high
+    keywords: [weak-cryptography, md5, bcrypt, argon2, password hash]
+  - id: insecure-random-reset-token
+    title: Password reset token generated with random.random()
+    file: 08-security/service.py
+    severity: high
+    keywords: [insecure-randomness, random.random, secrets module, csprng, cryptographically, predictable]
+  - id: tls-verification-disabled
+    title: requests.post(..., verify=False) disables TLS certificate verification
+    file: 08-security/service.py
+    severity: blocker
+    keywords: [insecure-tls, verify=false, certificate verification, tls]
+  - id: debug-server-all-interfaces
+    title: Flask debug=True bound to 0.0.0.0
+    file: 08-security/service.py
+    severity: high
+    keywords: [debug-enabled, debug=true, debug mode, 0.0.0.0, werkzeug debugger]
