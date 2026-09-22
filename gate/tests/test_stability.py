@@ -6,7 +6,8 @@ from ai_sdlc_gate import ledger as lg
 from ai_sdlc_gate.changes import ChangedFile, ChangeSet
 from ai_sdlc_gate.intent import detect_intent
 from ai_sdlc_gate.llm import StaticLLM
-from ai_sdlc_gate.runner import merge_findings, review_phase, run_gate, skill_categories
+from ai_sdlc_gate.progress import Progress
+from ai_sdlc_gate.runner import merge_findings, review_passes, review_phase, run_gate, skill_categories
 from ai_sdlc_gate.skills import load_skills
 from ai_sdlc_gate.skip import parse_skip
 
@@ -102,3 +103,101 @@ def test_run_gate_with_ledger_makes_late_findings_advisory(cfg, skills_dir, tmp_
     # a secret on reviewed code is never advisory
     r3 = run_gate(cfg, StaticLLM(lambda s, u: {"summary": "", "findings": [_f(cat="secret-exposure", sev="blocker", title="key", line=6)]}), skills, _cs(), it, parse_skip(cfg, []), ledger=led)
     assert r3.verdict == "fail"
+
+
+def test_review_runs_until_a_pass_finds_nothing_new(cfg, skills_dir):
+    """Pass 1 finds one issue, pass 2 another, pass 3 a third, pass 4 nothing -> 4 passes, converged."""
+    skill = load_skills(skills_dir, cfg)[4]
+    it = detect_intent(cfg, explicit="commit")
+    per_pass = {
+        1: [_f()],
+        2: [_f(cat="hardcoded-credential", title="password literal", line=3)],
+        3: [_f(cat="debug-statement", title="print left in code", line=6, sev="medium")],
+    }
+    seen: list[int] = []
+
+    def responder(system, user):
+        n = 1
+        if "<review_pass" in user:
+            n = int(user.split('number="', 1)[1].split('"', 1)[0])
+        seen.append(n)
+        return {"summary": "s", "findings": per_pass.get(n, [])}
+
+    assert review_passes(cfg) == (2, 4)
+    res = review_phase(cfg, StaticLLM(responder), skill, _cs(), it, max_passes=6)
+    assert seen == [1, 2, 3, 4] and res.passes == 4 and res.converged
+    assert sorted(f["category"] for f in res.findings) == ["debug-statement", "hardcoded-credential", "sql-injection"]
+    # The pass limit stops the loop even while new findings keep coming, and says so.
+    seen.clear()
+    endless = StaticLLM(lambda s, u: {"summary": "", "findings": [_f(cat="dead-code", title=f"unused {len(seen)}", line=len(seen) * 10 + 1)] if not seen.append(1) else []})
+    res2 = review_phase(cfg, endless, skill, _cs(), it, max_passes=3)
+    assert res2.passes == 3 and not res2.converged and len(res2.findings) == 3
+    # A clean change stops after the minimum number of passes.
+    seen.clear()
+    res3 = review_phase(cfg, StaticLLM(lambda s, u: {"summary": "", "findings": []}), skill, _cs(), it)
+    assert res3.passes == 2 and res3.converged
+
+
+def test_progress_events_and_report_depth(cfg, skills_dir):
+    import io
+
+    skills = load_skills(skills_dir, cfg)
+    it = detect_intent(cfg, explicit="commit")
+    out = io.StringIO()
+    prog = Progress(stream=out, enabled=True, interactive=False)
+    calls: list[int] = []
+
+    def responder(system, user):
+        calls.append(1)
+        return {"summary": "", "findings": [_f()] if len(calls) == 1 else []}
+
+    report = run_gate(cfg, StaticLLM(responder), skills, _cs(), it, parse_skip(cfg, []), progress=prog)
+    text = out.getvalue()
+    assert "Reviewing 1 file(s) for phase(s)" in text
+    assert "pass 1 done, 1 finding(s); taking another look" in text
+    assert "pass 2 done, nothing new" in text
+    assert "Review finished in" in text and "BLOCKED" in text
+    assert report.stats["review"]["converged"] and report.stats["review"]["passes"]
+    from ai_sdlc_gate.report import to_markdown, to_text
+
+    rendered = to_text(report)
+    assert "Review passes (" in rendered and "found nothing new, so this list is complete" in rendered
+    assert "| Passes |" in to_markdown(report, cfg)
+
+    # Interactive mode redraws one line with a bar and clears it at the end; nothing is written when disabled.
+    tty = io.StringIO()
+    prog2 = Progress(stream=tty, enabled=True, interactive=True)
+    prog2.start([(4, "development")], 1)
+    prog2.phase_start(4, "development", 1, 2)
+    prog2.pass_start(4, "development", 1, 2)
+    prog2.pass_done(4, "development", 1, 1, 1, True)
+    prog2.finish("passed")
+    drawn = tty.getvalue()
+    assert "\r[ai-sdlc-gate] [" in drawn and "%" in drawn and "Review finished" in drawn
+    off = io.StringIO()
+    Progress(stream=off, enabled=False).start([(4, "development")], 1)
+    assert off.getvalue() == ""
+
+
+def test_gateway_errors_never_reveal_model_or_key(monkeypatch):
+    import httpx
+
+    from ai_sdlc_gate.llm import LLMClient, LLMError, describe_failure
+
+    body = '{"error":{"message":"Budget has been exceeded! Key=Some-Team-key (sk-...ABCD) Current cost: 50.1, Max budget: 50.0","type":"budget_exceeded"}}'
+    assert "budget" in describe_failure(429, body) and "sk-" not in describe_failure(429, body)
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(429, content=body.encode())
+
+    client = LLMClient(base_url="https://gw.example", api_key="sk-x", model="secret-model-name", fallback_models=["other-secret"], max_retries=3)
+    client._client = httpx.Client(transport=httpx.MockTransport(handler))
+    client._sleep = lambda s: None
+    with __import__("pytest").raises(LLMError) as exc:
+        client.chat("s", "u")
+    msg = str(exc.value)
+    assert "secret-model-name" not in msg and "other-secret" not in msg and "sk-" not in msg and "Some-Team" not in msg
+    assert "usage budget" in msg and "gate administrators" in msg
+    assert len(calls) == 2, "an exhausted budget is final: no retries, one attempt per model"

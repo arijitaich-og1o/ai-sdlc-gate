@@ -112,9 +112,13 @@ gate:
     - '**/*.generated.*'
   # Completeness and stability of the review.
   review:
-    # 1 = single pass. 2 = after the first pass, a second look receives what was found and hunts for what was missed
-    # (file by file, taxonomy categories not yet covered). Results are merged and de-duplicated. Doubles model calls.
+    # Minimum passes per phase. Pass 1 reviews the change; every further pass receives what was already found and the
+    # taxonomy categories still uncovered, and hunts for what was missed. Results are merged and de-duplicated.
     passes: 2
+    # Keep taking another look until a pass finds nothing new, so the first report is complete instead of surfacing
+    # new findings on every commit. Each extra pass costs one more model call per phase.
+    until_stable: true
+    max_passes: 4
     # Findings on code the gate already reviewed in the previous run but did not flag then. `advisory` reports them
     # without blocking (secrets, credentials, vulnerable dependencies and blockers still block); `block` treats them
     # like any other finding.
