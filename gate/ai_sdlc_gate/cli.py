@@ -113,6 +113,16 @@ def cmd_run(args: argparse.Namespace) -> int:
         return EXIT_ERROR
     skip = parse_skip(cfg, texts, approved_phases=_parse_phases(args.approved_skip_phases))
 
+    # Who is committing on this machine is the person signed in here, not the author of any commit in the range. A
+    # change may include commits pulled from another repository (a different author's e-mail and even their own gate
+    # attestation trailers); those must never be attributed to the developer running this gate.
+    local_identity = None
+    if not os.environ.get("GITHUB_ACTIONS"):
+        try:
+            local_identity = identity_mod.load_identity()
+        except Exception:
+            local_identity = None
+
     context = {
         "repo": args.repo or os.environ.get("GITHUB_REPOSITORY", ""),
         "actor": args.actor or os.environ.get("GITHUB_ACTOR", ""),
@@ -122,6 +132,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         "run_url": args.run_url or "",
         "event_name": args.event_name or os.environ.get("GITHUB_EVENT_NAME", "local"),
         "pr_number": int(args.pr_number) if args.pr_number and str(args.pr_number).isdigit() else None,
+        "verified_email": (local_identity.email if local_identity else ""),
+        "verified_name": (local_identity.name if local_identity else ""),
     }
 
     try:
