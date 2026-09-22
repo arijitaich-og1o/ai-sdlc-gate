@@ -127,7 +127,7 @@ def test_gate_passes_with_only_low_findings(cfg, skills_dir):
     skills = load_skills(skills_dir, cfg)
     report = _run(cfg, skills, [_finding(sev="low"), _finding(sev="medium", cat="dead-code")])
     assert report.verdict == "pass"
-    assert [p.phase for p in report.phases] == [3, 4, 5]
+    assert [p.phase for p in report.phases] == [3, 4, 5, 8]
     assert MARKER in to_markdown(report)
 
 
@@ -142,7 +142,7 @@ def test_gate_fails_on_high_finding(cfg, skills_dir):
 
 def test_valid_skip_waives_findings_but_not_secrets(cfg, skills_dir):
     skills = load_skills(skills_dir, cfg)
-    texts = ["SDLC-Skip: 3,4,5\nSDLC-Skip-Reason: Prototype branch for spike SPK-12; will be rewritten before it reaches develop."]
+    texts = ["SDLC-Skip: 3,4,5,8\nSDLC-Skip-Reason: Prototype branch for spike SPK-12; will be rewritten before it reaches develop."]
     report = _run(cfg, skills, [_finding(sev="high")], texts=texts)
     assert report.verdict == "pass"
     assert all(p.verdict == "waived" for p in report.phases)
@@ -207,7 +207,7 @@ def test_metrics_event_ingest_and_dashboard(cfg, skills_dir, tmp_path):
     reports = [
         _run(cfg, skills, [_finding(sev="high")]),
         _run(cfg, skills, []),
-        _run(cfg, skills, [_finding(sev="high")], texts=["SDLC-Skip: 3,4,5\nSDLC-Skip-Reason: Legacy module scheduled for deletion in LEG-9; findings are in code that is being removed."]),
+        _run(cfg, skills, [_finding(sev="high")], texts=["SDLC-Skip: 3,4,5,8\nSDLC-Skip-Reason: Legacy module scheduled for deletion in LEG-9; findings are in code that is being removed."]),
     ]
     events_dir = tmp_path / "events"
     for r in reports:
@@ -224,7 +224,7 @@ def test_metrics_event_ingest_and_dashboard(cfg, skills_dir, tmp_path):
     assert org["runs"] == 3 and org["blocked"] == 1 and org["flagged"] == 2
     assert org["skips_requested"] == 1 and org["skips_granted"] == 1
     dev = summary["developers"]["@dev1"]
-    assert dev["runs"] == 3 and dev["waived_findings"] == 3  # one waived finding per skipped phase
+    assert dev["runs"] == 3 and dev["waived_findings"] == 4  # one waived finding per skipped phase
     assert "org/x" in summary["repositories"]
 
 
@@ -244,7 +244,7 @@ def test_report_roundtrip_to_json(cfg, skills_dir):
     skills = load_skills(skills_dir, cfg)
     report = _run(cfg, skills, [_finding(sev="medium")])
     data = json.loads(json.dumps(report.to_dict()))
-    assert data["verdict"] == "pass" and data["intent"]["phases"] == [3, 4, 5]
+    assert data["verdict"] == "pass" and data["intent"]["phases"] == [3, 4, 5, 8]
 
 
 def test_api_key_normalisation_accepts_labelled_keys():
@@ -264,7 +264,7 @@ def test_text_rendering_lists_blocking_findings(cfg, skills_dir):
     text = to_text(report, full_report_path="/tmp/last-report.md")
     assert text.startswith("AI SDLC Gate: BLOCKED")
     assert "[HIGH   ] app.py:10" in text and "SQL built by f-string" in text and "Fix: r" in text
-    assert "Advisory findings below the threshold: 3" in text
+    assert "Advisory findings below the threshold: 4" in text
     assert "SDLC-Skip-Reason" in text and "ai-sdlc-gate last" in text
     ok = to_text(_run(cfg, skills, []))
     assert ok.startswith("AI SDLC Gate: PASSED") and "SDLC-Skip" not in ok

@@ -31,7 +31,7 @@ def _llm_for(findings):
 
 
 def test_ground_truth_files_load_for_all_phases(cfg, trials_root):
-    for phase in range(1, 8):
+    for phase in range(1, 9):
         gt = load_ground_truth(trials_root / cfg.phase_slug(phase))
         assert gt["phase"] == phase and len(gt["defects"]) >= 5
         for d in gt["defects"]:
