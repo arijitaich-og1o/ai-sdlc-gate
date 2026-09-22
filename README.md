@@ -1,7 +1,7 @@
 # AI SDLC Gate — Otto Group One.O India
 
 Every change a developer commits, pushes or releases in the organisation passes through one gate. The gate
-reviews the change against the seven phases of the software development life cycle through the organisation's own
+reviews the change against the eight phases of the software development life cycle through the organisation's own
 model gateway, blocks it until findings are fixed or explicitly waived with a recorded reason, and keeps a
 scoreboard so we all know how we are doing. It is installed once on every developer machine, by IT or with a
 one-click installer, and from then on every commit and push from any IDE or terminal goes through it. There is
@@ -14,7 +14,7 @@ nothing to add to any project.
 
 <sub>Badges and the scoreboard below are generated from live gate results and appear after the first recorded run.</sub>
 
-## The seven skills
+## The eight skills
 
 | Phase | Skill | What it looks at |
 |---|---|---|
@@ -25,9 +25,10 @@ nothing to add to any project.
 | 5 | [Testing](skills/05-testing/SKILL.md) | test coverage and quality for the change |
 | 6 | [Deployment](skills/06-deployment/SKILL.md) | pipelines, containers, infrastructure as code |
 | 7 | [Maintenance](skills/07-maintenance/SKILL.md) | dependencies, runbooks, changelogs, backups, SLOs |
+| 8 | [Security](skills/08-security/SKILL.md) | dedicated application-security review: injection, authz/IDOR, crypto, SSRF, deserialisation, secrets, supply-chain, IaC |
 
 Which phases apply depends on what you are doing: planning work is checked against phases 1–2, a normal commit
-or pull request against 3–5, a release or deployment against 3–7, a hotfix against 4–7. You can state your
+or pull request against 3–5 and 8, a release or deployment against 3–8, a hotfix against 4–8. You can state your
 intent explicitly with an `SDLC-Intent:` trailer; otherwise it is inferred from your branch and files.
 
 ## Live scoreboard
@@ -83,7 +84,7 @@ Think a skill misses things, or flags too much? Improve it. Open a pull request 
 current one, scores both, and decides to keep the current skill, adopt yours, or absorb the parts of yours that
 are better. Adopted work is written to your branch, you are credited in [CREDITS.md](CREDITS.md), and the pull
 request merges automatically. Rejected challenges are closed with the scores so you can try again. The repository
-always holds exactly seven skills. Read [docs/skill-challenge.md](docs/skill-challenge.md) before your first
+always holds exactly eight skills. Read [docs/skill-challenge.md](docs/skill-challenge.md) before your first
 challenge.
 
 ## Documentation
