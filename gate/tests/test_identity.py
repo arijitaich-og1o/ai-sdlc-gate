@@ -138,6 +138,40 @@ def test_attestation_flows_into_gate_context_and_event(cfg, skills_dir):
     assert set(summary["developers"]) == {"priya.r@og1o.in", "@someone"}
 
 
+def test_pulled_in_commits_are_never_attributed_to_the_local_developer(cfg, skills_dir):
+    """A change that includes another repository's commits (their author e-mail and their own gate attestation
+    trailers) must be credited only to the developer signed in on this machine, not to the pulled-in author."""
+    from ai_sdlc_gate.changes import ChangeSet, ChangedFile
+    from ai_sdlc_gate.intent import detect_intent
+    from ai_sdlc_gate.llm import StaticLLM
+    from ai_sdlc_gate.metrics import build_event, developer_key
+    from ai_sdlc_gate.runner import run_gate
+    from ai_sdlc_gate.skills import load_skills
+    from ai_sdlc_gate.skip import parse_skip
+
+    skills = load_skills(skills_dir, cfg)
+    # The reviewed range contains a commit pulled from someone else's repository: their author e-mail and their own
+    # AI-SDLC-Gate-Client attestation trailer.
+    owners_commit = "feat: upstream work\n\n" + idm.attestation_line("pass", "1.0.0", idm.Identity(email="owner@upstream.example", name="Repo Owner", oid="o", tid=TENANT))
+    cs = ChangeSet(
+        files=[ChangedFile(path="a.py", status="M", diff="+x", content="x")],
+        commit_messages=[owners_commit, "chore: my tweak"],
+        author_name="Repo Owner",
+        author_email="owner@upstream.example",
+    )
+    # The developer running the gate is signed in as themselves.
+    context = {"repo": "arijitaich-og1o/x", "actor": "arijitaich-og1o", "verified_email": "arijit.aich@og1o.in", "verified_name": "Arijit"}
+    report = run_gate(cfg, StaticLLM(), skills, cs, detect_intent(cfg, explicit="commit"), parse_skip(cfg, []), context=context)
+
+    # Attribution is the signed-in developer only; the upstream owner appears nowhere.
+    assert report.context["developer_email"] == "arijit.aich@og1o.in"
+    assert report.context["author_email"] == "arijit.aich@og1o.in"
+    assert "owner@upstream.example" not in report.context.values()
+    ev = build_event(report)
+    assert ev["developer_email"] == "arijit.aich@og1o.in" and ev["author_email"] == "arijit.aich@og1o.in"
+    assert developer_key(ev) == "arijit.aich@og1o.in"
+
+
 def test_dashboard_writes_scoreboard_and_badges(tmp_path):
     from ai_sdlc_gate.metrics import build_dashboard
 
