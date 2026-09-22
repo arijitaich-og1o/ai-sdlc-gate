@@ -22,6 +22,33 @@ import httpx
 from .config import Config
 
 RETRY_STATUSES = {408, 409, 425, 429, 500, 502, 503, 504}
+
+
+def describe_failure(status: int, body: str) -> str:
+    """Developer-facing reason for a gateway failure.
+
+    Deliberately never echoes the response body: gateway errors name the model, the key label and the provider,
+    none of which may reach a developer's terminal or report. The full body is not logged anywhere either.
+    """
+    low = (body or "").lower()
+    if status == 429 and "budget" in low:
+        return "the review service has reached its usage budget; ask the gate administrators to raise it"
+    if status == 429:
+        return "the review service is rate limited; try again in a minute"
+    if status in (401, 403):
+        return "the review service rejected this machine's credential; run: ai-sdlc-gate configure"
+    if status == 404:
+        return "the review service did not recognise the request (configuration out of date); run: ai-sdlc-gate configure"
+    if status == 400:
+        return "the review service rejected the request"
+    if status >= 500:
+        return f"the review service is unavailable (HTTP {status})"
+    return f"HTTP {status}"
+
+
+def _is_final(status: int, body: str) -> bool:
+    """A 429 caused by an exhausted budget does not recover on retry; stop immediately instead of backing off."""
+    return status == 429 and "budget" in (body or "").lower()
 _KEY_TOKEN = re.compile(r"sk-[A-Za-z0-9_-]{16,}")
 
 
@@ -190,6 +217,8 @@ class LLMClient:
         )
 
     def _attempt(self, model: str, messages: list[dict[str, str]], json_mode: bool) -> LLMResponse:
+        # Errors are labelled by role, never by model name: the model must not be identifiable from the client.
+        label = "review model" if model == self.model else "fallback model"
         payload: dict[str, Any] = {
             "model": model,
             "messages": messages,
@@ -204,7 +233,7 @@ class LLMClient:
             try:
                 resp = self._post(payload)
             except httpx.HTTPError as exc:
-                last_error = exc
+                last_error = LLMError(f"could not reach the review service ({exc.__class__.__name__})")
             else:
                 if resp.status_code == 400:
                     # Some models behind the gateway reject particular parameters; drop the offending one and retry.
@@ -218,16 +247,18 @@ class LLMClient:
                     if "max_tokens" in payload and "max_tokens" in body:
                         payload["max_completion_tokens"] = payload.pop("max_tokens")
                         continue
+                if resp.status_code >= 400 and _is_final(resp.status_code, resp.text):
+                    raise LLMError(f"{label}: {describe_failure(resp.status_code, resp.text)}")
                 if resp.status_code in RETRY_STATUSES:
-                    last_error = LLMError(f"{model}: HTTP {resp.status_code}: {resp.text[:300]}")
+                    last_error = LLMError(describe_failure(resp.status_code, resp.text))
                 elif resp.status_code >= 400:
-                    raise LLMError(f"{model}: HTTP {resp.status_code}: {resp.text[:500]}")
+                    raise LLMError(f"{label}: {describe_failure(resp.status_code, resp.text)}")
                 else:
                     data = resp.json()
                     try:
                         content = data["choices"][0]["message"]["content"]
                     except (KeyError, IndexError, TypeError) as exc:
-                        raise LLMError(f"{model}: unexpected response shape: {str(data)[:300]}") from exc
+                        raise LLMError(f"{label}: the review service returned an unexpected response") from exc
                     usage = data.get("usage") or {}
                     self.total_usage["prompt_tokens"] += int(usage.get("prompt_tokens") or 0)
                     self.total_usage["completion_tokens"] += int(usage.get("completion_tokens") or 0)
@@ -239,7 +270,7 @@ class LLMClient:
                     )
             if attempt < self.max_retries:
                 self._sleep(min(30.0, 2.0 ** attempt))
-        raise LLMError(f"{model}: exhausted retries: {last_error}")
+        raise LLMError(f"{label}: gave up after {self.max_retries + 1} attempts: {last_error}")
 
     # ------------------------------------------------------------------ public
     def chat(self, system: str, user: str, json_mode: bool = True) -> LLMResponse:
@@ -250,7 +281,12 @@ class LLMClient:
                 return self._attempt(model, messages, json_mode)
             except LLMError as exc:
                 errors.append(str(exc))
-        raise LLMError("All models failed: " + " | ".join(errors))
+        # One reason is enough for the developer; identical fallback failures would only repeat it.
+        unique: list[str] = []
+        for e in errors:
+            if e not in unique:
+                unique.append(e)
+        raise LLMError("; ".join(unique))
 
     def chat_json(self, system: str, user: str) -> tuple[dict[str, Any], LLMResponse]:
         resp = self.chat(system, user, json_mode=True)

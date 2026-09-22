@@ -59,8 +59,11 @@ lefthook) keep working: the gate runs first and then hands over to them.
 
 The gate is designed to give you the complete list in one go and then stay consistent:
 
-- Each review runs two passes: the second pass receives what the first found and hunts for what was missed, so the
-  first report is as complete as the model can make it.
+- Each phase is reviewed in several passes. The first pass reviews the change; every further pass receives what was
+  already found and hunts for what was missed, and the gate keeps going until a pass finds nothing new (up to a
+  limit). The first report is therefore complete: fixing it does not surface a new list on the next commit.
+- While the review runs, the terminal shows a progress bar with the current phase and pass, the number of findings
+  so far and the elapsed time. Set `AI_SDLC_GATE_NO_PROGRESS=1` to turn it off.
 - The gate remembers what it reported on your branch and which code it has already reviewed. Fixed findings
   disappear; findings it notices later on code it had already reviewed are shown as **late** and do not block
   (except secrets, credentials and known-vulnerable dependencies). New code is always reviewed in full.

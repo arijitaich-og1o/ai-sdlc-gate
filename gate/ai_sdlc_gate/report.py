@@ -71,19 +71,19 @@ def to_markdown(report: GateReport, cfg=None, compact: bool = False) -> str:
         lines.append("")
 
     lines.append("### Phase results")
-    lines.append("| Phase | Skill | Verdict | 🟥 | 🟧 | 🟨 | 🟦 | ⬜ |")
+    lines.append("| Phase | Skill | Verdict | Passes | 🟥 | 🟧 | 🟨 | 🟦 | ⬜ |")
     lines.append("|---|---|---|---|---|---|---|---|")
     if report.prechecks:
         c = {s: 0 for s in SEVERITIES}
         for f in report.prechecks:
             c[f["severity"]] += 1
         v = "fail" if any(severity_rank(f["severity"]) >= severity_rank(report.threshold) for f in report.prechecks) else "pass"
-        lines.append(f"| pre-checks | secrets & credentials | {VERDICT_ICON[v]} {v} | {c['blocker']} | {c['high']} | {c['medium']} | {c['low']} | {c['info']} |")
+        lines.append(f"| pre-checks | secrets & credentials | {VERDICT_ICON[v]} {v} | - | {c['blocker']} | {c['high']} | {c['medium']} | {c['low']} | {c['info']} |")
     for p in report.phases:
         c = p.counts()
         lines.append(
             f"| {p.phase} · {p.phase_name} | {p.skill_name} v{p.skill_version} | {VERDICT_ICON.get(p.verdict, '')} {p.verdict} "
-            f"| {c['blocker']} | {c['high']} | {c['medium']} | {c['low']} | {c['info']} |"
+            f"| {p.passes}{'' if p.converged else ' (limit)'} | {c['blocker']} | {c['high']} | {c['medium']} | {c['low']} | {c['info']} |"
         )
     lines.append("")
 
@@ -147,7 +147,7 @@ def to_markdown(report: GateReport, cfg=None, compact: bool = False) -> str:
     return "\n".join(lines)
 
 
-def to_text(report: GateReport, full_report_path: str | None = None, max_findings: int = 25) -> str:
+def to_text(report: GateReport, full_report_path: str | None = None, max_findings: int = 60) -> str:
     """Compact rendering for terminals and hook output (no tables, no markup)."""
     thr = severity_rank(report.threshold)
     it = report.intent
@@ -186,6 +186,16 @@ def to_text(report: GateReport, full_report_path: str | None = None, max_finding
     if advisory:
         lines.append("")
         lines.append(f"Advisory findings below the threshold: {len(advisory)} (see the full report)")
+    reviewed = [p for p in report.phases if p.skill_name != "(missing)" and p.error is None]
+    if reviewed:
+        depth = ", ".join(f"phase {p.phase}: {p.passes}" for p in reviewed)
+        if all(p.converged for p in reviewed):
+            lines.append("")
+            lines.append(f"Review passes ({depth}); each phase was re-checked until a pass found nothing new, so this list is complete.")
+        else:
+            limit = [str(p.phase) for p in reviewed if not p.converged]
+            lines.append("")
+            lines.append(f"Review passes ({depth}); phase(s) {', '.join(limit)} reached the pass limit while still finding new issues.")
     st = report.stats.get("stability") or {}
     if report.stats.get("ledger_runs", 0) > 1 and st:
         lines.append("")
