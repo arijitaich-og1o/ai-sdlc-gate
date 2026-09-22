@@ -25,6 +25,7 @@ from .judge import apply_decision, decision_markdown, judge
 from .llm import LLMClient, LLMError, StaticLLM
 from .prechecks import run_prechecks
 from .report import to_markdown, to_text
+from .progress import Progress
 from .runner import run_gate
 from .skills import load_skill_file, load_skills, validate_skills_dir
 from .skip import parse_skip
@@ -148,8 +149,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         ledger_file = ledger_mod.ledger_path(context["repo"] or str(root), context["ref"] or cs.branch)
         ledger = ledger_mod.Ledger.load(ledger_file)
         ledger.repo, ledger.branch = context["repo"] or str(root), context["ref"] or cs.branch
+    # Live progress goes to stderr (git shows hook stderr in the terminal); it is never part of the report.
+    progress = None if (args.no_progress or args.offline) else Progress()
     try:
-        report = run_gate(cfg, llm, skills, cs, intent, skip, fail_on=args.fail_on, context=context, ledger=ledger)
+        report = run_gate(cfg, llm, skills, cs, intent, skip, fail_on=args.fail_on, context=context, ledger=ledger, progress=progress)
     finally:
         llm.close()
     if ledger is not None and ledger_file is not None:
@@ -393,6 +396,7 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--output-json"), r.add_argument("--output-md"), r.add_argument("--output-text", help="write the compact terminal rendering here")
     r.add_argument("--text", action="store_true", help="print the compact terminal rendering instead of markdown")
     r.add_argument("--no-ledger", action="store_true", help="do not use the per-repository memory of previous runs")
+    r.add_argument("--no-progress", action="store_true", help="do not show live progress on stderr (also AI_SDLC_GATE_NO_PROGRESS=1)")
     r.add_argument("--offline", action="store_true", help="do not call the model (pre-checks only; for tests)")
     r.add_argument("--quiet", action="store_true")
     r.set_defaults(func=cmd_run)

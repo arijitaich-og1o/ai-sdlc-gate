@@ -60,7 +60,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "max_file_bytes": 120_000,
         "exclude_globs": [],
         "review": {
-            "passes": 2,                 # 1 = single pass; 2 = add a second-look sweep for what the first pass missed
+            "passes": 2,                 # minimum passes per phase (pass 2+ hunts for what the earlier passes missed)
+            "until_stable": True,        # keep taking another look until a pass finds nothing new ...
+            "max_passes": 4,             # ... up to this many passes per phase
             "late_findings": "advisory", # advisory | block: findings on code already reviewed in the previous run
             "ledger": True,              # remember findings and reviewed code per repository/branch
         },
