@@ -25,14 +25,28 @@ ACCOUNT = "gateway-config"
 
 @dataclass
 class Stored:
-    base_url: str
-    api_key: str
+    base_url: str = ""
+    api_key: str = ""
     models: list[str] = field(default_factory=list)
     backend: str = ""  # keyring | file | env
     mode: str = ""
+    # provider selects the review backend: "openai" (an OpenAI-compatible gateway with a bearer key) or "vertex"
+    # (Anthropic on Google Vertex AI, authenticated with a service account). `data` holds the provider-specific
+    # secret material for vertex ({project, location, credentials:<service-account JSON>}); it is part of the one
+    # encrypted record and is never written anywhere in the clear.
+    provider: str = "openai"
+    data: dict = field(default_factory=dict)
+
+    def is_ready(self) -> bool:
+        if self.provider == "vertex":
+            return bool(self.data and self.data.get("credentials") and self.data.get("project"))
+        return bool(self.base_url and self.api_key)
 
     def to_json(self) -> str:
-        return json.dumps({"base_url": self.base_url, "api_key": self.api_key, "models": self.models, "mode": self.mode})
+        return json.dumps({
+            "provider": self.provider, "base_url": self.base_url, "api_key": self.api_key,
+            "models": self.models, "mode": self.mode, "data": self.data,
+        })
 
     @classmethod
     def from_json(cls, text: str, backend: str) -> "Stored | None":
@@ -40,9 +54,14 @@ class Stored:
             d = json.loads(text)
         except (TypeError, json.JSONDecodeError):
             return None
-        if not isinstance(d, dict) or not d.get("api_key"):
+        if not isinstance(d, dict):
             return None
-        return cls(base_url=str(d.get("base_url") or ""), api_key=str(d["api_key"]), models=[str(m) for m in d.get("models") or []], backend=backend, mode=str(d.get("mode") or ""))
+        provider = str(d.get("provider") or "openai")
+        data = d.get("data") if isinstance(d.get("data"), dict) else {}
+        rec = cls(base_url=str(d.get("base_url") or ""), api_key=str(d.get("api_key") or ""),
+                  models=[str(m) for m in d.get("models") or []], backend=backend,
+                  mode=str(d.get("mode") or ""), provider=provider, data=data)
+        return rec if rec.is_ready() else None
 
 
 def _keyring():
@@ -115,8 +134,10 @@ def _fernet():
     return Fernet(key)
 
 
-def store(base_url: str, api_key: str, models: list[str] | None = None, mode: str = "") -> Stored:
-    rec = Stored(base_url=(base_url or "").rstrip("/"), api_key=api_key, models=list(models or []), mode=mode)
+def store(base_url: str = "", api_key: str = "", models: list[str] | None = None, mode: str = "",
+          provider: str = "openai", data: dict | None = None) -> Stored:
+    rec = Stored(base_url=(base_url or "").rstrip("/"), api_key=api_key, models=list(models or []), mode=mode,
+                 provider=provider, data=dict(data or {}))
     kr = _keyring()
     if kr is not None:
         try:
@@ -138,6 +159,17 @@ def store(base_url: str, api_key: str, models: list[str] | None = None, mode: st
 
 def load() -> Stored | None:
     """Resolve the gateway configuration: environment first (CI), then the OS store, then the encrypted file."""
+    sa = os.environ.get("VERTEX_SA_KEY", "").strip()
+    proj = os.environ.get("VERTEX_PROJECT", "").strip()
+    if sa and proj:
+        try:
+            creds = json.loads(sa)
+        except json.JSONDecodeError:
+            creds = None
+        if isinstance(creds, dict):
+            vmodels = [m.strip() for m in (os.environ.get("VERTEX_MODELS") or os.environ.get("LITELLM_MODELS") or "").split(",") if m.strip()]
+            return Stored(provider="vertex", backend="env", mode="shared", models=vmodels,
+                          data={"project": proj, "location": os.environ.get("VERTEX_LOCATION", "").strip() or "us-east5", "credentials": creds})
     env_key = os.environ.get("LITELLM_API_KEY", "").strip()
     env_url = os.environ.get("LITELLM_BASE_URL", "").strip()
     env_models = [m.strip() for m in os.environ.get("LITELLM_MODELS", "").split(",") if m.strip()]

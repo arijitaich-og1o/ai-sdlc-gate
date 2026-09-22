@@ -2,16 +2,41 @@
 
 ## 1. Secrets (this repository only)
 
-| Secret | Used by | Value |
-|---|---|---|
-| `LITELLM_BASE_URL` | key broker, self gate, skill challenge | the model gateway endpoint (kept out of the repository on purpose) |
-| `LITELLM_API_KEY` | key broker, self gate, skill challenge | the gateway key from IT (a display name in front of it is tolerated) |
-| `LITELLM_MODELS` | key broker, self gate, skill challenge | comma separated model names: review model, judge model, fallbacks. Keeps model names out of the repository. |
-| `AI_SDLC_GATE_TOKEN` | skill challenge (pushing resolution commits so checks re-run) | fine-grained PAT or GitHub App token with **Contents: read & write** and **Pull requests: read & write** on this repository |
+Choose one model backend. The key broker and the workflows use whichever is configured.
 
-Installed clients obtain endpoint, key and model names through the `Key Broker` workflow and keep them in their OS
-credential store (see [enforcement.md](enforcement.md)). `AI_SDLC_GATE_TOKEN` is never given to clients; metrics are sent
-with the developer's own GitHub credential.
+**Option A — Anthropic on Google Vertex AI (recommended):**
+
+| Secret | Value |
+|---|---|
+| `VERTEX_SA_KEY` | the full JSON key of a Google service account that may call Vertex AI (role **Vertex AI User**, `roles/aiplatform.user`) in the project where the Claude model is enabled. Paste the whole key file. |
+| `VERTEX_PROJECT` | the Google Cloud project id that has the Claude model enabled (e.g. `ogcs-mjnq-ai-ic-network`). |
+| `VERTEX_LOCATION` | optional; the region, or `global`. Defaults to `us-east5`. Use a region where the model is served. |
+| `VERTEX_MODELS` | optional; comma separated: review model, judge model, fallbacks. Defaults to `claude-opus-4-8,claude-opus-4-8`. Set it to keep model names out of the repository. |
+
+Create the service account with only `roles/aiplatform.user`, scoped to that project, so it cannot touch other
+workloads. The model must be enabled once in the project's Model Garden. The client authenticates to Vertex with
+short-lived access tokens it mints from this service account; nothing about the project, region, model or key is
+written to the repository or to a readable file on the developer's machine.
+
+**Option B — OpenAI-compatible gateway:**
+
+| Secret | Value |
+|---|---|
+| `LITELLM_BASE_URL` | the model gateway endpoint (kept out of the repository on purpose) |
+| `LITELLM_API_KEY` | the gateway key from IT (a display name in front of it is tolerated) |
+| `LITELLM_MODELS` | comma separated model names: review model, judge model, fallbacks. Keeps model names out of the repository. |
+
+**Always:**
+
+| Secret | Value |
+|---|---|
+| `AI_SDLC_GATE_TOKEN` | skill challenge (pushing resolution commits so checks re-run): fine-grained PAT or GitHub App token with **Contents: read & write** and **Pull requests: read & write** on this repository |
+
+If `VERTEX_SA_KEY` is set, the Vertex backend is used; otherwise the OpenAI-compatible gateway is used. Installed
+clients obtain the whole configuration through the `Key Broker` workflow and keep it in their OS credential store
+(see [enforcement.md](enforcement.md)). The broker seals it with a random AES-256-GCM key wrapped to the client's
+one-time RSA key, so nothing readable leaves the runner. `AI_SDLC_GATE_TOKEN` is never given to clients; metrics
+are sent with the developer's own GitHub credential.
 
 ## 2. Repository settings
 
