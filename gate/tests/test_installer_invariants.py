@@ -65,34 +65,31 @@ def test_installer_does_not_set_a_persistent_git_config_parameters_override():
     assert 'git config --global core.hooksPath "$SDLC_HOME/hooks"' in sh
 
 
-@pytest.mark.skipif(__import__("shutil").which("bash") is None, reason="bash not available")
-def test_installsh_removes_a_stale_profile_line_but_keeps_others(tmp_path):
-    """Run the installer's own sed removal against a fixture profile and prove it clears the stale line only.
+def test_installsh_removal_pattern_clears_the_stale_line_only():
+    """Apply install.sh's own removal pattern to a fixture profile and prove it clears the stale line only.
 
-    This exercises the fix, not just its presence: a static check would pass even if the pattern were wrong.
+    This exercises the fix, not just its presence: a static check would pass even if the pattern were wrong. The
+    pattern is extracted from install.sh and applied with Python's re (no shell), so there is no injection surface.
     """
     import re
-    import subprocess
 
     sh = _read("install.sh")
-    # Pull the exact sed command out of install.sh so the test guards the real script, not a re-typed copy.
-    m = re.search(r"sed -i\.bak '([^']*# ai-sdlc-gate\$)/d'", sh)
+    # Pull the exact sed address out of install.sh so the test guards the real script, not a re-typed copy.
+    m = re.search(r"sed -i\.bak '/([^']*# ai-sdlc-gate\$)/d'", sh)
     assert m, "install.sh no longer contains the expected sed removal command"
-    sed_pattern = m.group(1)  # e.g. /GIT_CONFIG_PARAMETERS.*# ai-sdlc-gate$
+    address = m.group(1)  # e.g. GIT_CONFIG_PARAMETERS.*# ai-sdlc-gate$
+    # `.`, `*`, `$` mean the same in sed's basic regex and Python's re for this address, and `#` is literal.
+    line_re = re.compile(address)
 
-    prof = tmp_path / ".bashrc"
-    # write_bytes (not write_text) so line endings stay LF on Windows too, matching a real shell profile.
-    prof.write_bytes(
-        b"export PATH=$PATH:/usr/local/bin\n"
-        b"export GIT_CONFIG_PARAMETERS=\"'core.hooksPath=/home/u/.ai-sdlc-gate/hooks'\" # ai-sdlc-gate\n"
-        b'alias ll="ls -la"\n'
-    )
-    # Run with the temp dir as cwd and a relative name so this works under Git bash on Windows (which cannot read a
-    # C:\... path) as well as on POSIX CI.
-    subprocess.run(["bash", "-c", f"sed -i.bak '{sed_pattern}/d' .bashrc && rm -f .bashrc.bak"], check=True, cwd=str(tmp_path))
-    out = prof.read_text(encoding="utf-8")
-    assert "GIT_CONFIG_PARAMETERS" not in out, "the stale override line was not removed"
-    assert "export PATH=" in out and 'alias ll="ls -la"' in out, "unrelated profile lines must be preserved"
+    profile = [
+        "export PATH=$PATH:/usr/local/bin",
+        "export GIT_CONFIG_PARAMETERS=\"'core.hooksPath=/home/u/.ai-sdlc-gate/hooks'\" # ai-sdlc-gate",
+        'alias ll="ls -la"',
+    ]
+    kept = [ln for ln in profile if not line_re.search(ln)]
+    assert kept == ["export PATH=$PATH:/usr/local/bin", 'alias ll="ls -la"'], "cleanup removed the wrong line(s)"
+    # And the address does not match an unrelated GIT_CONFIG_PARAMETERS a developer set without the gate marker.
+    assert line_re.search('export GIT_CONFIG_PARAMETERS="\'user.name=me\'"') is None
 
 
 @pytest.mark.parametrize("launcher,script", [("install.cmd", "install.ps1"), ("install.command", "install.sh")])
