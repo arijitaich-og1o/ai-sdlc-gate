@@ -94,20 +94,30 @@ $gitParams = "'core.hooksPath=$hooksPosix'"
 [Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $gitParams, "User")
 $env:GIT_CONFIG_PARAMETERS = $gitParams
 
-Say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
-Gate configure --config $config
-if ($LASTEXITCODE -ne 0) { Say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)." }
+Say "Step 3 of 3: preparing the review engine"
+# A bundled deployment ships the review configuration as a record file next to the installer, so testers need no
+# GitHub permission and the key broker is not contacted. Otherwise fetch it from the central repository (broker).
+$recordFile = $env:AI_SDLC_GATE_RECORD_FILE
+if (-not $recordFile) { $candidate = Join-Path $PSScriptRoot "gate.record"; if (Test-Path $candidate) { $recordFile = $candidate } }
+if ($recordFile -and (Test-Path $recordFile)) {
+  & cmd /c "$(GateCmd) configure --config ""$config"" --import-record < ""$recordFile"" 2>&1"
+  if ($LASTEXITCODE -ne 0) { Say "The bundled review configuration could not be imported; contact the platform team." }
+} else {
+  Gate configure --config $config
+  if ($LASTEXITCODE -ne 0) { Say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)." }
+}
 
 Say "Verifying"
 Gate validate-skills --config $config | Select-Object -Last 1
 
 Set-Content -Path (Join-Path $home_ ".last-refresh") -Value ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -Encoding ascii
 
-# WSL is a separate Linux system with its own git. Install the gate in every distribution from the Windows copy of
-# the repository (no network or GitHub credential needed inside WSL) and carry the sign-in and review engine over.
-if (Get-Command wsl.exe -ErrorAction SilentlyContinue) {
+# WSL is a separate Linux system with its own git. Provisioning it is OFF by default so a Windows-only tester never
+# sees WSL errors; set AI_SDLC_GATE_WSL=1 to also install the gate into your real Linux distributions. Utility
+# distributions (Docker/Podman machines, which are not developer environments) are always skipped.
+if ($env:AI_SDLC_GATE_WSL -eq "1" -and (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
   $distros = @()
-  try { $distros = (& wsl.exe -l -q 2>$null) -replace "\x00", "" | ForEach-Object { $_.Trim() } | Where-Object { $_ -and $_ -notmatch "docker-desktop" } } catch {}
+  try { $distros = (& wsl.exe -l -q 2>$null) -replace "\x00", "" | ForEach-Object { $_.Trim() } | Where-Object { $_ -and $_ -notmatch "docker-desktop|podman|rancher|-data$|-machine" } } catch {}
   if ($distros.Count -gt 0) {
     $drive = $home_.Substring(0, 1).ToLower()
     $winHomeWsl = "/mnt/$drive" + ($home_.Substring(2) -replace "\\", "/")

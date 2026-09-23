@@ -2,6 +2,9 @@
 # AI SDLC Gate installer for macOS. Double-click in Finder, or run from a terminal.
 # Requires git (Xcode command line tools) and Python 3.10+ (https://www.python.org/downloads/macos/).
 cd "$(dirname "$0")" || exit 1
+# A bundled deployment ships the review configuration as gate.record next to this file: the installer imports it
+# and never contacts the key broker, so a tester needs no GitHub permission.
+[ -f "./gate.record" ] && export AI_SDLC_GATE_RECORD_FILE="$(pwd)/gate.record"
 if [ -f ./install.sh ]; then
   bash ./install.sh
 else
