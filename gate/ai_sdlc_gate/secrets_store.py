@@ -43,6 +43,8 @@ class Stored:
     def is_ready(self) -> bool:
         if self.provider == "vertex":
             return bool(self.data and self.data.get("credentials") and self.data.get("project"))
+        if self.provider == "endpoint":
+            return bool(self.data and self.data.get("endpoint_url"))
         return bool(self.base_url and self.api_key)
 
     def to_json(self) -> str:
@@ -263,6 +265,56 @@ def load() -> Stored | None:
         if env_models:
             stored.models = env_models
     return stored
+
+
+def set_blob(account: str, text: str) -> str:
+    """Store an arbitrary secret string under `account` (OS credential store, else an encrypted file). Returns backend."""
+    kr = _keyring()
+    if kr is not None:
+        try:
+            kr.set_password(SERVICE, account, text)
+            fp = sdlc_home() / f".{account}.enc"
+            if fp.exists():
+                fp.unlink()
+            return "keyring"
+        except Exception:  # noqa: BLE001
+            if kr is not None:
+                try:
+                    kr.delete_password(SERVICE, account)
+                except Exception:  # noqa: BLE001
+                    pass
+    _write_private(sdlc_home() / f".{account}.enc", _fernet().encrypt(text.encode("utf-8")))
+    return "file"
+
+
+def get_blob(account: str) -> str | None:
+    kr = _keyring()
+    if kr is not None:
+        try:
+            raw = kr.get_password(SERVICE, account)
+        except Exception:  # noqa: BLE001
+            raw = None
+        if raw:
+            return raw
+    fp = sdlc_home() / f".{account}.enc"
+    if fp.is_file() and _enc_key_path().is_file():
+        try:
+            return _fernet().decrypt(fp.read_bytes()).decode("utf-8")
+        except Exception:  # noqa: BLE001
+            return None
+    return None
+
+
+def del_blob(account: str) -> None:
+    kr = _keyring()
+    if kr is not None:
+        try:
+            kr.delete_password(SERVICE, account)
+        except Exception:  # noqa: BLE001
+            pass
+    fp = sdlc_home() / f".{account}.enc"
+    if fp.exists():
+        fp.unlink()
 
 
 def clear() -> None:

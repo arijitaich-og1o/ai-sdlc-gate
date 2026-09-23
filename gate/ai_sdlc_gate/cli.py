@@ -590,6 +590,15 @@ def cmd_configure(args: argparse.Namespace) -> int:
                             provider=rec.provider, data=rec.data)
         print("Review engine ready.", flush=True)
         return EXIT_PASS
+    if getattr(args, "endpoint_url", None):
+        try:
+            llm_mod.validate_base_url(args.endpoint_url)
+        except llm_mod.LLMError as exc:
+            _eprint(f"configure: {exc}")
+            return EXIT_FAIL
+        secrets_store.store(models=[], mode="endpoint", provider="endpoint", data={"endpoint_url": args.endpoint_url.rstrip("/")})
+        print("Review engine ready (organisation endpoint).", flush=True)
+        return EXIT_PASS
     if args.api_key:
         if not args.base_url:
             _eprint("--base-url is required together with --api-key")
@@ -701,6 +710,7 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
 
     cf = sub.add_parser("configure", help="prepare the review engine on this machine (uses your GitHub sign-in)")
     cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker (with --base-url)")
+    cf.add_argument("--endpoint-url", help="use the organisation's SDLC review endpoint; the client sends its Microsoft token and stores no cloud credential")
     cf.add_argument("--models", help="comma separated model names to store with --api-key")
     cf.add_argument("--repo", help="central repository (default from policy)"), cf.add_argument("--ref", help="branch of the central repository (default main)")
     cf.add_argument("--check", action="store_true", help="exit 0 if the review engine is set up, 1 otherwise")
