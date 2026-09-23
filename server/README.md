@@ -18,7 +18,9 @@ Why it exists:
 - `POST /v1/review` — body `{ "system": "...", "user": "...", "role": "review|judge", "max_tokens": 8000 }`,
   header `Authorization: Bearer <entra-token>`. Returns `{ "text": "...", "usage": {...}, "developer": "..." }`.
   The client sends a **role**, never a model name.
-- `GET /status` — liveness.
+- `GET /status` — liveness (process is up). It is `/status`, not the conventional `/healthz`, because Cloud Run's
+  Google Front End reserves `/healthz` and returns its own 404 before the request reaches the app. It is a liveness
+  check only, not a readiness/dependency probe: a broken dependency shows up on a real `/v1/review` as `403`/`502`.
 
 ## One-time setup
 
