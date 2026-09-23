@@ -41,7 +41,7 @@ from typing import Any, Callable
 import httpx
 
 DEFAULT_AUTHORITY = "https://login.microsoftonline.com"
-SCOPES = "openid profile email"
+SCOPES = "openid profile email offline_access"
 IDENTITY_VALID_DAYS = 90  # how long a sign-in is trusted on this machine before the developer signs in again
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -263,6 +263,60 @@ def prefilled_login_url(authority: str, verification_uri: str, user_code: str) -
     return verification_uri
 
 
+
+REFRESH_ACCOUNT = "entra-refresh"
+
+
+def _store_refresh_token(refresh_token: str | None) -> None:
+    """Persist the Microsoft refresh token in the OS credential store so the endpoint client can get fresh tokens
+    silently. Best effort: a flow that returns no refresh token (e.g. in tests) simply stores nothing."""
+    if not refresh_token:
+        return
+    try:
+        from . import secrets_store
+
+        secrets_store.set_blob(REFRESH_ACCOUNT, refresh_token)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _refresh_token_exchange(authority: str, tenant: str, client_id: str, refresh_token: str, client: httpx.Client | None = None) -> tuple[str, str | None]:
+    url = f"{authority.rstrip('/')}/{tenant}/oauth2/v2.0/token"
+    http = client or httpx.Client(timeout=30)
+    try:
+        r = http.post(url, data={"client_id": client_id, "grant_type": "refresh_token", "refresh_token": refresh_token, "scope": SCOPES})
+    finally:
+        if client is None:
+            http.close()
+    if r.status_code != 200:
+        raise IdentityError("your Microsoft sign-in has expired; run: ai-sdlc-gate identity login")
+    j = r.json()
+    token = j.get("id_token") or j.get("access_token")
+    if not token:
+        raise IdentityError("the sign-in refresh did not return a token; run: ai-sdlc-gate identity login")
+    return token, j.get("refresh_token")
+
+
+def endpoint_token(cfg: Any, client: httpx.Client | None = None) -> str:
+    """Return a fresh Microsoft token to present to the SDLC endpoint, refreshing silently from the stored token."""
+    from . import secrets_store
+
+    rt = secrets_store.get_blob(REFRESH_ACCOUNT)
+    if not rt:
+        raise IdentityError("not signed in; run: ai-sdlc-gate identity login")
+    idc = cfg.identity if hasattr(cfg, "identity") else (cfg.get("identity", {}) if isinstance(cfg, dict) else {})
+    tenant = str(idc.get("tenant") or "")
+    client_id = str(idc.get("client_id") or "")
+    authority = str(idc.get("authority") or DEFAULT_AUTHORITY)
+    token, new_rt = _refresh_token_exchange(authority, tenant, client_id, rt, client=client)
+    if new_rt and new_rt != rt:
+        try:
+            secrets_store.set_blob(REFRESH_ACCOUNT, new_rt)
+        except Exception:  # noqa: BLE001
+            pass
+    return token
+
+
 def device_code_login(
     tenant: str,
     client_id: str,
@@ -319,6 +373,7 @@ def device_code_login(
                 id_token = tok.json().get("id_token")
                 if not id_token:
                     raise IdentityError("token response did not include an id_token (request the openid scope)")
+                _store_refresh_token(tok.json().get("refresh_token"))
                 return _validate_claims(verify(id_token, tenant, client_id, authority), tenant, client_id, authority, allowed_domains or [])
             err = tok.json().get("error") if tok.headers.get("content-type", "").startswith("application/json") else ""
             if err == "authorization_pending":
@@ -444,6 +499,7 @@ def browser_login(
     id_token = tok.json().get("id_token")
     if not id_token:
         raise IdentityError("token response did not include an id_token")
+    _store_refresh_token(tok.json().get("refresh_token"))
     claims = verify(id_token, tenant, client_id, authority)
     if claims.get("nonce") != nonce:
         raise IdentityError("token nonce does not match this request")

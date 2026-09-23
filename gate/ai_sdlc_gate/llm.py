@@ -494,11 +494,111 @@ class VertexClient:
         self._client.close()
 
 
+class EndpointClient:
+    """Review through the organisation's own SDLC endpoint (a keyless Cloud Run service in the EU).
+
+    The only credential on the machine is the developer's Microsoft sign-in. Each request carries a fresh Entra
+    token (fetched by `token_provider`); the endpoint verifies it, enforces @og1o.in, and calls the model itself, so
+    the client never holds a cloud key and never learns the project, region or model. The client sends a role
+    ("review"/"judge"), not a model name.
+    """
+
+    def __init__(
+        self,
+        endpoint_url: str,
+        token_provider: Callable[[], str],
+        role: str = "review",
+        timeout: float = 180.0,
+        max_retries: int = 3,
+        max_output_tokens: int = 8000,
+        transport: httpx.BaseTransport | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
+        if not endpoint_url:
+            raise LLMError("the review endpoint is not configured; run: ai-sdlc-gate configure")
+        self.endpoint_url = validate_base_url(endpoint_url).rstrip("/")
+        self._token_provider = token_provider
+        self.role = role
+        self.model = role  # for reporting only; the real model name stays on the server
+        self.fallback_models: list[str] = []
+        self.max_output_tokens = max_output_tokens
+        self.max_retries = max(0, int(max_retries))
+        self._sleep = sleep
+        self._client = httpx.Client(timeout=httpx.Timeout(timeout), transport=transport)
+        self.total_usage: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0}
+
+    @classmethod
+    def from_config(cls, cfg: Config, stored: Any, model: str | None = None, token_provider: Callable[[], str] | None = None, **kwargs: Any) -> "EndpointClient":
+        llm = cfg.llm
+        url = str((getattr(stored, "data", None) or {}).get("endpoint_url") or "")
+        if token_provider is None:
+            from . import identity as identity_mod
+
+            token_provider = lambda: identity_mod.endpoint_token(cfg)  # noqa: E731
+        return cls(
+            endpoint_url=url,
+            token_provider=token_provider,
+            role="judge" if model == "judge" else "review",
+            timeout=float(llm.get("timeout_seconds", 180)),
+            max_retries=int(llm.get("max_retries", 3)),
+            max_output_tokens=int(llm.get("max_output_tokens", 8000)),
+            **kwargs,
+        )
+
+    def chat(self, system: str, user: str, json_mode: bool = True) -> LLMResponse:
+        payload = {"system": system, "user": user, "role": self.role, "max_tokens": self.max_output_tokens}
+        last_error: Exception | None = None
+        for attempt in range(self.max_retries + 1):
+            started = time.monotonic()
+            try:
+                token = self._token_provider()
+            except Exception as exc:  # noqa: BLE001 - identity errors surface as a clear sign-in prompt
+                raise LLMError("sign in with your Microsoft work account: ai-sdlc-gate identity login") from exc
+            try:
+                resp = self._client.post(
+                    f"{self.endpoint_url}/v1/review",
+                    headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                    json=payload,
+                )
+            except httpx.HTTPError as exc:
+                last_error = LLMError(f"could not reach the review service ({exc.__class__.__name__})")
+            else:
+                if resp.status_code == 403:
+                    raise LLMError("your account is not permitted to use the gate; sign in with your @og1o.in work account")
+                if resp.status_code == 401:
+                    raise LLMError("sign in again: ai-sdlc-gate identity login")
+                if resp.status_code in RETRY_STATUSES:
+                    last_error = LLMError(describe_failure(resp.status_code, resp.text))
+                elif resp.status_code >= 400:
+                    raise LLMError(f"review service: {describe_failure(resp.status_code, resp.text)}")
+                else:
+                    data = resp.json()
+                    usage = data.get("usage") or {}
+                    self.total_usage["prompt_tokens"] += int(usage.get("input_tokens") or 0)
+                    self.total_usage["completion_tokens"] += int(usage.get("output_tokens") or 0)
+                    return LLMResponse(content=str(data.get("text") or ""), model="endpoint", usage=usage, latency_s=time.monotonic() - started)
+            if attempt < self.max_retries:
+                self._sleep(min(30.0, 2.0 ** attempt))
+        raise LLMError(f"review service: gave up after {self.max_retries + 1} attempts: {last_error}")
+
+    def chat_json(self, system: str, user: str) -> tuple[dict[str, Any], LLMResponse]:
+        resp = self.chat(system, user, json_mode=True)
+        data = extract_json(resp.content)
+        if not isinstance(data, dict):
+            raise LLMError("Model returned JSON that is not an object")
+        return data, resp
+
+    def close(self) -> None:
+        self._client.close()
+
+
 def build_client(cfg: Config, model: str | None = None, **kwargs: Any) -> Any:
     """Return the review client for the configured provider (Vertex AI or an OpenAI-compatible gateway)."""
     from . import secrets_store  # local import: keyring is optional at import time
 
     stored = secrets_store.load()
+    if stored is not None and stored.provider == "endpoint":
+        return EndpointClient.from_config(cfg, stored, model=model, **kwargs)
     if stored is not None and stored.provider == "vertex":
         return VertexClient.from_config(cfg, stored, model=model, **kwargs)
     return LLMClient.from_config(cfg, model=model, **kwargs)
