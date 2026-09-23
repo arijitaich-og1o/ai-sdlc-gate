@@ -96,11 +96,13 @@ git config --global core.hooksPath $hooksPosix
 # read fresh on every git call and takes effect immediately. Actively clear any stale override left by an older
 # install so this machine self-heals. (Repositories that set their own core.hooksPath - husky and friends - are
 # handled by the managed install's git shim and by the server-side branch-protection ruleset.)
-if (([Environment]::GetEnvironmentVariable("GIT_CONFIG_PARAMETERS", "User")) -like "*ai-sdlc-gate*") {
+# Match the exact shape we ever wrote (core.hooksPath pointing at the ai-sdlc-gate hooks) so an unrelated value a
+# developer set for their own reasons is never touched. -like is case-insensitive.
+if (([Environment]::GetEnvironmentVariable("GIT_CONFIG_PARAMETERS", "User")) -like "*core.hooksPath=*ai-sdlc-gate*") {
   [Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $null, "User")
   Say "Removed a stale GIT_CONFIG_PARAMETERS from an earlier install; restart open terminals to clear it there too."
 }
-if ($env:GIT_CONFIG_PARAMETERS -like "*ai-sdlc-gate*") { Remove-Item Env:\GIT_CONFIG_PARAMETERS -ErrorAction SilentlyContinue }
+if ($env:GIT_CONFIG_PARAMETERS -like "*core.hooksPath=*ai-sdlc-gate*") { Remove-Item Env:\GIT_CONFIG_PARAMETERS -ErrorAction SilentlyContinue }
 
 Say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
 Gate configure --config $config
