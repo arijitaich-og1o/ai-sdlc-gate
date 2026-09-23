@@ -18,7 +18,7 @@ Why it exists:
 - `POST /v1/review` — body `{ "system": "...", "user": "...", "role": "review|judge", "max_tokens": 8000 }`,
   header `Authorization: Bearer <entra-token>`. Returns `{ "text": "...", "usage": {...}, "developer": "..." }`.
   The client sends a **role**, never a model name.
-- `GET /healthz` — liveness.
+- `GET /status` — liveness.
 
 ## One-time setup
 
