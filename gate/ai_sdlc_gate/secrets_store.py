@@ -11,8 +11,11 @@ the client reports it as the weaker option.
 from __future__ import annotations
 
 import base64
+import csv
+import io
 import json
 import os
+import re
 import stat
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -86,61 +89,87 @@ def _enc_key_path() -> Path:
     return sdlc_home() / ".k"
 
 
+# Well-formed SID: S-1-<authority>-<sub>... (at least one sub-authority). Used to reject anything that is not a SID.
+_SID_RE = re.compile(r"^S-1-\d+(?:-\d+)+$", re.IGNORECASE)
+# Well-known SIDs, locale-independent: local SYSTEM and the built-in Administrators group.
+_SID_SYSTEM = "S-1-5-18"
+_SID_ADMINS = "S-1-5-32-544"
+
+
+def _parse_sid(whoami_csv: str) -> str:
+    """Extract the account SID from `whoami /user /fo csv /nh` output, or '' if none is well-formed.
+
+    The row is `"DOMAIN\\user","S-1-5-21-..."`. Parsed with the csv module (not ad-hoc splitting) and validated
+    against the SID grammar so a malformed or unexpected value is never handed to icacls.
+    """
+    try:
+        for row in csv.reader(io.StringIO(whoami_csv or "")):
+            for field in row:
+                f = field.strip()
+                if _SID_RE.match(f):
+                    return f.upper()
+    except (csv.Error, ValueError):
+        pass
+    return ""
+
+
 def _current_user_sid() -> str:
     """The current account's SID (e.g. S-1-5-21-...), or '' if it cannot be determined."""
     import subprocess
 
     try:
         out = subprocess.run(["whoami", "/user", "/fo", "csv", "/nh"], capture_output=True, text=True, check=False).stdout
-        for field in (out or "").strip().strip('"').replace('","', "\x00").split("\x00"):
-            f = field.strip().strip('"')
-            if f.upper().startswith("S-1-"):
-                return f
+        return _parse_sid(out)
     except Exception:  # noqa: BLE001
-        pass
-    return ""
+        return ""
 
 
-def _lock_down(path: Path) -> None:
-    """Restrict a file/dir to the current user, on POSIX and Windows.
+def _icacls_args(path: str, sid: str, is_dir: bool) -> list[str] | None:
+    """Build the icacls command that restricts `path` to the given SID plus SYSTEM and Administrators.
 
-    On Windows the grant is made to the current account's SID (not a bare user name): on a domain-joined machine a
+    Returns None when `sid` is not a well-formed SID: in that case the caller must NOT strip inheritance, because a
+    grant to the wrong principal combined with `/inheritance:r` is exactly what locked domain users out before.
+    Leaving the inherited profile permissions in place keeps the owner's access; the record is still encrypted.
+    """
+    if not _SID_RE.match(sid or ""):
+        return None
+    # Inherit flags (OI)(CI) are valid only for directories; a file must be granted plain `F`.
+    flags = "(OI)(CI)F" if is_dir else "F"
+    return [
+        "icacls", path, "/inheritance:r",
+        "/grant:r", f"*{sid}:{flags}",
+        "/grant:r", f"*{_SID_SYSTEM}:{flags}",
+        "/grant:r", f"*{_SID_ADMINS}:{flags}",
+    ]
+
+
+def _lock_down(path: Path) -> bool:
+    """Restrict a file/dir to the current user. Returns True only if the restriction was actually applied.
+
+    On Windows the grant is made to the current account's SID (never a bare user name): on a domain-joined machine a
     bare name can resolve to the wrong principal and, combined with removing inheritance, lock the real user out of
-    their own `~/.ai-sdlc-gate`. SYSTEM and Administrators are kept so system processes and admins are never locked
-    out (a local admin can take ownership regardless); removing inheritance still drops the broad Users groups, which
-    is what keeps other standard users from reading the record.
+    their own `~/.ai-sdlc-gate`. If the SID cannot be determined, the lockdown is skipped rather than guessed — the
+    file keeps the user profile's default permissions (owner-private on a standard machine) and stays encrypted,
+    which is safer than risking a lockout. SYSTEM and Administrators are always kept so system processes and admins
+    are never locked out; removing inheritance still drops the broad Users groups, which is what keeps other standard
+    users from reading the record. The boolean lets callers see when the extra hardening did not take effect.
     """
     if os.name == "nt":
+        args = _icacls_args(str(path), _current_user_sid(), path.is_dir())
+        if args is None:
+            return False
         try:
             import subprocess
 
-            sid = _current_user_sid()
-            # Inherit flags (OI)(CI) are valid only for directories; a file must be granted plain `F`.
-            flags = "(OI)(CI)F" if path.is_dir() else "F"
-            if sid:
-                user_ace = f"*{sid}:{flags}"
-            elif os.environ.get("USERNAME"):
-                dom = os.environ.get("USERDOMAIN")
-                user_ace = f"{(dom + chr(92)) if dom else ''}{os.environ['USERNAME']}:{flags}"
-            else:
-                user_ace = ""
-            if user_ace:
-                subprocess.run(
-                    ["icacls", str(path), "/inheritance:r",
-                     "/grant:r", user_ace, "/grant:r", f"*S-1-5-18:{flags}", "/grant:r", f"*S-1-5-32-544:{flags}"],
-                    capture_output=True,
-                    check=False,
-                )
+            return subprocess.run(args, capture_output=True, check=False).returncode == 0
         except Exception:  # noqa: BLE001
-            pass
+            return False
     else:
         try:
-            if path.is_dir():
-                os.chmod(path, stat.S_IRWXU)  # 0700
-            else:
-                os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)  # 0600
+            os.chmod(path, stat.S_IRWXU if path.is_dir() else (stat.S_IRUSR | stat.S_IWUSR))  # 0700 / 0600
+            return True
         except OSError:
-            pass
+            return False
 
 
 def _write_private(path: Path, data: bytes) -> None:
