@@ -49,6 +49,20 @@ def test_git_operations_have_a_network_timeout():
     assert "http.lowSpeedLimit" in ps1 and "http.lowSpeedTime" in ps1, "git clone/fetch should abort on a stalled network"
 
 
+def test_installer_does_not_set_a_persistent_git_config_parameters_override():
+    # GIT_CONFIG_PARAMETERS outranks the git config file and lingers in open shells; a stale value from an earlier
+    # install breaks git until every terminal restarts. The installer must rely on global core.hooksPath and only
+    # CLEAR a stale override, never set a new persistent one.
+    ps1 = _read("install.ps1")
+    assert 'core.hooksPath=$hooksPosix' not in ps1  # the old "set GIT_CONFIG_PARAMETERS to a value" pattern is gone
+    assert "SetEnvironmentVariable(\"GIT_CONFIG_PARAMETERS\", $null" in ps1  # only clears it
+    assert "git config --global core.hooksPath" in ps1
+
+    sh = _read("install.sh")
+    assert "export GIT_CONFIG_PARAMETERS=" not in sh, "install.sh must not export a persistent override"
+    assert 'git config --global core.hooksPath "$SDLC_HOME/hooks"' in sh
+
+
 @pytest.mark.parametrize("launcher,script", [("install.cmd", "install.ps1"), ("install.command", "install.sh")])
 def test_launchers_clone_when_the_local_script_is_absent(launcher, script):
     text = _read(launcher)
