@@ -39,12 +39,14 @@ $hooks = Join-Path $home_ "hooks"
 New-Item -ItemType Directory -Force -Path $hooks | Out-Null
 
 Say "Syncing central repository ($Ref) to $repo"
+# Abort rather than hang if the network stalls: fail a transfer that stays under 1 KB/s for 60s.
+$gitTimeout = @("-c", "http.lowSpeedLimit=1024", "-c", "http.lowSpeedTime=60")
 if (Test-Path (Join-Path $repo ".git")) {
-  git -C $repo fetch --quiet --depth 1 origin $Ref
+  git @gitTimeout -C $repo fetch --quiet --depth 1 origin $Ref
   git -C $repo reset --quiet --hard FETCH_HEAD
 } else {
   if (Test-Path $repo) { Remove-Item -Recurse -Force $repo }
-  git clone --quiet --depth 1 --branch $Ref $RepoUrl $repo
+  git @gitTimeout clone --quiet --depth 1 --branch $Ref $RepoUrl $repo
 }
 Set-Content -Path (Join-Path $home_ "ref") -Value $Ref -Encoding ascii
 
@@ -103,37 +105,10 @@ Gate validate-skills --config $config | Select-Object -Last 1
 
 Set-Content -Path (Join-Path $home_ ".last-refresh") -Value ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -Encoding ascii
 
-# WSL is a separate Linux system with its own git. Provisioning it is OFF by default so a Windows-only tester never
-# sees WSL errors; set AI_SDLC_GATE_WSL=1 to also install the gate into your real Linux distributions. Utility
-# distributions (Docker/Podman machines, which are not developer environments) are always skipped.
-if ($env:AI_SDLC_GATE_WSL -eq "1" -and (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
-  $distros = @()
-  try { $distros = (& wsl.exe -l -q 2>$null) -replace "\x00", "" | ForEach-Object { $_.Trim() } | Where-Object { $_ -and $_ -notmatch "docker-desktop|podman|rancher|-data$|-machine" } } catch {}
-  if ($distros.Count -gt 0) {
-    $drive = $home_.Substring(0, 1).ToLower()
-    $winHomeWsl = "/mnt/$drive" + ($home_.Substring(2) -replace "\\", "/")
-    # Refuse to provision WSL when the install path would break bash quoting (a quote in the path is an
-    # injection vector); such paths are unsupported for the WSL handover.
-    if ($winHomeWsl -match "'") { Say "WSL: skipped; the install path contains a single quote, which is unsupported." } else {
-    $record = Join-Path $home_ "handover.json"
-    # The handover carries the review key; write it owner-only and remove it in a finally so it never persists.
-    & cmd /c "$(GateCmd) configure --export-record > ""$record"" 2>nul"
-    try { (Get-Item $record).Attributes = 'Hidden' } catch {}
-    try {
-      foreach ($d in $distros) {
-        if ($d -match "'") { Say "WSL: skipped '$d'; distribution name contains a single quote."; continue }
-        Say "WSL: installing the gate in '$d'"
-        $cmd = "export AI_SDLC_GATE_NONINTERACTIVE=1 AI_SDLC_GATE_REPO_URL='file://$winHomeWsl/repo' AI_SDLC_GATE_RECORD_FILE='$winHomeWsl/handover.json'; " +
-               "bash '$winHomeWsl/repo/client/install.sh'; mkdir -p ~/.ai-sdlc-gate; " +
-               "[ -f '$winHomeWsl/identity.json' ] && cp '$winHomeWsl/identity.json' ~/.ai-sdlc-gate/ && chmod 600 ~/.ai-sdlc-gate/identity.json; true"
-        & cmd /c "wsl.exe -d $d -- bash -lc ""$cmd"" 2>&1" | Where-Object { $_ -notmatch "notice|pip is available|To update, run|WARNING: The script" }
-        if ($LASTEXITCODE -ne 0) { Say "WSL '$d': the gate could not be installed there (git and Python 3.10+ are required inside WSL). Run 'bash $winHomeWsl/repo/client/install.sh' inside it later." }
-      }
-    } finally {
-      if (Test-Path $record) { Remove-Item -Force $record }
-    }
-    }
-  }
+# WSL is a separate Linux system with its own git and Python. This Windows installer does not reach into WSL: to
+# gate commits made from inside a WSL distribution, open that distribution and run client/install.sh there.
+if ((Get-Command wsl.exe -ErrorAction SilentlyContinue) -and $env:AI_SDLC_GATE_WSL -eq "1") {
+  Say "WSL: to install the gate inside a WSL distribution, open it and run: bash ~/.ai-sdlc-gate/repo/client/install.sh"
 }
 
 Say "Done. Every commit and push on this machine now goes through the AI SDLC Gate."
