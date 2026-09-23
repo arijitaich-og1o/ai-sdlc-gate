@@ -52,15 +52,47 @@ def test_git_operations_have_a_network_timeout():
 def test_installer_does_not_set_a_persistent_git_config_parameters_override():
     # GIT_CONFIG_PARAMETERS outranks the git config file and lingers in open shells; a stale value from an earlier
     # install breaks git until every terminal restarts. The installer must rely on global core.hooksPath and only
-    # CLEAR a stale override, never set a new persistent one.
+    # CLEAR a stale override (guarded so it never wipes an unrelated value), never set a new persistent one.
     ps1 = _read("install.ps1")
-    assert 'core.hooksPath=$hooksPosix' not in ps1  # the old "set GIT_CONFIG_PARAMETERS to a value" pattern is gone
-    assert "SetEnvironmentVariable(\"GIT_CONFIG_PARAMETERS\", $null" in ps1  # only clears it
+    assert 'SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $gitParams' not in ps1  # the old "set a value" pattern
+    assert 'GetEnvironmentVariable("GIT_CONFIG_PARAMETERS", "User")) -like "*core.hooksPath=*ai-sdlc-gate*"' in ps1
+    assert 'SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $null, "User")' in ps1  # only clears it, guarded
     assert "git config --global core.hooksPath" in ps1
 
     sh = _read("install.sh")
     assert "export GIT_CONFIG_PARAMETERS=" not in sh, "install.sh must not export a persistent override"
+    assert "GIT_CONFIG_PARAMETERS.*# ai-sdlc-gate" in sh, "install.sh must still detect and remove a stale line"
     assert 'git config --global core.hooksPath "$SDLC_HOME/hooks"' in sh
+
+
+@pytest.mark.skipif(__import__("shutil").which("bash") is None, reason="bash not available")
+def test_installsh_removes_a_stale_profile_line_but_keeps_others(tmp_path):
+    """Run the installer's own sed removal against a fixture profile and prove it clears the stale line only.
+
+    This exercises the fix, not just its presence: a static check would pass even if the pattern were wrong.
+    """
+    import re
+    import subprocess
+
+    sh = _read("install.sh")
+    # Pull the exact sed command out of install.sh so the test guards the real script, not a re-typed copy.
+    m = re.search(r"sed -i\.bak '([^']*# ai-sdlc-gate\$)/d'", sh)
+    assert m, "install.sh no longer contains the expected sed removal command"
+    sed_pattern = m.group(1)  # e.g. /GIT_CONFIG_PARAMETERS.*# ai-sdlc-gate$
+
+    prof = tmp_path / ".bashrc"
+    # write_bytes (not write_text) so line endings stay LF on Windows too, matching a real shell profile.
+    prof.write_bytes(
+        b"export PATH=$PATH:/usr/local/bin\n"
+        b"export GIT_CONFIG_PARAMETERS=\"'core.hooksPath=/home/u/.ai-sdlc-gate/hooks'\" # ai-sdlc-gate\n"
+        b'alias ll="ls -la"\n'
+    )
+    # Run with the temp dir as cwd and a relative name so this works under Git bash on Windows (which cannot read a
+    # C:\... path) as well as on POSIX CI.
+    subprocess.run(["bash", "-c", f"sed -i.bak '{sed_pattern}/d' .bashrc && rm -f .bashrc.bak"], check=True, cwd=str(tmp_path))
+    out = prof.read_text(encoding="utf-8")
+    assert "GIT_CONFIG_PARAMETERS" not in out, "the stale override line was not removed"
+    assert "export PATH=" in out and 'alias ll="ls -la"' in out, "unrelated profile lines must be preserved"
 
 
 @pytest.mark.parametrize("launcher,script", [("install.cmd", "install.ps1"), ("install.command", "install.sh")])
