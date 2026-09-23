@@ -159,7 +159,7 @@ identity:
   # Tenant must be your organisation's tenant ID (a GUID). A multi-tenant endpoint such as "organizations" or
   # "common" is rejected at sign-in. Register a dedicated "AI SDLC Gate client" application and put its tenant
   # and client id here; only accounts in allowed_domains are accepted.
-  tenant: organizations
+  tenant: 8794e153-c3bd-4479-8bea-61aeaf167d5a
   client_id: 04b07795-8ddb-461a-bbee-02f9e1bf7b46
   allowed_domains: [og1o.in]
   # When true, the hooks refuse to commit until the developer has signed in once. Only enforced once tenant and
