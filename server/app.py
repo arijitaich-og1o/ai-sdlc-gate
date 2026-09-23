@@ -64,6 +64,12 @@ def create_app(settings: Settings | None = None, verify=verify_entra_token, revi
             # Neutral response: never tell an unauthorized caller why (tenant, domain, audience) they were refused.
             raise HTTPException(status_code=403, detail="not authorized")
 
+    # Liveness only: "is the process up and serving". It deliberately does not call Vertex or verify a token on
+    # every probe (that would spend model quota and add latency on a hot path); a broken dependency surfaces on a
+    # real /v1/review as 403/502 instead. The path is /status, not the usual /healthz: on Cloud Run the Google
+    # Front End reserves /healthz and answers it with its own 404 before the request reaches this app, so a /healthz
+    # route here could never fire. This service is new and nothing calls the old path (which never worked), so the
+    # rename migrates no existing caller.
     @app.get("/status")
     def status() -> dict:
         return {"ok": True}
