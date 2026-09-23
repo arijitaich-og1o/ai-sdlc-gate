@@ -64,8 +64,8 @@ def create_app(settings: Settings | None = None, verify=verify_entra_token, revi
             # Neutral response: never tell an unauthorized caller why (tenant, domain, audience) they were refused.
             raise HTTPException(status_code=403, detail="not authorized")
 
-    @app.get("/healthz")
-    def healthz() -> dict:
+    @app.get("/status")
+    def status() -> dict:
         return {"ok": True}
 
     @app.post("/v1/review")
