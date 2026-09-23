@@ -94,18 +94,9 @@ $gitParams = "'core.hooksPath=$hooksPosix'"
 [Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $gitParams, "User")
 $env:GIT_CONFIG_PARAMETERS = $gitParams
 
-Say "Step 3 of 3: preparing the review engine"
-# A bundled deployment ships the review configuration as a record file next to the installer, so testers need no
-# GitHub permission and the key broker is not contacted. Otherwise fetch it from the central repository (broker).
-$recordFile = $env:AI_SDLC_GATE_RECORD_FILE
-if (-not $recordFile) { $candidate = Join-Path $PSScriptRoot "gate.record"; if (Test-Path $candidate) { $recordFile = $candidate } }
-if ($recordFile -and (Test-Path $recordFile)) {
-  & cmd /c "$(GateCmd) configure --config ""$config"" --import-record < ""$recordFile"" 2>&1"
-  if ($LASTEXITCODE -ne 0) { Say "The bundled review configuration could not be imported; contact the platform team." }
-} else {
-  Gate configure --config $config
-  if ($LASTEXITCODE -ne 0) { Say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)." }
-}
+Say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
+Gate configure --config $config
+if ($LASTEXITCODE -ne 0) { Say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)." }
 
 Say "Verifying"
 Gate validate-skills --config $config | Select-Object -Last 1
