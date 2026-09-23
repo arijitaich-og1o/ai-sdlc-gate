@@ -39,15 +39,18 @@ if (-not (Test-Path "$stage\gate.record") -or (Get-Item "$stage\gate.record").Le
 
 Copy-Item (Join-Path $PSScriptRoot "install.cmd") $stage
 Copy-Item (Join-Path $PSScriptRoot "install.command") $stage
+Copy-Item (Join-Path $PSScriptRoot "bootstrap.ps1") $stage
 @"
 AI SDLC Gate - one-step tester install
 ======================================
 1. Unzip this folder anywhere.
 2. Windows: double-click  install.cmd
    macOS:   double-click  install.command   (first time: right-click -> Open)
-3. When the browser opens, sign in with your @og1o.in work account. Nothing to type.
+3. If Windows shows a blue "Windows protected your PC" box: More info -> Run anyway.
+4. When the browser opens, sign in with your @og1o.in work account. Nothing to type.
 
-Requirements: Git and Python 3.10+ already installed.
+That's all. On Windows, if Python or Git are missing they are installed for you
+automatically (no administrator rights needed) - you just need an internet connection.
 The gate then reviews every commit and push on this machine.
 
 Note: gate.record in this folder holds the review configuration - keep it private, do not re-share.
