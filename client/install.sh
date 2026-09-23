@@ -89,13 +89,18 @@ if [ -n "$CURRENT_HOOKS" ] && [ "$CURRENT_HOOKS" != "$SDLC_HOME/hooks" ]; then
   say "core.hooksPath is currently '$CURRENT_HOOKS'. It will be replaced; the gate chains to repository hooks itself."
 fi
 git config --global core.hooksPath "$SDLC_HOME/hooks"
-# Repositories may set their own core.hooksPath (husky and friends). Git's environment override wins over
-# repository configuration, so export it from the shell profiles; the gate chains to the project's hooks.
-GIT_ENV_LINE="export GIT_CONFIG_PARAMETERS=\"'core.hooksPath=$SDLC_HOME/hooks'\" # ai-sdlc-gate"
+# We do NOT export a persistent GIT_CONFIG_PARAMETERS override. That variable outranks the git config file and
+# lingers in already-open shells, so a value left by an earlier install can point git at a removed hooks path and
+# break commits until every terminal is restarted. The global core.hooksPath above is read fresh on every git call.
+# Remove any GIT_CONFIG_PARAMETERS line an older install added to the shell profiles so this machine self-heals.
+# (Repositories that set their own core.hooksPath - husky and friends - are handled by the managed install's git
+# shim and by the server-side branch-protection ruleset.)
 for prof in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zshenv"; do
-  [ -f "$prof" ] || { case "$prof" in *".profile"|*".bashrc") touch "$prof";; *) continue;; esac; }
-  grep -q "# ai-sdlc-gate" "$prof" 2>/dev/null && sed -i.bak '/# ai-sdlc-gate$/d' "$prof" && rm -f "$prof.bak"
-  printf '%s\n' "$GIT_ENV_LINE" >> "$prof"
+  [ -f "$prof" ] || continue
+  if grep -q "GIT_CONFIG_PARAMETERS.*# ai-sdlc-gate" "$prof" 2>/dev/null; then
+    sed -i.bak '/GIT_CONFIG_PARAMETERS.*# ai-sdlc-gate$/d' "$prof" && rm -f "$prof.bak"
+    say "Removed a stale GIT_CONFIG_PARAMETERS line from $prof; open a new shell to clear it there too."
+  fi
 done
 
 say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"

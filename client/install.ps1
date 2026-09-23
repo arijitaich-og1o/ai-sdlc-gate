@@ -90,11 +90,17 @@ $hooksPosix = $hooks -replace "\\", "/"
 $current = git config --global --get core.hooksPath
 if ($current -and $current -ne $hooksPosix) { Say "core.hooksPath was '$current'; replacing it (the gate chains to repository hooks itself)." }
 git config --global core.hooksPath $hooksPosix
-# Repositories may set their own core.hooksPath (husky and friends). Git's environment override wins over repository
-# configuration, so set it for the user; IDEs and GUI clients started afterwards inherit it.
-$gitParams = "'core.hooksPath=$hooksPosix'"
-[Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $gitParams, "User")
-$env:GIT_CONFIG_PARAMETERS = $gitParams
+# We do NOT set a persistent GIT_CONFIG_PARAMETERS override. That environment variable outranks the git config file
+# and lingers in already-open shells, so a value left by an earlier install can point git at a removed hooks path
+# and break commits until every terminal is restarted - a confusing failure. The global core.hooksPath above is
+# read fresh on every git call and takes effect immediately. Actively clear any stale override left by an older
+# install so this machine self-heals. (Repositories that set their own core.hooksPath - husky and friends - are
+# handled by the managed install's git shim and by the server-side branch-protection ruleset.)
+if (([Environment]::GetEnvironmentVariable("GIT_CONFIG_PARAMETERS", "User")) -like "*ai-sdlc-gate*") {
+  [Environment]::SetEnvironmentVariable("GIT_CONFIG_PARAMETERS", $null, "User")
+  Say "Removed a stale GIT_CONFIG_PARAMETERS from an earlier install; restart open terminals to clear it there too."
+}
+if ($env:GIT_CONFIG_PARAMETERS -like "*ai-sdlc-gate*") { Remove-Item Env:\GIT_CONFIG_PARAMETERS -ErrorAction SilentlyContinue }
 
 Say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
 Gate configure --config $config
