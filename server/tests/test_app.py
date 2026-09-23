@@ -88,6 +88,6 @@ def test_upstream_failure_is_502_not_a_leak():
     assert r.status_code == 502 and "ogcs" not in r.text and "quota" not in r.text
 
 
-def test_healthz():
+def test_status():
     c = _client(lambda *a, **k: {"email": "a@og1o.in"}, _fake_review_capture({}))
-    assert c.get("/healthz").json() == {"ok": True}
+    assert c.get("/status").json() == {"ok": True}
