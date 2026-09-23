@@ -86,17 +86,48 @@ def _enc_key_path() -> Path:
     return sdlc_home() / ".k"
 
 
+def _current_user_sid() -> str:
+    """The current account's SID (e.g. S-1-5-21-...), or '' if it cannot be determined."""
+    import subprocess
+
+    try:
+        out = subprocess.run(["whoami", "/user", "/fo", "csv", "/nh"], capture_output=True, text=True, check=False).stdout
+        for field in (out or "").strip().strip('"').replace('","', "\x00").split("\x00"):
+            f = field.strip().strip('"')
+            if f.upper().startswith("S-1-"):
+                return f
+    except Exception:  # noqa: BLE001
+        pass
+    return ""
+
+
 def _lock_down(path: Path) -> None:
-    """Restrict a file/dir to the current user only, on POSIX and Windows."""
+    """Restrict a file/dir to the current user, on POSIX and Windows.
+
+    On Windows the grant is made to the current account's SID (not a bare user name): on a domain-joined machine a
+    bare name can resolve to the wrong principal and, combined with removing inheritance, lock the real user out of
+    their own `~/.ai-sdlc-gate`. SYSTEM and Administrators are kept so system processes and admins are never locked
+    out (a local admin can take ownership regardless); removing inheritance still drops the broad Users groups, which
+    is what keeps other standard users from reading the record.
+    """
     if os.name == "nt":
         try:
             import subprocess
 
-            user = os.environ.get("USERNAME") or ""
-            if user:
-                # Reset inheritance and grant only the current user full control.
+            sid = _current_user_sid()
+            # Inherit flags (OI)(CI) are valid only for directories; a file must be granted plain `F`.
+            flags = "(OI)(CI)F" if path.is_dir() else "F"
+            if sid:
+                user_ace = f"*{sid}:{flags}"
+            elif os.environ.get("USERNAME"):
+                dom = os.environ.get("USERDOMAIN")
+                user_ace = f"{(dom + chr(92)) if dom else ''}{os.environ['USERNAME']}:{flags}"
+            else:
+                user_ace = ""
+            if user_ace:
                 subprocess.run(
-                    ["icacls", str(path), "/inheritance:r", "/grant:r", f"{user}:F"],
+                    ["icacls", str(path), "/inheritance:r",
+                     "/grant:r", user_ace, "/grant:r", f"*S-1-5-18:{flags}", "/grant:r", f"*S-1-5-32-544:{flags}"],
                     capture_output=True,
                     check=False,
                 )
