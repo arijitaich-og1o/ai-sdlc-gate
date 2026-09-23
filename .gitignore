@@ -26,3 +26,9 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Bundled tester installer output (contains the model credential — never commit)
+dist/
+*.record
+gate.record
+handover.json
