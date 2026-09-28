@@ -56,7 +56,12 @@ def call_vertex(
         "messages": [{"role": "user", "content": user}],
     }
     if system:
-        body["system"] = system
+        # Prompt caching: the gate resends the same large phase-skill prompt as `system` on every review, so we
+        # mark it as a cache breakpoint. Subsequent calls with an identical system prefix (within the cache TTL)
+        # are billed the cached-read rate (~10% of input) instead of the full prompt. The structured block form
+        # is required to attach cache_control; a plain string cannot carry it. Prompts shorter than the model's
+        # minimum cacheable length are simply not cached (no error).
+        body["system"] = [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
     token = (token_fn or _default_token)()
     http = client or httpx.Client(timeout=httpx.Timeout(180.0))
     try:
