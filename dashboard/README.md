@@ -1,40 +1,40 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-28T06:58:43+00:00 from 2 gate run(s)._
+_Generated 2026-09-28T07:10:39+00:00 from 3 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 2 |
-| Pass rate | 50% |
-| Runs flagged (findings at/above threshold) | 1 (50%) |
-| Runs blocked | 1 (50%) |
+| Gate runs | 3 |
+| Pass rate | 67% |
+| Runs flagged (findings at/above threshold) | 1 (33%) |
+| Runs blocked | 1 (33%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 3.0 |
-| Runs with local client attestation | 50% |
+| Findings per run | 5.0 |
+| Runs with local client attestation | 67% |
 | Active developers / repositories | 1 / 2 |
-| Top finding categories | hardcoded-credential, missing-changelog, observability-gap, scalability-risk, capacity-risk |
+| Top finding categories | missing-changelog, capacity-risk, hardcoded-credential, observability-gap, scalability-risk |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 2 | 50% | 1 | 0 | 1 | 0 | 1 |
+| 2026-09 | 3 | 67% | 1 | 0 | 1 | 0 | 3 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 2 | 50% | 1 | 1 | 0/0 | 0 | 3.0 | 50% | hardcoded-credential, missing-changelog, observability-gap | 2026-09-28 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 3 | 67% | 1 | 1 | 0/0 | 0 | 5.0 | 67% | missing-changelog, capacity-risk, hardcoded-credential | 2026-09-28 |
 
 ## Repositories
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
+| oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
 | arijitaich-og1o/ai-sdlc-gate | 1 | 0% | 1 | 0 | 1 | 1.0 | hardcoded-credential |
-| oneo-dice/oggpt-x-backend | 1 | 100% | 0 | 0 | 1 | 5.0 | missing-changelog, observability-gap, scalability-risk |
 
 ### Reading this dashboard
 
