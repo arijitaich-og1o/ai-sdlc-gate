@@ -40,6 +40,8 @@ from typing import Any, Callable
 
 import httpx
 
+from .httpcfg import ssl_context
+
 DEFAULT_AUTHORITY = "https://login.microsoftonline.com"
 SCOPES = "openid profile email offline_access"
 IDENTITY_VALID_DAYS = 90  # how long a sign-in is trusted on this machine before the developer signs in again
@@ -282,7 +284,7 @@ def _store_refresh_token(refresh_token: str | None) -> None:
 
 def _refresh_token_exchange(authority: str, tenant: str, client_id: str, refresh_token: str, client: httpx.Client | None = None) -> tuple[str, str | None]:
     url = f"{authority.rstrip('/')}/{tenant}/oauth2/v2.0/token"
-    http = client or httpx.Client(timeout=30)
+    http = client or httpx.Client(timeout=30, verify=ssl_context())
     try:
         r = http.post(url, data={"client_id": client_id, "grant_type": "refresh_token", "refresh_token": refresh_token, "scope": SCOPES})
     finally:
@@ -333,7 +335,7 @@ def device_code_login(
     if not tenant or not client_id:
         raise IdentityError("identity.tenant and identity.client_id must be configured (see docs/enforcement.md)")
     verify = verify_token or _verify_id_token
-    http = client or httpx.Client(timeout=30)
+    http = client or httpx.Client(timeout=30, verify=ssl_context())
     base = f"{authority.rstrip('/')}/{tenant}/oauth2/v2.0"
     try:
         resp = http.post(f"{base}/devicecode", data={"client_id": client_id, "scope": SCOPES})
@@ -434,7 +436,7 @@ def browser_login(
     if not tenant or not client_id:
         raise IdentityError("identity.tenant and identity.client_id must be configured (see docs/enforcement.md)")
     verify = verify_token or _verify_id_token
-    session = client or httpx.Client(timeout=30)
+    session = client or httpx.Client(timeout=30, verify=ssl_context())
     port = port or _free_port()
     redirect_uri = f"http://localhost:{port}"
     state = _secrets.token_urlsafe(24)
@@ -484,7 +486,7 @@ def browser_login(
         raise IdentityError(f"sign-in failed: {result.get('error')}: {result.get('error_description', '')[:200]}")
     if result.get("state") != state or not result.get("code"):
         raise IdentityError("sign-in response did not match this request")
-    session2 = client or httpx.Client(timeout=30)
+    session2 = client or httpx.Client(timeout=30, verify=ssl_context())
     try:
         tok = session2.post(f"{base}/token", data={
             "grant_type": "authorization_code", "client_id": client_id, "code": result["code"],
