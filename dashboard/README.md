@@ -1,19 +1,19 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-28T12:01:14+00:00 from 21 gate run(s)._
+_Generated 2026-09-28T12:01:31+00:00 from 22 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 21 |
-| Pass rate | 95% |
-| Runs flagged (findings at/above threshold) | 1 (5%) |
-| Runs blocked | 1 (5%) |
+| Gate runs | 22 |
+| Pass rate | 96% |
+| Runs flagged (findings at/above threshold) | 1 (4%) |
+| Runs blocked | 1 (4%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 0.71 |
-| Runs with local client attestation | 95% |
+| Findings per run | 0.68 |
+| Runs with local client attestation | 96% |
 | Active developers / repositories | 1 / 2 |
 | Top finding categories | missing-changelog, capacity-risk, hardcoded-credential, observability-gap, scalability-risk |
 
@@ -21,19 +21,19 @@ _Generated 2026-09-28T12:01:14+00:00 from 21 gate run(s)._
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 21 | 95% | 1 | 0 | 1 | 0 | 3 |
+| 2026-09 | 22 | 96% | 1 | 0 | 1 | 0 | 3 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 21 | 95% | 1 | 1 | 0/0 | 0 | 0.71 | 95% | missing-changelog, capacity-risk, hardcoded-credential | 2026-09-28 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 22 | 96% | 1 | 1 | 0/0 | 0 | 0.68 | 96% | missing-changelog, capacity-risk, hardcoded-credential | 2026-09-28 |
 
 ## Repositories
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
-| arijitaich-og1o/ai-sdlc-gate | 19 | 95% | 1 | 0 | 1 | 0.05 | hardcoded-credential |
+| arijitaich-og1o/ai-sdlc-gate | 20 | 95% | 1 | 0 | 1 | 0.05 | hardcoded-credential |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
 
 ### Reading this dashboard
