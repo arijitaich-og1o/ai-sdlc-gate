@@ -20,6 +20,7 @@ from typing import Any, Callable
 import httpx
 
 from .config import Config
+from .httpcfg import ssl_context
 
 RETRY_STATUSES = {408, 409, 425, 429, 500, 502, 503, 504}
 
@@ -171,7 +172,7 @@ class LLMClient:
         self.temperature = temperature
         self.max_output_tokens = max_output_tokens
         self._sleep = sleep
-        self._client = httpx.Client(timeout=httpx.Timeout(timeout), transport=transport)
+        self._client = httpx.Client(timeout=httpx.Timeout(timeout), transport=transport, verify=ssl_context())
         self.total_usage: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0}
 
     # ------------------------------------------------------------------ factory
@@ -341,7 +342,7 @@ class VertexClient:
         self.temperature = temperature
         self.max_output_tokens = max_output_tokens
         self._sleep = sleep
-        self._client = httpx.Client(timeout=httpx.Timeout(timeout), transport=transport)
+        self._client = httpx.Client(timeout=httpx.Timeout(timeout), transport=transport, verify=ssl_context())
         self._token_fn = token_fn
         self._tok: str | None = None
         self._tok_exp: float = 0.0
@@ -524,7 +525,7 @@ class EndpointClient:
         self.max_output_tokens = max_output_tokens
         self.max_retries = max(0, int(max_retries))
         self._sleep = sleep
-        self._client = httpx.Client(timeout=httpx.Timeout(timeout), transport=transport)
+        self._client = httpx.Client(timeout=httpx.Timeout(timeout), transport=transport, verify=ssl_context())
         self.total_usage: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0}
 
     @classmethod

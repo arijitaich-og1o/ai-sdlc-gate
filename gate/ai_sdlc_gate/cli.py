@@ -670,12 +670,14 @@ def _verify_litellm_key(base_url: str, api_key: str) -> str | None:
     """Return a human-readable problem description, or None when the key works."""
     import httpx
 
+    from .httpcfg import ssl_context
+
     if not api_key.startswith("sk-"):
         return "the API key must start with 'sk-' (the secret includes a label or prefix)"
     url = base_url.rstrip("/")
     url = f"{url}/models" if url.endswith("/v1") else f"{url}/v1/models"
     try:
-        resp = httpx.get(url, headers={"Authorization": f"Bearer {api_key}"}, timeout=20)
+        resp = httpx.get(url, headers={"Authorization": f"Bearer {api_key}"}, timeout=20, verify=ssl_context())
     except httpx.HTTPError as exc:
         return f"could not reach the gateway: {type(exc).__name__}"
     if resp.status_code in (401, 403):
