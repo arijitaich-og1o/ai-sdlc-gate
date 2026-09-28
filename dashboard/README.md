@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-28T12:00:37+00:00 from 19 gate run(s)._
+_Generated 2026-09-28T12:00:58+00:00 from 20 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 19 |
+| Gate runs | 20 |
 | Pass rate | 95% |
 | Runs flagged (findings at/above threshold) | 1 (5%) |
 | Runs blocked | 1 (5%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 0.79 |
+| Findings per run | 0.75 |
 | Runs with local client attestation | 95% |
 | Active developers / repositories | 1 / 2 |
 | Top finding categories | missing-changelog, capacity-risk, hardcoded-credential, observability-gap, scalability-risk |
@@ -21,19 +21,19 @@ _Generated 2026-09-28T12:00:37+00:00 from 19 gate run(s)._
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 19 | 95% | 1 | 0 | 1 | 0 | 3 |
+| 2026-09 | 20 | 95% | 1 | 0 | 1 | 0 | 3 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 19 | 95% | 1 | 1 | 0/0 | 0 | 0.79 | 95% | missing-changelog, capacity-risk, hardcoded-credential | 2026-09-28 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 20 | 95% | 1 | 1 | 0/0 | 0 | 0.75 | 95% | missing-changelog, capacity-risk, hardcoded-credential | 2026-09-28 |
 
 ## Repositories
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
-| arijitaich-og1o/ai-sdlc-gate | 17 | 94% | 1 | 0 | 1 | 0.06 | hardcoded-credential |
+| arijitaich-og1o/ai-sdlc-gate | 18 | 94% | 1 | 0 | 1 | 0.06 | hardcoded-credential |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
 
 ### Reading this dashboard
