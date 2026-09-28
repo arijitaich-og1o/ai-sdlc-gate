@@ -15,7 +15,7 @@ llm:
   # Set endpoint_url to the deployed organisation endpoint (server/) to make it the default for
   # `ai-sdlc-gate configure`: developers then onboard with only their Microsoft sign-in and need no access to this
   # repository. Empty falls back to the key broker (which requires repository write access — platform/admin only).
-  endpoint_url: ""
+  endpoint_url: "https://ai-sdlc-endpoint-r6lkl7l5za-ew.a.run.app"
   base_url_env: LITELLM_BASE_URL
   api_key_env: LITELLM_API_KEY
   models_env: LITELLM_MODELS      # comma separated: review model, judge model, fallback models...
