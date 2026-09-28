@@ -5,9 +5,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 16,
-      "attested_rate": 0.941,
-      "block_rate": 0.059,
+      "attested": 17,
+      "attested_rate": 0.944,
+      "block_rate": 0.056,
       "blocked": 1,
       "developers_count": 1,
       "findings": {
@@ -17,22 +17,22 @@
         "low": 6,
         "medium": 3
       },
-      "findings_per_run": 0.88,
+      "findings_per_run": 0.83,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.059,
+      "flag_rate": 0.056,
       "flagged": 1,
       "intents": {
-        "commit": 15,
+        "commit": 16,
         "deploy": 2
       },
-      "last_seen": "2026-09-28T11:59:45+00:00",
-      "pass_rate": 0.941,
-      "passed": 16,
+      "last_seen": "2026-09-28T11:59:59+00:00",
+      "pass_rate": 0.944,
+      "passed": 17,
       "repos": [
         "arijitaich-og1o/ai-sdlc-gate",
         "oneo-dice/oggpt-x-backend"
       ],
-      "runs": 17,
+      "runs": 18,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -46,17 +46,17 @@
       "waived_findings": 0
     }
   },
-  "events": 17,
-  "generated_at": "2026-09-28T12:00:04+00:00",
+  "events": 18,
+  "generated_at": "2026-09-28T12:00:22+00:00",
   "months": {
     "2026-09": {
       "actors": [
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 16,
-      "attested_rate": 0.941,
-      "block_rate": 0.059,
+      "attested": 17,
+      "attested_rate": 0.944,
+      "block_rate": 0.056,
       "blocked": 1,
       "developers_count": 1,
       "findings": {
@@ -66,22 +66,22 @@
         "low": 6,
         "medium": 3
       },
-      "findings_per_run": 0.88,
+      "findings_per_run": 0.83,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.059,
+      "flag_rate": 0.056,
       "flagged": 1,
       "intents": {
-        "commit": 15,
+        "commit": 16,
         "deploy": 2
       },
-      "last_seen": "2026-09-28T11:59:45+00:00",
-      "pass_rate": 0.941,
-      "passed": 16,
+      "last_seen": "2026-09-28T11:59:59+00:00",
+      "pass_rate": 0.944,
+      "passed": 17,
       "repos": [
         "arijitaich-og1o/ai-sdlc-gate",
         "oneo-dice/oggpt-x-backend"
       ],
-      "runs": 17,
+      "runs": 18,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -100,9 +100,9 @@
       "arijitaich-og1o"
     ],
     "actors_count": 1,
-    "attested": 16,
-    "attested_rate": 0.941,
-    "block_rate": 0.059,
+    "attested": 17,
+    "attested_rate": 0.944,
+    "block_rate": 0.056,
     "blocked": 1,
     "developers_count": 1,
     "findings": {
@@ -112,22 +112,22 @@
       "low": 6,
       "medium": 3
     },
-    "findings_per_run": 0.88,
+    "findings_per_run": 0.83,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.059,
+    "flag_rate": 0.056,
     "flagged": 1,
     "intents": {
-      "commit": 15,
+      "commit": 16,
       "deploy": 2
     },
-    "last_seen": "2026-09-28T11:59:45+00:00",
-    "pass_rate": 0.941,
-    "passed": 16,
+    "last_seen": "2026-09-28T11:59:59+00:00",
+    "pass_rate": 0.944,
+    "passed": 17,
     "repos": [
       "arijitaich-og1o/ai-sdlc-gate",
       "oneo-dice/oggpt-x-backend"
     ],
-    "runs": 17,
+    "runs": 18,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
@@ -146,9 +146,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 14,
-      "attested_rate": 0.933,
-      "block_rate": 0.067,
+      "attested": 15,
+      "attested_rate": 0.938,
+      "block_rate": 0.062,
       "blocked": 1,
       "developers_count": 1,
       "findings": {
@@ -158,20 +158,20 @@
         "low": 0,
         "medium": 0
       },
-      "findings_per_run": 0.07,
+      "findings_per_run": 0.06,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.067,
+      "flag_rate": 0.062,
       "flagged": 1,
       "intents": {
-        "commit": 15
+        "commit": 16
       },
-      "last_seen": "2026-09-28T11:59:45+00:00",
-      "pass_rate": 0.933,
-      "passed": 14,
+      "last_seen": "2026-09-28T11:59:59+00:00",
+      "pass_rate": 0.938,
+      "passed": 15,
       "repos": [
         "arijitaich-og1o/ai-sdlc-gate"
       ],
-      "runs": 15,
+      "runs": 16,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
