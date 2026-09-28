@@ -51,6 +51,10 @@ bumps, refactors, patches, hotfixes).
 ## Do not flag
 - Feature logic (phase 4), test design (phase 5) or one-off deployment mechanics (phase 6).
 - Documentation style preferences.
+- Removal of files with no external consumer — local tooling/editor/agent configuration (for example
+  `.opencode/`, `.vscode/`, `.idea/`, `.claude/`) or files added earlier in the same change set — as a breaking
+  change or semver violation. A deletion is breaking only when a released, imported or persisted contract
+  depends on the removed item.
 
 ## Category taxonomy (use exactly these `category` values)
 

@@ -26,6 +26,9 @@ line-level implementation quality (that is phase 4) or tests (phase 5).
 ### API contracts
 - Versioning strategy and backwards compatibility: removing/renaming fields, changing types or semantics, and
   tightening validation are breaking changes and must be flagged unless a version bump/deprecation path exists.
+  A removal is breaking only when something outside this change set depends on it — a caller, import, published
+  package export, route, persisted schema or documented contract. Deleting a file or symbol that has no such
+  consumer is not a breaking change (see "Do not flag").
 - Consistent naming, pagination, filtering, error format (problem+json or equivalent), idempotency for
   non-safe operations, and explicit status codes.
 - Input validation and size limits are defined in the contract, not left to the implementation.
@@ -57,6 +60,11 @@ line-level implementation quality (that is phase 4) or tests (phase 5).
 ## Do not flag
 - Formatting, naming style that follows the project's existing conventions.
 - Implementation details that do not affect structure, contracts or security.
+- Deletions that break nothing: files or symbols with no external consumer, local tooling/editor/agent
+  configuration (for example `.opencode/`, `.vscode/`, `.idea/`, `.claude/`, `.husky/`), or files that were
+  added earlier in the same branch/change set and removed again before merge. Flag a removal as breaking only
+  with concrete evidence of a dependent caller, import, export, route or persisted contract — never on the `D`
+  status alone.
 
 ## Category taxonomy (use exactly these `category` values)
 
