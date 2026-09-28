@@ -612,6 +612,21 @@ def cmd_configure(args: argparse.Namespace) -> int:
         st = secrets_store.store(args.base_url, args.api_key, models=models, mode="manual")
         print("Review engine ready.")
         return EXIT_PASS
+    # Preferred onboarding path: the organisation's own SDLC endpoint. When the policy (or this machine's
+    # AI_SDLC_GATE_ENDPOINT_URL) names one, use it — the client authenticates with the developer's Microsoft token
+    # and stores no cloud credential, so a developer needs no access to the central repository. The key broker
+    # below stays available for the platform/admins via --no-endpoint.
+    endpoint = (os.environ.get("AI_SDLC_GATE_ENDPOINT_URL") or cfg.llm.get("endpoint_url") or "").strip()
+    if endpoint and not getattr(args, "no_endpoint", False):
+        try:
+            llm_mod.validate_base_url(endpoint)
+        except llm_mod.LLMError as exc:
+            _eprint(f"configure: {exc}")
+            return EXIT_FAIL
+        secrets_store.store(models=[], mode="endpoint", provider="endpoint", data={"endpoint_url": endpoint.rstrip("/")})
+        print("Review engine ready (organisation endpoint).", flush=True)
+        return EXIT_PASS
+
     cred = ghauth.find_credential(token_env="AI_SDLC_GATE_GITHUB_TOKEN")
     if cred is None:
         _eprint(
@@ -713,6 +728,7 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     cf = sub.add_parser("configure", help="prepare the review engine on this machine (uses your GitHub sign-in)")
     cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker (with --base-url)")
     cf.add_argument("--endpoint-url", help="use the organisation's SDLC review endpoint; the client sends its Microsoft token and stores no cloud credential")
+    cf.add_argument("--no-endpoint", action="store_true", help="ignore a configured organisation endpoint and use the key broker (platform/admin path)")
     cf.add_argument("--models", help="comma separated model names to store with --api-key")
     cf.add_argument("--repo", help="central repository (default from policy)"), cf.add_argument("--ref", help="branch of the central repository (default main)")
     cf.add_argument("--check", action="store_true", help="exit 0 if the review engine is set up, 1 otherwise")

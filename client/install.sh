@@ -103,11 +103,11 @@ for prof in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.zshrc" "$HOME/.zshenv"; do
   fi
 done
 
-say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
+say "Step 3 of 3: preparing the review engine"
 if [ -n "${AI_SDLC_GATE_RECORD_FILE:-}" ] && [ -f "$AI_SDLC_GATE_RECORD_FILE" ]; then
   $GATE configure --config "$CONFIG" --import-record < "$AI_SDLC_GATE_RECORD_FILE" || say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' later."
 else
-  $GATE configure --config "$CONFIG" || say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)."
+  $GATE configure --config "$CONFIG" || say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' again once you have signed in (Microsoft work account; or 'gh auth login' if your organisation uses the key broker)."
 fi
 
 say "Verifying"

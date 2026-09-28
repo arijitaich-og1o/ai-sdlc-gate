@@ -78,6 +78,73 @@ def test_build_client_selects_the_endpoint_provider(tmp_path, monkeypatch):
     client.close()
 
 
+def _fake_keyring(monkeypatch):
+    class FakeKeyring:
+        store: dict = {}
+
+        def set_password(self, s, a, v):
+            self.store[(s, a)] = v
+
+        def get_password(self, s, a):
+            return self.store.get((s, a))
+
+        def delete_password(self, s, a):
+            self.store.pop((s, a), None)
+
+    monkeypatch.setattr(secrets_store, "_keyring", lambda: FakeKeyring())
+
+
+def _configure_args(config_path):
+    import argparse
+
+    return argparse.Namespace(
+        config=str(config_path), base_url=None, api_key=None, endpoint_url=None, no_endpoint=False,
+        models=None, repo=None, ref=None, check=False, clear=False, export_record=False, import_record=False,
+    )
+
+
+def test_configure_prefers_the_configured_endpoint_and_never_calls_the_key_broker(tmp_path, monkeypatch):
+    # A developer with no access to the central repository must still be able to configure: when the policy names an
+    # organisation endpoint, `configure` stores it and never triggers the key-broker workflow_dispatch (which 403s
+    # without repository write access).
+    from ai_sdlc_gate import cli, keybroker
+
+    monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
+    monkeypatch.delenv("AI_SDLC_GATE_ENDPOINT_URL", raising=False)
+    _fake_keyring(monkeypatch)
+
+    def _boom(*a, **k):
+        raise AssertionError("key broker must not be called when an endpoint is configured")
+
+    monkeypatch.setattr(keybroker, "fetch_config", _boom)
+
+    cfg_file = tmp_path / "gate.config.yaml"
+    cfg_file.write_text("version: 1\nllm:\n  endpoint_url: https://sdlc.example\n", encoding="utf-8")
+
+    rc = cli.cmd_configure(_configure_args(cfg_file))
+    assert rc == cli.EXIT_PASS
+    loaded = secrets_store.load()
+    assert loaded and loaded.provider == "endpoint" and loaded.data["endpoint_url"] == "https://sdlc.example"
+
+
+def test_configure_env_endpoint_overrides_policy(tmp_path, monkeypatch):
+    from ai_sdlc_gate import cli, keybroker
+
+    monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
+    monkeypatch.setenv("AI_SDLC_GATE_ENDPOINT_URL", "https://machine.example/")
+    _fake_keyring(monkeypatch)
+    monkeypatch.setattr(keybroker, "fetch_config", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no broker")))
+
+    cfg_file = tmp_path / "gate.config.yaml"
+    cfg_file.write_text("version: 1\n", encoding="utf-8")
+
+    rc = cli.cmd_configure(_configure_args(cfg_file))
+    assert rc == cli.EXIT_PASS
+    loaded = secrets_store.load()
+    # trailing slash is normalised away
+    assert loaded and loaded.provider == "endpoint" and loaded.data["endpoint_url"] == "https://machine.example"
+
+
 def test_endpoint_token_refreshes_silently_from_the_stored_refresh_token(tmp_path, monkeypatch):
     monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
     monkeypatch.setattr(secrets_store, "_keyring", lambda: None)  # use the encrypted-file fallback
