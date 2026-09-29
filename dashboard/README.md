@@ -1,33 +1,34 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-28T15:42:12+00:00 from 25 gate run(s)._
+_Generated 2026-09-29T08:13:05+00:00 from 26 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 25 |
+| Gate runs | 26 |
 | Pass rate | 92% |
 | Runs flagged (findings at/above threshold) | 2 (8%) |
 | Runs blocked | 2 (8%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 1.04 |
+| Findings per run | 1.38 |
 | Runs with local client attestation | 96% |
-| Active developers / repositories | 1 / 2 |
-| Top finding categories | missing-changelog, observability-gap, capacity-risk, hardcoded-credential, scalability-risk |
+| Active developers / repositories | 2 / 3 |
+| Top finding categories | observability-gap, hardcoded-credential, missing-changelog, capacity-risk, general |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 25 | 92% | 2 | 0 | 1 | 1 | 10 |
+| 2026-09 | 26 | 92% | 2 | 0 | 1 | 1 | 15 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 25 | 92% | 2 | 2 | 0/0 | 0 | 1.04 | 96% | missing-changelog, observability-gap, capacity-risk | 2026-09-28 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 1 | 100% | 0 | 0 | 0/0 | 0 | 10.0 | 100% | hardcoded-configuration, undocumented-decision, data-protection-design-gap | 2026-09-29 |
 
 ## Repositories
 
@@ -35,6 +36,7 @@ _Generated 2026-09-28T15:42:12+00:00 from 25 gate run(s)._
 |---|---|---|---|---|---|---|---|
 | arijitaich-og1o/ai-sdlc-gate | 23 | 91% | 2 | 0 | 1 | 0.52 | hardcoded-credential, missing-tests, missing-negative-tests |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
+| otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
 
 ### Reading this dashboard
 
