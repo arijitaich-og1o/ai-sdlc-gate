@@ -1,0 +1,26 @@
+#!/bin/bash
+# Runs as root after the .pkg lays down the binary and policy. It sets up the *logged-in* user's gate:
+# copies the policy + hooks into their home and points their global git hooks at them. Sign-in and the
+# review-engine configuration are done by the user afterwards (they need an interactive browser), which the
+# installer's final screen tells them to do: `ai-sdlc-gate configure`.
+set -e
+
+CONSOLE_USER="$(stat -f%Su /dev/console)"
+[ -z "$CONSOLE_USER" ] || [ "$CONSOLE_USER" = "root" ] && CONSOLE_USER="${USER:-$(whoami)}"
+USER_HOME="$(dscl . -read "/Users/$CONSOLE_USER" NFSHomeDirectory 2>/dev/null | awk '{print $2}')"
+[ -n "$USER_HOME" ] || USER_HOME="/Users/$CONSOLE_USER"
+
+SRC="/usr/local/share/ai-sdlc-gate"
+DEST="$USER_HOME/.ai-sdlc-gate"
+
+/usr/bin/sudo -u "$CONSOLE_USER" /bin/mkdir -p "$DEST/repo" "$DEST/hooks"
+/bin/cp -R "$SRC/repo/." "$DEST/repo/"
+/bin/cp -R "$SRC/hooks/." "$DEST/hooks/"
+/bin/chmod +x "$DEST/hooks/"* 2>/dev/null || true
+/usr/sbin/chown -R "$CONSOLE_USER" "$DEST"
+
+# Point the user's global git hooks at ours (git runs them with /bin/sh in every terminal and IDE).
+HOOKS_POSIX="$DEST/hooks"
+/usr/bin/sudo -u "$CONSOLE_USER" /usr/bin/git config --global core.hooksPath "$HOOKS_POSIX" 2>/dev/null || true
+
+exit 0

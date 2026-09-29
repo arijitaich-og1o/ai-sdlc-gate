@@ -1,0 +1,52 @@
+name: build-macos-installer
+
+# Produces the self-contained macOS installer (ai-sdlc-gate-<version>.pkg) on an Apple runner.
+# Runs on demand and on version tags; attaches the .pkg to the GitHub Release for a tag.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version string for the installer"
+        default: "1.0.0"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve version
+        id: ver
+        run: |
+          v="${{ github.event.inputs.version }}"
+          if [ "${{ github.ref_type }}" = "tag" ]; then v="${GITHUB_REF_NAME#v}"; fi
+          [ -n "$v" ] || v="1.0.0"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - name: Build installer
+        run: bash packaging/macos/build-macos.sh "${{ steps.ver.outputs.version }}"
+
+      - name: Verify the frozen binary runs
+        run: ./dist/ai-sdlc-gate --version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-sdlc-gate-macos-installer
+          path: dist/ai-sdlc-gate-*.pkg
+          if-no-files-found: error
+
+      - name: Attach to release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ai-sdlc-gate-*.pkg
