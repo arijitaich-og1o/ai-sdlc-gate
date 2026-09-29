@@ -1,34 +1,34 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-29T08:13:05+00:00 from 26 gate run(s)._
+_Generated 2026-09-29T10:16:21+00:00 from 27 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 26 |
-| Pass rate | 92% |
-| Runs flagged (findings at/above threshold) | 2 (8%) |
-| Runs blocked | 2 (8%) |
+| Gate runs | 27 |
+| Pass rate | 89% |
+| Runs flagged (findings at/above threshold) | 3 (11%) |
+| Runs blocked | 3 (11%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 1.38 |
+| Findings per run | 2.15 |
 | Runs with local client attestation | 96% |
-| Active developers / repositories | 2 / 3 |
-| Top finding categories | observability-gap, hardcoded-credential, missing-changelog, capacity-risk, general |
+| Active developers / repositories | 2 / 4 |
+| Top finding categories | hardcoded-credential, observability-gap, general, missing-changelog, capacity-risk |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 26 | 92% | 2 | 0 | 1 | 1 | 15 |
+| 2026-09 | 27 | 89% | 3 | 0 | 1 | 4 | 27 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 25 | 92% | 2 | 2 | 0/0 | 0 | 1.04 | 96% | missing-changelog, observability-gap, capacity-risk | 2026-09-28 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 1 | 100% | 0 | 0 | 0/0 | 0 | 10.0 | 100% | hardcoded-configuration, undocumented-decision, data-protection-design-gap | 2026-09-29 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 2 | 50% | 1 | 1 | 0/0 | 0 | 16.0 | 100% | hardcoded-configuration, undocumented-decision, general | 2026-09-29 |
 
 ## Repositories
 
@@ -36,6 +36,7 @@ _Generated 2026-09-29T08:13:05+00:00 from 26 gate run(s)._
 |---|---|---|---|---|---|---|---|
 | arijitaich-og1o/ai-sdlc-gate | 23 | 91% | 2 | 0 | 1 | 0.52 | hardcoded-credential, missing-tests, missing-negative-tests |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
+| otto-ec/flagship_benefits_service | 1 | 0% | 1 | 0 | 1 | 22.0 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
 
 ### Reading this dashboard
