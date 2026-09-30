@@ -51,49 +51,49 @@
         "PavanNeela0011"
       ],
       "actors_count": 1,
-      "attested": 2,
+      "attested": 3,
       "attested_rate": 1.0,
-      "block_rate": 0.5,
-      "blocked": 1,
+      "block_rate": 0.667,
+      "blocked": 2,
       "developers_count": 1,
       "findings": {
         "blocker": 0,
-        "high": 3,
-        "info": 3,
-        "low": 9,
-        "medium": 17
+        "high": 6,
+        "info": 9,
+        "low": 19,
+        "medium": 31
       },
-      "findings_per_run": 16.0,
+      "findings_per_run": 21.67,
       "first_seen": "2026-09-29T08:12:46+00:00",
-      "flag_rate": 0.5,
-      "flagged": 1,
+      "flag_rate": 0.667,
+      "flagged": 2,
       "intents": {
         "commit": 1,
-        "deploy": 1
+        "deploy": 2
       },
-      "last_seen": "2026-09-29T10:15:59+00:00",
-      "pass_rate": 0.5,
+      "last_seen": "2026-09-30T06:25:22+00:00",
+      "pass_rate": 0.333,
       "passed": 1,
       "repos": [
         "otto-ec/flagship_benefits_service",
         "otto-ec/flagship_customer_service"
       ],
-      "runs": 2,
+      "runs": 3,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "hardcoded-configuration",
         "undocumented-decision",
-        "general",
         "hardcoded-credential",
-        "data-protection-design-gap"
+        "general",
+        "observability-gap"
       ],
       "waived_findings": 0
     }
   },
-  "events": 28,
-  "generated_at": "2026-09-29T22:09:59+00:00",
+  "events": 29,
+  "generated_at": "2026-09-30T06:25:38+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -101,28 +101,28 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 27,
-      "attested_rate": 0.964,
-      "block_rate": 0.143,
-      "blocked": 4,
+      "attested": 28,
+      "attested_rate": 0.966,
+      "block_rate": 0.172,
+      "blocked": 5,
       "developers_count": 2,
       "findings": {
         "blocker": 1,
-        "high": 5,
-        "info": 9,
-        "low": 18,
-        "medium": 33
+        "high": 8,
+        "info": 15,
+        "low": 28,
+        "medium": 47
       },
-      "findings_per_run": 2.36,
+      "findings_per_run": 3.41,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.143,
-      "flagged": 4,
+      "flag_rate": 0.172,
+      "flagged": 5,
       "intents": {
         "commit": 23,
-        "deploy": 5
+        "deploy": 6
       },
-      "last_seen": "2026-09-29T22:09:44+00:00",
-      "pass_rate": 0.857,
+      "last_seen": "2026-09-30T06:25:22+00:00",
+      "pass_rate": 0.828,
       "passed": 24,
       "repos": [
         "arijitaich-og1o/ai-sdlc-gate",
@@ -131,16 +131,16 @@
         "otto-ec/flagship_benefits_service",
         "otto-ec/flagship_customer_service"
       ],
-      "runs": 28,
+      "runs": 29,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "observability-gap",
-        "general",
         "hardcoded-credential",
-        "missing-resilience",
-        "hardcoded-configuration"
+        "general",
+        "hardcoded-configuration",
+        "undocumented-decision"
       ],
       "waived_findings": 0
     }
@@ -151,28 +151,28 @@
       "arijitaich-og1o"
     ],
     "actors_count": 2,
-    "attested": 27,
-    "attested_rate": 0.964,
-    "block_rate": 0.143,
-    "blocked": 4,
+    "attested": 28,
+    "attested_rate": 0.966,
+    "block_rate": 0.172,
+    "blocked": 5,
     "developers_count": 2,
     "findings": {
       "blocker": 1,
-      "high": 5,
-      "info": 9,
-      "low": 18,
-      "medium": 33
+      "high": 8,
+      "info": 15,
+      "low": 28,
+      "medium": 47
     },
-    "findings_per_run": 2.36,
+    "findings_per_run": 3.41,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.143,
-    "flagged": 4,
+    "flag_rate": 0.172,
+    "flagged": 5,
     "intents": {
       "commit": 23,
-      "deploy": 5
+      "deploy": 6
     },
-    "last_seen": "2026-09-29T22:09:44+00:00",
-    "pass_rate": 0.857,
+    "last_seen": "2026-09-30T06:25:22+00:00",
+    "pass_rate": 0.828,
     "passed": 24,
     "repos": [
       "arijitaich-og1o/ai-sdlc-gate",
@@ -181,16 +181,16 @@
       "otto-ec/flagship_benefits_service",
       "otto-ec/flagship_customer_service"
     ],
-    "runs": 28,
+    "runs": 29,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
     "top_categories": [
       "observability-gap",
-      "general",
       "hardcoded-credential",
-      "missing-resilience",
-      "hardcoded-configuration"
+      "general",
+      "hardcoded-configuration",
+      "undocumented-decision"
     ],
     "waived_findings": 0
   },
@@ -330,32 +330,32 @@
         "PavanNeela0011"
       ],
       "actors_count": 1,
-      "attested": 1,
+      "attested": 2,
       "attested_rate": 1.0,
       "block_rate": 1.0,
-      "blocked": 1,
+      "blocked": 2,
       "developers_count": 1,
       "findings": {
         "blocker": 0,
-        "high": 3,
-        "info": 2,
-        "low": 5,
-        "medium": 12
+        "high": 6,
+        "info": 8,
+        "low": 15,
+        "medium": 26
       },
-      "findings_per_run": 22.0,
+      "findings_per_run": 27.5,
       "first_seen": "2026-09-29T10:15:59+00:00",
       "flag_rate": 1.0,
-      "flagged": 1,
+      "flagged": 2,
       "intents": {
-        "deploy": 1
+        "deploy": 2
       },
-      "last_seen": "2026-09-29T10:15:59+00:00",
+      "last_seen": "2026-09-30T06:25:22+00:00",
       "pass_rate": 0.0,
       "passed": 0,
       "repos": [
         "otto-ec/flagship_benefits_service"
       ],
-      "runs": 1,
+      "runs": 2,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -363,8 +363,8 @@
         "missing-tests",
         "hardcoded-credential",
         "hardcoded-configuration",
-        "general",
-        "undocumented-configuration"
+        "undocumented-configuration",
+        "undocumented-decision"
       ],
       "waived_findings": 0
     },
