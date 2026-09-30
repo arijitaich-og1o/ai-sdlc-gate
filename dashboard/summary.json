@@ -48,45 +48,45 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 27,
-      "attested_rate": 0.964,
-      "block_rate": 0.143,
+      "attested": 28,
+      "attested_rate": 0.966,
+      "block_rate": 0.138,
       "blocked": 4,
       "developers_count": 1,
       "findings": {
         "blocker": 1,
         "high": 9,
         "info": 6,
-        "low": 11,
-        "medium": 19
+        "low": 19,
+        "medium": 29
       },
-      "findings_per_run": 1.64,
+      "findings_per_run": 2.21,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.143,
+      "flag_rate": 0.138,
       "flagged": 4,
       "intents": {
-        "commit": 24,
+        "commit": 25,
         "deploy": 4
       },
-      "last_seen": "2026-09-30T12:15:21+00:00",
-      "pass_rate": 0.857,
-      "passed": 24,
+      "last_seen": "2026-09-30T12:17:33+00:00",
+      "pass_rate": 0.862,
+      "passed": 25,
       "repos": [
         "OG-DW/sofa_docs",
         "arijitaich-og1o/ai-sdlc-gate",
         "oneo-dice/oggpt-x-backend",
         "oneo-dice/oggpt-x-infra"
       ],
-      "runs": 28,
+      "runs": 29,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "observability-gap",
         "general",
+        "undocumented-decision",
         "hardcoded-credential",
-        "missing-changelog",
-        "capacity-risk"
+        "missing-changelog"
       ],
       "waived_findings": 0
     },
@@ -137,8 +137,8 @@
       "waived_findings": 0
     }
   },
-  "events": 36,
-  "generated_at": "2026-09-30T12:15:39+00:00",
+  "events": 37,
+  "generated_at": "2026-09-30T12:19:31+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -147,29 +147,29 @@
         "arijitaich-og1o"
       ],
       "actors_count": 3,
-      "attested": 35,
-      "attested_rate": 0.972,
-      "block_rate": 0.278,
+      "attested": 36,
+      "attested_rate": 0.973,
+      "block_rate": 0.27,
       "blocked": 10,
       "developers_count": 3,
       "findings": {
         "blocker": 13,
         "high": 47,
         "info": 24,
-        "low": 68,
-        "medium": 136
+        "low": 76,
+        "medium": 146
       },
-      "findings_per_run": 8.0,
+      "findings_per_run": 8.27,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.278,
+      "flag_rate": 0.27,
       "flagged": 10,
       "intents": {
-        "commit": 26,
+        "commit": 27,
         "deploy": 10
       },
-      "last_seen": "2026-09-30T12:15:21+00:00",
-      "pass_rate": 0.722,
-      "passed": 26,
+      "last_seen": "2026-09-30T12:17:33+00:00",
+      "pass_rate": 0.73,
+      "passed": 27,
       "repos": [
         "OG-DW/sofa_docs",
         "arijitaich-og1o/ai-sdlc-gate",
@@ -180,15 +180,15 @@
         "otto-ec/flagship_customer_service",
         "otto-ec/kraken_samplenator"
       ],
-      "runs": 36,
+      "runs": 37,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "hardcoded-credential",
         "observability-gap",
-        "hardcoded-configuration",
         "missing-tests",
+        "hardcoded-configuration",
         "undocumented-decision"
       ],
       "waived_findings": 0
@@ -201,29 +201,29 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 35,
-    "attested_rate": 0.972,
-    "block_rate": 0.278,
+    "attested": 36,
+    "attested_rate": 0.973,
+    "block_rate": 0.27,
     "blocked": 10,
     "developers_count": 3,
     "findings": {
       "blocker": 13,
       "high": 47,
       "info": 24,
-      "low": 68,
-      "medium": 136
+      "low": 76,
+      "medium": 146
     },
-    "findings_per_run": 8.0,
+    "findings_per_run": 8.27,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.278,
+    "flag_rate": 0.27,
     "flagged": 10,
     "intents": {
-      "commit": 26,
+      "commit": 27,
       "deploy": 10
     },
-    "last_seen": "2026-09-30T12:15:21+00:00",
-    "pass_rate": 0.722,
-    "passed": 26,
+    "last_seen": "2026-09-30T12:17:33+00:00",
+    "pass_rate": 0.73,
+    "passed": 27,
     "repos": [
       "OG-DW/sofa_docs",
       "arijitaich-og1o/ai-sdlc-gate",
@@ -234,15 +234,15 @@
       "otto-ec/flagship_customer_service",
       "otto-ec/kraken_samplenator"
     ],
-    "runs": 36,
+    "runs": 37,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
     "top_categories": [
       "hardcoded-credential",
       "observability-gap",
-      "hardcoded-configuration",
       "missing-tests",
+      "hardcoded-configuration",
       "undocumented-decision"
     ],
     "waived_findings": 0
@@ -253,41 +253,41 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 2,
+      "attested": 3,
       "attested_rate": 1.0,
-      "block_rate": 0.5,
+      "block_rate": 0.333,
       "blocked": 1,
       "developers_count": 1,
       "findings": {
         "blocker": 0,
         "high": 7,
         "info": 0,
-        "low": 2,
-        "medium": 3
+        "low": 10,
+        "medium": 13
       },
-      "findings_per_run": 6.0,
+      "findings_per_run": 10.0,
       "first_seen": "2026-09-30T11:40:45+00:00",
-      "flag_rate": 0.5,
+      "flag_rate": 0.333,
       "flagged": 1,
       "intents": {
-        "commit": 2
+        "commit": 3
       },
-      "last_seen": "2026-09-30T12:15:21+00:00",
-      "pass_rate": 0.5,
-      "passed": 1,
+      "last_seen": "2026-09-30T12:17:33+00:00",
+      "pass_rate": 0.667,
+      "passed": 2,
       "repos": [
         "OG-DW/sofa_docs"
       ],
-      "runs": 2,
+      "runs": 3,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
-        "secret-exposure",
-        "hardcoded-credential",
         "general",
-        "data-protection-design-gap",
-        "credentials-in-tests"
+        "undocumented-decision",
+        "observability-gap",
+        "requirement-mismatch",
+        "secret-exposure"
       ],
       "waived_findings": 0
     },
