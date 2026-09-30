@@ -1,33 +1,33 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-30T11:39:32+00:00 from 33 gate run(s)._
+_Generated 2026-09-30T11:41:01+00:00 from 34 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 33 |
-| Pass rate | 76% |
-| Runs flagged (findings at/above threshold) | 8 (24%) |
-| Runs blocked | 8 (24%) |
+| Gate runs | 34 |
+| Pass rate | 74% |
+| Runs flagged (findings at/above threshold) | 9 (26%) |
+| Runs blocked | 9 (26%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 8.15 |
+| Findings per run | 8.18 |
 | Runs with local client attestation | 97% |
-| Active developers / repositories | 2 / 6 |
-| Top finding categories | hardcoded-credential, hardcoded-configuration, observability-gap, missing-tests, undocumented-decision |
+| Active developers / repositories | 2 / 7 |
+| Top finding categories | hardcoded-credential, hardcoded-configuration, observability-gap, general, missing-tests |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 33 | 76% | 8 | 0 | 11 | 37 | 133 |
+| 2026-09 | 34 | 74% | 9 | 0 | 11 | 44 | 135 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 26 | 88% | 3 | 3 | 0/0 | 0 | 1.31 | 96% | observability-gap, missing-changelog, capacity-risk | 2026-09-29 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 27 | 85% | 4 | 4 | 0/0 | 0 | 1.59 | 96% | observability-gap, general, hardcoded-credential | 2026-09-30 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
 ## Repositories
@@ -38,6 +38,7 @@ _Generated 2026-09-30T11:39:32+00:00 from 33 gate run(s)._
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
+| OG-DW/sofa_docs | 1 | 0% | 1 | 0 | 1 | 9.0 | secret-exposure, hardcoded-credential, general |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
 | otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
 
