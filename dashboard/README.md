@@ -1,33 +1,33 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-30T11:47:31+00:00 from 35 gate run(s)._
+_Generated 2026-09-30T12:15:39+00:00 from 36 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 35 |
-| Pass rate | 71% |
-| Runs flagged (findings at/above threshold) | 10 (29%) |
-| Runs blocked | 10 (29%) |
+| Gate runs | 36 |
+| Pass rate | 72% |
+| Runs flagged (findings at/above threshold) | 10 (28%) |
+| Runs blocked | 10 (28%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 8.14 |
+| Findings per run | 8.0 |
 | Runs with local client attestation | 97% |
 | Active developers / repositories | 3 / 8 |
-| Top finding categories | hardcoded-credential, hardcoded-configuration, observability-gap, missing-tests, general |
+| Top finding categories | hardcoded-credential, observability-gap, hardcoded-configuration, missing-tests, undocumented-decision |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 35 | 71% | 10 | 0 | 13 | 47 | 135 |
+| 2026-09 | 36 | 72% | 10 | 0 | 13 | 47 | 136 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 27 | 85% | 4 | 4 | 0/0 | 0 | 1.59 | 96% | observability-gap, general, hardcoded-credential | 2026-09-30 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 28 | 86% | 4 | 4 | 0/0 | 0 | 1.64 | 96% | observability-gap, general, hardcoded-credential | 2026-09-30 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 | anitha.bantu@og1o.in (@Anitha9765) | 1 | 0% | 1 | 1 | 0/0 | 0 | 7.0 | 100% | gate-manipulation, breaking-api-change, logic-error | 2026-09-30 |
 
@@ -38,8 +38,8 @@ _Generated 2026-09-30T11:47:31+00:00 from 35 gate run(s)._
 | arijitaich-og1o/ai-sdlc-gate | 23 | 91% | 2 | 0 | 1 | 0.52 | hardcoded-credential, missing-tests, missing-negative-tests |
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
+| OG-DW/sofa_docs | 2 | 50% | 1 | 0 | 1 | 6.0 | secret-exposure, hardcoded-credential, general |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
-| OG-DW/sofa_docs | 1 | 0% | 1 | 0 | 1 | 9.0 | secret-exposure, hardcoded-credential, general |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
 | otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
 | otto-ec/kraken_samplenator | 1 | 0% | 1 | 0 | 1 | 7.0 | gate-manipulation, breaking-api-change, logic-error |
