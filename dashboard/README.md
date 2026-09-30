@@ -1,27 +1,27 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-30T12:19:31+00:00 from 37 gate run(s)._
+_Generated 2026-09-30T14:38:38+00:00 from 38 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 37 |
-| Pass rate | 73% |
-| Runs flagged (findings at/above threshold) | 10 (27%) |
-| Runs blocked | 10 (27%) |
+| Gate runs | 38 |
+| Pass rate | 71% |
+| Runs flagged (findings at/above threshold) | 11 (29%) |
+| Runs blocked | 11 (29%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 8.27 |
+| Findings per run | 8.24 |
 | Runs with local client attestation | 97% |
-| Active developers / repositories | 3 / 8 |
-| Top finding categories | hardcoded-credential, observability-gap, missing-tests, hardcoded-configuration, undocumented-decision |
+| Active developers / repositories | 3 / 9 |
+| Top finding categories | hardcoded-credential, observability-gap, missing-tests, general, hardcoded-configuration |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 37 | 73% | 10 | 0 | 13 | 47 | 146 |
+| 2026-09 | 38 | 71% | 11 | 0 | 13 | 50 | 148 |
 
 ## Developers
 
@@ -29,7 +29,7 @@ _Generated 2026-09-30T12:19:31+00:00 from 37 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 29 | 86% | 4 | 4 | 0/0 | 0 | 2.21 | 97% | observability-gap, general, undocumented-decision | 2026-09-30 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
-| anitha.bantu@og1o.in (@Anitha9765) | 1 | 0% | 1 | 1 | 0/0 | 0 | 7.0 | 100% | gate-manipulation, breaking-api-change, logic-error | 2026-09-30 |
+| anitha.bantu@og1o.in (@Anitha9765) | 2 | 0% | 2 | 2 | 0/0 | 0 | 7.0 | 100% | logic-error, dead-code, missing-tests | 2026-09-30 |
 
 ## Repositories
 
@@ -40,6 +40,7 @@ _Generated 2026-09-30T12:19:31+00:00 from 37 gate run(s)._
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
+| Anitha9765/psw_internal-proxy_AnithaB | 1 | 0% | 1 | 0 | 1 | 7.0 | general, logic-error, dead-code |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
 | otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
 | otto-ec/kraken_samplenator | 1 | 0% | 1 | 0 | 1 | 7.0 | gate-manipulation, breaking-api-change, logic-error |
