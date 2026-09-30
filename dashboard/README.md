@@ -1,27 +1,27 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-09-30T11:41:01+00:00 from 34 gate run(s)._
+_Generated 2026-09-30T11:47:31+00:00 from 35 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 34 |
-| Pass rate | 74% |
-| Runs flagged (findings at/above threshold) | 9 (26%) |
-| Runs blocked | 9 (26%) |
+| Gate runs | 35 |
+| Pass rate | 71% |
+| Runs flagged (findings at/above threshold) | 10 (29%) |
+| Runs blocked | 10 (29%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 8.18 |
+| Findings per run | 8.14 |
 | Runs with local client attestation | 97% |
-| Active developers / repositories | 2 / 7 |
-| Top finding categories | hardcoded-credential, hardcoded-configuration, observability-gap, general, missing-tests |
+| Active developers / repositories | 3 / 8 |
+| Top finding categories | hardcoded-credential, hardcoded-configuration, observability-gap, missing-tests, general |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
-| 2026-09 | 34 | 74% | 9 | 0 | 11 | 44 | 135 |
+| 2026-09 | 35 | 71% | 10 | 0 | 13 | 47 | 135 |
 
 ## Developers
 
@@ -29,6 +29,7 @@ _Generated 2026-09-30T11:41:01+00:00 from 34 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 27 | 85% | 4 | 4 | 0/0 | 0 | 1.59 | 96% | observability-gap, general, hardcoded-credential | 2026-09-30 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
+| anitha.bantu@og1o.in (@Anitha9765) | 1 | 0% | 1 | 1 | 0/0 | 0 | 7.0 | 100% | gate-manipulation, breaking-api-change, logic-error | 2026-09-30 |
 
 ## Repositories
 
@@ -41,6 +42,7 @@ _Generated 2026-09-30T11:41:01+00:00 from 34 gate run(s)._
 | OG-DW/sofa_docs | 1 | 0% | 1 | 0 | 1 | 9.0 | secret-exposure, hardcoded-credential, general |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
 | otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
+| otto-ec/kraken_samplenator | 1 | 0% | 1 | 0 | 1 | 7.0 | gate-manipulation, breaking-api-change, logic-error |
 
 ### Reading this dashboard
 
