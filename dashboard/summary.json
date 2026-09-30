@@ -51,50 +51,50 @@
         "PavanNeela0011"
       ],
       "actors_count": 1,
-      "attested": 6,
+      "attested": 7,
       "attested_rate": 1.0,
-      "block_rate": 0.667,
-      "blocked": 4,
+      "block_rate": 0.714,
+      "blocked": 5,
       "developers_count": 1,
       "findings": {
-        "blocker": 3,
-        "high": 25,
+        "blocker": 10,
+        "high": 35,
         "info": 17,
-        "low": 44,
-        "medium": 82
+        "low": 56,
+        "medium": 117
       },
-      "findings_per_run": 28.5,
+      "findings_per_run": 33.57,
       "first_seen": "2026-09-29T08:12:46+00:00",
-      "flag_rate": 0.667,
-      "flagged": 4,
+      "flag_rate": 0.714,
+      "flagged": 5,
       "intents": {
         "commit": 1,
-        "deploy": 5
+        "deploy": 6
       },
-      "last_seen": "2026-09-30T11:04:07+00:00",
-      "pass_rate": 0.333,
+      "last_seen": "2026-09-30T11:39:18+00:00",
+      "pass_rate": 0.286,
       "passed": 2,
       "repos": [
         "otto-ec/flagship_benefits_service",
         "otto-ec/flagship_connection_service",
         "otto-ec/flagship_customer_service"
       ],
-      "runs": 6,
+      "runs": 7,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "hardcoded-configuration",
         "hardcoded-credential",
+        "unpinned-action-or-image",
         "undocumented-decision",
-        "missing-tests",
-        "undocumented-configuration"
+        "missing-tests"
       ],
       "waived_findings": 0
     }
   },
-  "events": 32,
-  "generated_at": "2026-09-30T11:04:25+00:00",
+  "events": 33,
+  "generated_at": "2026-09-30T11:39:32+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -102,28 +102,28 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 31,
-      "attested_rate": 0.969,
-      "block_rate": 0.219,
-      "blocked": 7,
+      "attested": 32,
+      "attested_rate": 0.97,
+      "block_rate": 0.242,
+      "blocked": 8,
       "developers_count": 2,
       "findings": {
-        "blocker": 4,
-        "high": 27,
+        "blocker": 11,
+        "high": 37,
         "info": 23,
-        "low": 53,
-        "medium": 98
+        "low": 65,
+        "medium": 133
       },
-      "findings_per_run": 6.41,
+      "findings_per_run": 8.15,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.219,
-      "flagged": 7,
+      "flag_rate": 0.242,
+      "flagged": 8,
       "intents": {
         "commit": 23,
-        "deploy": 9
+        "deploy": 10
       },
-      "last_seen": "2026-09-30T11:04:07+00:00",
-      "pass_rate": 0.781,
+      "last_seen": "2026-09-30T11:39:18+00:00",
+      "pass_rate": 0.758,
       "passed": 25,
       "repos": [
         "arijitaich-og1o/ai-sdlc-gate",
@@ -133,14 +133,14 @@
         "otto-ec/flagship_connection_service",
         "otto-ec/flagship_customer_service"
       ],
-      "runs": 32,
+      "runs": 33,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "hardcoded-credential",
-        "observability-gap",
         "hardcoded-configuration",
+        "observability-gap",
         "missing-tests",
         "undocumented-decision"
       ],
@@ -153,28 +153,28 @@
       "arijitaich-og1o"
     ],
     "actors_count": 2,
-    "attested": 31,
-    "attested_rate": 0.969,
-    "block_rate": 0.219,
-    "blocked": 7,
+    "attested": 32,
+    "attested_rate": 0.97,
+    "block_rate": 0.242,
+    "blocked": 8,
     "developers_count": 2,
     "findings": {
-      "blocker": 4,
-      "high": 27,
+      "blocker": 11,
+      "high": 37,
       "info": 23,
-      "low": 53,
-      "medium": 98
+      "low": 65,
+      "medium": 133
     },
-    "findings_per_run": 6.41,
+    "findings_per_run": 8.15,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.219,
-    "flagged": 7,
+    "flag_rate": 0.242,
+    "flagged": 8,
     "intents": {
       "commit": 23,
-      "deploy": 9
+      "deploy": 10
     },
-    "last_seen": "2026-09-30T11:04:07+00:00",
-    "pass_rate": 0.781,
+    "last_seen": "2026-09-30T11:39:18+00:00",
+    "pass_rate": 0.758,
     "passed": 25,
     "repos": [
       "arijitaich-og1o/ai-sdlc-gate",
@@ -184,14 +184,14 @@
       "otto-ec/flagship_connection_service",
       "otto-ec/flagship_customer_service"
     ],
-    "runs": 32,
+    "runs": 33,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
     "top_categories": [
       "hardcoded-credential",
-      "observability-gap",
       "hardcoded-configuration",
+      "observability-gap",
       "missing-tests",
       "undocumented-decision"
     ],
@@ -376,41 +376,41 @@
         "PavanNeela0011"
       ],
       "actors_count": 1,
-      "attested": 2,
+      "attested": 3,
       "attested_rate": 1.0,
-      "block_rate": 0.5,
-      "blocked": 1,
+      "block_rate": 0.667,
+      "blocked": 2,
       "developers_count": 1,
       "findings": {
-        "blocker": 3,
-        "high": 16,
+        "blocker": 10,
+        "high": 26,
         "info": 2,
-        "low": 15,
-        "medium": 37
+        "low": 27,
+        "medium": 72
       },
-      "findings_per_run": 36.5,
+      "findings_per_run": 45.67,
       "first_seen": "2026-09-30T10:37:20+00:00",
-      "flag_rate": 0.5,
-      "flagged": 1,
+      "flag_rate": 0.667,
+      "flagged": 2,
       "intents": {
-        "deploy": 2
+        "deploy": 3
       },
-      "last_seen": "2026-09-30T11:04:07+00:00",
-      "pass_rate": 0.5,
+      "last_seen": "2026-09-30T11:39:18+00:00",
+      "pass_rate": 0.333,
       "passed": 1,
       "repos": [
         "otto-ec/flagship_connection_service"
       ],
-      "runs": 2,
+      "runs": 3,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "unpinned-action-or-image",
         "missing-changelog",
-        "undocumented-configuration",
-        "stale-documentation",
-        "missing-tests"
+        "hardcoded-credential",
+        "hardcoded-configuration",
+        "insecure-tls"
       ],
       "waived_findings": 0
     },
