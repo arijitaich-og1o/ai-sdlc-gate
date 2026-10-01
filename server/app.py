@@ -17,13 +17,29 @@ Configuration (environment variables):
 """
 from __future__ import annotations
 
+import json
 import os
+import sys
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from verify import AuthError, verify_entra_token
 from vertex import UpstreamError, call_vertex
+
+
+def emit_event(kind: str, who: dict, **fields) -> None:
+    """Write one structured telemetry line to stdout for Cloud Logging (live usage / bypass tracking).
+
+    Cloud Run captures stdout and parses a JSON line into `jsonPayload`, so these are queryable live, e.g.
+    `jsonPayload.sdlc_event="skip"`. Only the verified e-mail is recorded as the actor; no token or diff content.
+    """
+    rec = {"sdlc_event": kind, "developer": (who or {}).get("email", "")}
+    rec.update({k: v for k, v in fields.items() if v not in (None, "")})
+    try:
+        print(json.dumps(rec, separators=(",", ":")), file=sys.stdout, flush=True)
+    except Exception:
+        pass  # telemetry must never break a request
 
 
 class Settings:
@@ -48,6 +64,18 @@ class ReviewRequest(BaseModel):
     system: str = ""
     role: str = "review"  # the client sends a role, never a model name
     max_tokens: int | None = None
+    repo: str = ""        # optional context for telemetry; never affects the review
+    ref: str = ""
+
+
+class SkipRequest(BaseModel):
+    """Posted by the client's git shim when a developer runs `--no-verify`, so the skip is tracked live even
+    though the gate hook was bypassed. Carries no diff content."""
+    repo: str = ""
+    ref: str = ""
+    sha: str = ""
+    command: str = ""     # e.g. "push --no-verify"
+    reason: str = ""
 
 
 def create_app(settings: Settings | None = None, verify=verify_entra_token, review=call_vertex) -> FastAPI:
@@ -85,11 +113,20 @@ def create_app(settings: Settings | None = None, verify=verify_entra_token, revi
         blocks = data.get("content") or []
         text = "".join(b.get("text", "") for b in blocks if isinstance(b, dict) and b.get("type") == "text")
         usage = data.get("usage") or {}
+        emit_event("review", who, role=req.role, repo=req.repo[:200], ref=req.ref[:200])
         return {
             "text": text,
             "usage": {"input_tokens": int(usage.get("input_tokens") or 0), "output_tokens": int(usage.get("output_tokens") or 0)},
             "developer": who["email"],
         }
+
+    @app.post("/v1/skip")
+    def record_skip(req: SkipRequest, who: dict = Depends(caller)) -> dict:
+        # The developer bypassed the local gate (`--no-verify`); record it against their verified identity so it
+        # shows up live on the dashboard. Authenticated exactly like /v1/review; nothing is blocked.
+        emit_event("skip", who, repo=req.repo[:200], ref=req.ref[:200], sha=req.sha[:64],
+                   command=req.command[:80], reason=req.reason[:200])
+        return {"ok": True}
 
     return app
 

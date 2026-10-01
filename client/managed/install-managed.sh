@@ -48,12 +48,14 @@ for h in commit-msg pre-push refresh-skills; do install -m 755 "$PREFIX/repo/cli
 printf '%s\n' "$REAL_GIT" > "$PREFIX/bin/.real-git"
 cat > "$PREFIX/bin/git" <<'SHIM'
 #!/usr/bin/env bash
-# AI SDLC Gate managed git shim: enforces the managed hooks path and removes hook-bypass flags.
+# AI SDLC Gate managed git shim (visibility mode): forces the managed hooks path, and when a developer bypasses
+# the gate with --no-verify the bypass is ALLOWED but reported to the organisation endpoint, so the skip is
+# tracked live against the developer's verified identity. (Set enforce mode by re-enabling the strips below.)
 PREFIX="/opt/ai-sdlc-gate"
 REAL_GIT="$(cat "$PREFIX/bin/.real-git" 2>/dev/null || echo /usr/bin/git)"
 unset GIT_CONFIG_PARAMETERS GIT_CONFIG_COUNT
 for v in $(env | grep -o '^GIT_CONFIG_KEY_[0-9]*' ; env | grep -o '^GIT_CONFIG_VALUE_[0-9]*'); do unset "$v"; done
-args=(); sub=""; skip_next=0
+args=(); sub=""; skip_next=0; bypass=""
 for a in "$@"; do
   if [ "$skip_next" = 1 ]; then skip_next=0; case "$a" in core.hooksPath=*|core.hookspath=*|ai-sdlc-gate.*) continue;; esac; args+=("-c" "$a"); continue; fi
   case "$a" in
@@ -63,12 +65,20 @@ for a in "$@"; do
   if [ -z "$sub" ] && [[ "$a" != -* ]]; then sub="$a"; fi
   case "$sub" in
     commit|merge|rebase|push|cherry-pick|revert)
-      case "$a" in --no-verify) continue;; esac
-      [ "$sub" = commit ] && [ "$a" = "-n" ] && continue
+      case "$a" in --no-verify) bypass="$sub";; esac
+      [ "$sub" = commit ] && [ "$a" = "-n" ] && bypass="commit"
       ;;
   esac
   args+=("$a")
 done
+# A bypass is allowed but reported (fire-and-forget; must never block, slow or fail the git command).
+if [ -n "$bypass" ] && [ -x "$PREFIX/bin/ai-sdlc-gate" ]; then
+  _slug="$("$REAL_GIT" remote get-url origin 2>/dev/null | sed -E 's#(\.git)?$##; s#.*[:/]([^/]+/[^/]+)$#\1#')"
+  ( "$PREFIX/bin/ai-sdlc-gate" report-skip --config "$PREFIX/repo/gate.config.yaml" \
+      --command "$bypass --no-verify" --repo "$_slug" \
+      --ref "$("$REAL_GIT" rev-parse --abbrev-ref HEAD 2>/dev/null)" \
+      --sha "$("$REAL_GIT" rev-parse HEAD 2>/dev/null)" >/dev/null 2>&1 & ) >/dev/null 2>&1
+fi
 exec "$REAL_GIT" -c "core.hooksPath=$PREFIX/hooks" "${args[@]}"
 SHIM
 sed -i.bak "s#^PREFIX=.*#PREFIX=\"$PREFIX\"#" "$PREFIX/bin/git" && rm -f "$PREFIX/bin/git.bak"

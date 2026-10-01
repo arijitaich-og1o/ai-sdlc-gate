@@ -367,6 +367,40 @@ def cmd_metrics_build(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def cmd_report_skip(args: argparse.Namespace) -> int:
+    """Notify the organisation endpoint that the developer bypassed the gate with `--no-verify`.
+
+    Called by the git shim, so it must be fire-and-forget: it NEVER blocks, slows or fails the developer's git
+    command. Any problem (not signed in, offline, no endpoint configured) is swallowed and it exits 0. It reuses
+    the developer's Microsoft token, so the skip is attributed to their verified identity; it sends only the
+    repo/ref/sha metadata, never diff content.
+    """
+    try:
+        import httpx
+
+        from .httpcfg import ssl_context
+        cfg = Config.load(args.config)
+        stored = secrets_store.load()
+        url = ""
+        if stored is not None and stored.provider == "endpoint":
+            url = str((stored.data or {}).get("endpoint_url") or "")
+        url = url or str(cfg.llm.get("endpoint_url") or "")
+        if not url:
+            return EXIT_PASS  # no endpoint configured (e.g. key-broker/openai mode) — nothing to notify
+        token = identity_mod.endpoint_token(cfg)
+        httpx.post(
+            url.rstrip("/") + "/v1/skip",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"repo": args.repo or "", "ref": args.ref or "", "sha": args.sha or "",
+                  "command": args.command or "", "reason": args.reason or ""},
+            timeout=httpx.Timeout(args.timeout if args.timeout else 4.0),
+            verify=ssl_context(),
+        )
+    except Exception:
+        pass  # telemetry must never break or delay a git operation
+    return EXIT_PASS
+
+
 # ----------------------------------------------------------------------------- parser
 
 def build_parser() -> argparse.ArgumentParser:
@@ -739,6 +773,13 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
 
     up = sub.add_parser("update", help="refresh policy, skills and engine on this machine now")
     up.set_defaults(func=cmd_update)
+
+    rs = sub.add_parser("report-skip", help=argparse.SUPPRESS)  # internal: the git shim calls this on --no-verify
+    rs.add_argument("--config")
+    rs.add_argument("--repo"), rs.add_argument("--ref"), rs.add_argument("--sha")
+    rs.add_argument("--command"), rs.add_argument("--reason")
+    rs.add_argument("--timeout", type=float)
+    rs.set_defaults(func=cmd_report_skip)
 
 
 def cmd_update(args: argparse.Namespace) -> int:

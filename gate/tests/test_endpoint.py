@@ -164,3 +164,46 @@ def test_endpoint_token_refreshes_silently_from_the_stored_refresh_token(tmp_pat
     assert tok == "fresh-id-token" and calls["n"] == 1
     # the rotated refresh token is persisted for next time
     assert secrets_store.get_blob(identity_mod.REFRESH_ACCOUNT) == "rt-1"
+
+
+def _skip_args(config_path, **over):
+    import argparse
+    base = dict(config=str(config_path), repo="og1o/app", ref="refs/heads/x", sha="deadbeef",
+                command="push --no-verify", reason="", timeout=None)
+    base.update(over)
+    return argparse.Namespace(**base)
+
+
+def test_report_skip_notifies_the_endpoint_with_the_developer_token(tmp_path, monkeypatch):
+    from ai_sdlc_gate import cli, identity
+    monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
+    monkeypatch.delenv("AI_SDLC_GATE_ENDPOINT_URL", raising=False)
+    _fake_keyring(monkeypatch)
+    secrets_store.store(models=[], mode="endpoint", provider="endpoint", data={"endpoint_url": "https://sdlc.example"})
+    monkeypatch.setattr(identity, "endpoint_token", lambda cfg, **k: "entra-tok")
+
+    seen = {}
+
+    def fake_post(url, **kw):
+        seen["url"] = url; seen["headers"] = kw.get("headers"); seen["json"] = kw.get("json")
+        return httpx.Response(200, json={"ok": True})
+
+    monkeypatch.setattr(httpx, "post", fake_post)
+    cfg_file = tmp_path / "gate.config.yaml"; cfg_file.write_text("version: 1\n", encoding="utf-8")
+
+    assert cli.cmd_report_skip(_skip_args(cfg_file)) == cli.EXIT_PASS
+    assert seen["url"] == "https://sdlc.example/v1/skip"
+    assert seen["headers"]["Authorization"] == "Bearer entra-tok"
+    assert seen["json"]["repo"] == "og1o/app" and seen["json"]["command"] == "push --no-verify"
+
+
+def test_report_skip_is_a_silent_noop_without_an_endpoint(tmp_path, monkeypatch):
+    from ai_sdlc_gate import cli
+    monkeypatch.setenv("AI_SDLC_GATE_HOME", str(tmp_path))
+    monkeypatch.delenv("AI_SDLC_GATE_ENDPOINT_URL", raising=False)
+    _fake_keyring(monkeypatch)  # empty store -> no endpoint record; config has no endpoint_url
+    called = {"n": 0}
+    monkeypatch.setattr(httpx, "post", lambda *a, **k: called.__setitem__("n", called["n"] + 1))
+    cfg_file = tmp_path / "gate.config.yaml"; cfg_file.write_text("version: 1\n", encoding="utf-8")
+    assert cli.cmd_report_skip(_skip_args(cfg_file)) == cli.EXIT_PASS
+    assert called["n"] == 0  # nothing posted when no endpoint is configured

@@ -91,3 +91,31 @@ def test_upstream_failure_is_502_not_a_leak():
 def test_status():
     c = _client(lambda *a, **k: {"email": "a@og1o.in"}, _fake_review_capture({}))
     assert c.get("/status").json() == {"ok": True}
+
+
+def test_skip_is_recorded_against_the_verified_developer(capsys):
+    import json as _j
+    c = _client(lambda *a, **k: {"email": "priya.r@og1o.in"}, _fake_review_capture({}))
+    r = c.post("/v1/skip", json={"repo": "og1o/app", "sha": "abc123", "command": "push --no-verify"},
+               headers={"Authorization": "Bearer t"})
+    assert r.status_code == 200 and r.json() == {"ok": True}
+    lines = [l for l in capsys.readouterr().out.splitlines() if '"sdlc_event":"skip"' in l]
+    assert lines, "a skip telemetry line should be emitted"
+    rec = _j.loads(lines[-1])
+    assert rec["developer"] == "priya.r@og1o.in" and rec["repo"] == "og1o/app" and rec["command"] == "push --no-verify"
+
+
+def test_skip_requires_auth_and_logs_nothing_when_unauthorized(capsys):
+    def verify(*a, **k):
+        raise AuthError("nope")
+    c = _client(verify, _fake_review_capture({}))
+    assert c.post("/v1/skip", json={"repo": "x"}, headers={"Authorization": "Bearer bad"}).status_code == 403
+    assert c.post("/v1/skip", json={"repo": "x"}).status_code == 401
+    assert '"sdlc_event":"skip"' not in capsys.readouterr().out
+
+
+def test_review_emits_a_usage_event(capsys):
+    c = _client(lambda *a, **k: {"email": "a@og1o.in"}, _fake_review_capture({}))
+    c.post("/v1/review", json={"user": "x", "role": "review", "repo": "og1o/app"}, headers={"Authorization": "Bearer t"})
+    out = capsys.readouterr().out
+    assert '"sdlc_event":"review"' in out and "og1o/app" in out
