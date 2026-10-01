@@ -48,7 +48,9 @@ if ($Disable) {
 Assert-Admin
 if (-not (Get-Command git.exe -ErrorAction SilentlyContinue)) { throw "Git for Windows was not found on PATH." }
 if (-not (Get-Command ai-sdlc-gate -ErrorAction SilentlyContinue)) {
-  throw "ai-sdlc-gate was not found on PATH. Install the gate first, then re-run this."
+  # Not fatal: when run from the installer the PATH isn't refreshed yet, and the shim resolves `ai-sdlc-gate`
+  # by name at run time (from a new terminal), so this is only informational.
+  Write-Host "Note: 'ai-sdlc-gate' is not on the current PATH yet; the shim resolves it by name when you run git from a new terminal." -ForegroundColor Yellow
 }
 
 # The shim: scan (read-only) for --no-verify, report it in the background, then run the REAL git with the
