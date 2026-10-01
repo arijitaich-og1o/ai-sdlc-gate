@@ -33,9 +33,14 @@ $bpy = Join-Path $bvenv "Scripts\python.exe"
 
 Write-Host "== 2/4 freeze exe =="
 Push-Location $PSScriptRoot
-try { & $bpy -m PyInstaller --clean --noconfirm --distpath $out "ai-sdlc-gate.spec" }
-finally { Pop-Location }
-if (-not (Test-Path (Join-Path $out "ai-sdlc-gate.exe"))) { throw "PyInstaller did not produce ai-sdlc-gate.exe" }
+# PyInstaller logs to stderr; under $ErrorActionPreference='Stop' PowerShell 5.1 turns that into a terminating
+# NativeCommandError. Relax it for this call and judge success by the exit code + the output file instead.
+$eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+& $bpy -m PyInstaller --clean --noconfirm --log-level WARN --distpath $out "ai-sdlc-gate.spec" 2>&1 | ForEach-Object { "$_" }
+$pyiExit = $LASTEXITCODE
+$ErrorActionPreference = $eap
+Pop-Location
+if ($pyiExit -ne 0 -or -not (Test-Path (Join-Path $out "ai-sdlc-gate.exe"))) { throw "PyInstaller did not produce ai-sdlc-gate.exe (exit $pyiExit)" }
 
 Write-Host "== 3/4 stage policy =="
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
