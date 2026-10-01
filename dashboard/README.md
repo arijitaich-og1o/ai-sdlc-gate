@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-01T09:49:18+00:00 from 49 gate run(s)._
+_Generated 2026-10-01T09:52:25+00:00 from 50 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 49 |
+| Gate runs | 50 |
 | Pass rate | 74% |
 | Runs flagged (findings at/above threshold) | 13 (26%) |
 | Runs blocked | 13 (26%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 7.43 |
+| Findings per run | 7.28 |
 | Runs with local client attestation | 98% |
 | Active developers / repositories | 3 / 10 |
 | Top finding categories | observability-gap, general, missing-tests, hardcoded-configuration, undocumented-decision |
@@ -22,7 +22,7 @@ _Generated 2026-10-01T09:49:18+00:00 from 49 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 9 | 78% | 2 | 0 | 0 | 8 | 22 |
+| 2026-10 | 10 | 80% | 2 | 0 | 0 | 8 | 22 |
 
 ## Developers
 
@@ -30,7 +30,7 @@ _Generated 2026-10-01T09:49:18+00:00 from 49 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 39 | 85% | 6 | 6 | 0/0 | 0 | 2.92 | 97% | observability-gap, general, undocumented-decision | 2026-10-01 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
-| anitha.bantu@og1o.in (@Anitha9765) | 3 | 33% | 2 | 2 | 0/0 | 0 | 5.0 | 100% | breaking-api-change, logic-error, dead-code | 2026-10-01 |
+| anitha.bantu@og1o.in (@Anitha9765) | 4 | 50% | 2 | 2 | 0/0 | 0 | 3.75 | 100% | breaking-api-change, logic-error, dead-code | 2026-10-01 |
 
 ## Repositories
 
@@ -41,8 +41,8 @@ _Generated 2026-10-01T09:49:18+00:00 from 49 gate run(s)._
 | OG-DW/sofa_docs | 6 | 50% | 3 | 0 | 1 | 13.33 | general, undocumented-decision, observability-gap |
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
+| otto-ec/kraken_samplenator | 3 | 67% | 1 | 0 | 1 | 2.67 | breaking-api-change, gate-manipulation, logic-error |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
-| otto-ec/kraken_samplenator | 2 | 50% | 1 | 0 | 1 | 4.0 | breaking-api-change, gate-manipulation, logic-error |
 | Anitha9765/psw_internal-proxy_AnithaB | 1 | 0% | 1 | 0 | 1 | 7.0 | general, logic-error, dead-code |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
 | otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
