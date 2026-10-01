@@ -74,6 +74,7 @@ done
 # A bypass is allowed but reported (fire-and-forget; must never block, slow or fail the git command).
 if [ -n "$bypass" ] && [ -x "$PREFIX/bin/ai-sdlc-gate" ]; then
   _slug="$("$REAL_GIT" remote get-url origin 2>/dev/null | sed -E 's#(\.git)?$##; s#.*[:/]([^/]+/[^/]+)$#\1#')"
+  _slug="$(printf '%s' "$_slug" | tr -cd 'A-Za-z0-9._/-')"  # restrict to owner/name characters; neutralise any shell metacharacters
   ( "$PREFIX/bin/ai-sdlc-gate" report-skip --config "$PREFIX/repo/gate.config.yaml" \
       --command "$bypass --no-verify" --repo "$_slug" \
       --ref "$("$REAL_GIT" rev-parse --abbrev-ref HEAD 2>/dev/null)" \

@@ -375,6 +375,17 @@ def cmd_report_skip(args: argparse.Namespace) -> int:
     the developer's Microsoft token, so the skip is attributed to their verified identity; it sends only the
     repo/ref/sha metadata, never diff content.
     """
+    # Record the skip locally first, so it stays observable even if the endpoint POST below is lost (offline,
+    # DNS failure, credential rotation): an operator can audit ~/.ai-sdlc-gate/skip-reports.log post-hoc.
+    try:
+        from datetime import datetime, timezone
+        home = os.environ.get("AI_SDLC_GATE_HOME") or os.path.join(os.path.expanduser("~"), ".ai-sdlc-gate")
+        os.makedirs(home, exist_ok=True)
+        with open(os.path.join(home, "skip-reports.log"), "a", encoding="utf-8") as fh:
+            fh.write("\t".join([datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                                str(args.command or ""), str(args.repo or ""), str(args.sha or "")]) + "\n")
+    except Exception:
+        pass
     try:
         import httpx
 
