@@ -1,34 +1,34 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-02T06:21:34+00:00 from 100 gate run(s)._
+_Generated 2026-10-02T06:22:15+00:00 from 101 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 100 |
-| Pass rate | 76% |
-| Runs flagged (findings at/above threshold) | 24 (24%) |
-| Runs blocked | 24 (24%) |
+| Gate runs | 101 |
+| Pass rate | 75% |
+| Runs flagged (findings at/above threshold) | 25 (25%) |
+| Runs blocked | 25 (25%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 4.57 |
+| Findings per run | 4.55 |
 | Runs with local client attestation | 99% |
 | Active developers / repositories | 3 / 10 |
-| Top finding categories | undocumented-decision, missing-tests, general, observability-gap, hardcoded-configuration |
+| Top finding categories | undocumented-decision, general, missing-tests, observability-gap, hardcoded-configuration |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 60 | 78% | 13 | 0 | 1 | 40 | 54 |
+| 2026-10 | 61 | 77% | 14 | 0 | 1 | 41 | 55 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 84 | 86% | 12 | 12 | 0/0 | 0 | 2.11 | 99% | general, observability-gap, undocumented-decision | 2026-10-02 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 85 | 85% | 13 | 13 | 0/0 | 0 | 2.12 | 99% | general, undocumented-decision, observability-gap | 2026-10-02 |
 | anitha.bantu@og1o.in (@Anitha9765) | 9 | 22% | 7 | 7 | 0/0 | 0 | 5.0 | 100% | logic-error, breaking-api-change, missing-contract-tests | 2026-10-01 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
@@ -36,7 +36,7 @@ _Generated 2026-10-02T06:21:34+00:00 from 100 gate run(s)._
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
-| unknown/unknown | 50 | 88% | 6 | 0 | 1 | 0.9 | debug-statement, missing-tests, logic-error |
+| unknown/unknown | 51 | 86% | 7 | 0 | 1 | 0.94 | debug-statement, missing-tests, general |
 | arijitaich-og1o/ai-sdlc-gate | 23 | 91% | 2 | 0 | 1 | 0.52 | hardcoded-credential, missing-tests, missing-negative-tests |
 | OG-DW/sofa_docs | 8 | 62% | 3 | 0 | 1 | 12.25 | general, undocumented-decision, observability-gap |
 | otto-ec/kraken_samplenator | 8 | 25% | 6 | 0 | 1 | 4.75 | breaking-api-change, logic-error, inconsistent-api-contract |
