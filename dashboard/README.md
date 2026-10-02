@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-02T04:06:49+00:00 from 92 gate run(s)._
+_Generated 2026-10-02T04:07:18+00:00 from 93 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 92 |
+| Gate runs | 93 |
 | Pass rate | 78% |
 | Runs flagged (findings at/above threshold) | 20 (22%) |
 | Runs blocked | 20 (22%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 4.7 |
+| Findings per run | 4.66 |
 | Runs with local client attestation | 99% |
 | Active developers / repositories | 3 / 10 |
 | Top finding categories | undocumented-decision, general, observability-gap, hardcoded-configuration, missing-tests |
@@ -22,13 +22,13 @@ _Generated 2026-10-02T04:06:49+00:00 from 92 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 52 | 83% | 9 | 0 | 1 | 34 | 48 |
+| 2026-10 | 53 | 83% | 9 | 0 | 1 | 34 | 48 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 76 | 90% | 8 | 8 | 0/0 | 0 | 2.0 | 99% | general, observability-gap, undocumented-decision | 2026-10-02 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 77 | 90% | 8 | 8 | 0/0 | 0 | 1.99 | 99% | general, observability-gap, undocumented-decision | 2026-10-02 |
 | anitha.bantu@og1o.in (@Anitha9765) | 9 | 22% | 7 | 7 | 0/0 | 0 | 5.0 | 100% | logic-error, breaking-api-change, missing-contract-tests | 2026-10-01 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
@@ -36,7 +36,7 @@ _Generated 2026-10-02T04:06:49+00:00 from 92 gate run(s)._
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
-| unknown/unknown | 42 | 95% | 2 | 0 | 1 | 0.48 | general, logic-error, missing-tests |
+| unknown/unknown | 43 | 95% | 2 | 0 | 1 | 0.49 | general, missing-documentation, logic-error |
 | arijitaich-og1o/ai-sdlc-gate | 23 | 91% | 2 | 0 | 1 | 0.52 | hardcoded-credential, missing-tests, missing-negative-tests |
 | OG-DW/sofa_docs | 8 | 62% | 3 | 0 | 1 | 12.25 | general, undocumented-decision, observability-gap |
 | otto-ec/kraken_samplenator | 8 | 25% | 6 | 0 | 1 | 4.75 | breaking-api-change, logic-error, inconsistent-api-contract |
