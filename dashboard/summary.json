@@ -49,29 +49,29 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 102,
+      "attested": 103,
       "attested_rate": 0.99,
-      "block_rate": 0.155,
-      "blocked": 16,
+      "block_rate": 0.163,
+      "blocked": 17,
       "developers_count": 1,
       "findings": {
-        "blocker": 3,
-        "high": 54,
-        "info": 33,
-        "low": 99,
-        "medium": 115
+        "blocker": 10,
+        "high": 82,
+        "info": 36,
+        "low": 116,
+        "medium": 158
       },
-      "findings_per_run": 2.95,
+      "findings_per_run": 3.87,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.155,
-      "flagged": 16,
+      "flag_rate": 0.163,
+      "flagged": 17,
       "intents": {
         "commit": 95,
-        "deploy": 5,
+        "deploy": 6,
         "maintenance": 3
       },
-      "last_seen": "2026-10-02T14:43:35+00:00",
-      "pass_rate": 0.845,
+      "last_seen": "2026-10-02T15:34:09+00:00",
+      "pass_rate": 0.837,
       "passed": 87,
       "repos": [
         "OG-DW/sofa_docs",
@@ -81,7 +81,7 @@
         "oneo-dice/oggpt-x-infra",
         "unknown/unknown"
       ],
-      "runs": 103,
+      "runs": 104,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -90,7 +90,7 @@
         "undocumented-decision",
         "observability-gap",
         "missing-tests",
-        "missing-documentation"
+        "hardcoded-configuration"
       ],
       "waived_findings": 0
     },
@@ -141,8 +141,8 @@
       "waived_findings": 0
     }
   },
-  "events": 119,
-  "generated_at": "2026-10-02T14:43:54+00:00",
+  "events": 120,
+  "generated_at": "2026-10-02T15:34:26+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -205,29 +205,29 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 79,
+      "attested": 80,
       "attested_rate": 1.0,
-      "block_rate": 0.215,
-      "blocked": 17,
+      "block_rate": 0.225,
+      "blocked": 18,
       "developers_count": 2,
       "findings": {
-        "blocker": 2,
-        "high": 63,
-        "info": 27,
-        "low": 80,
-        "medium": 99
+        "blocker": 9,
+        "high": 91,
+        "info": 30,
+        "low": 97,
+        "medium": 142
       },
-      "findings_per_run": 3.43,
+      "findings_per_run": 4.61,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.215,
-      "flagged": 17,
+      "flag_rate": 0.225,
+      "flagged": 18,
       "intents": {
         "commit": 75,
-        "deploy": 1,
+        "deploy": 2,
         "maintenance": 3
       },
-      "last_seen": "2026-10-02T14:43:35+00:00",
-      "pass_rate": 0.785,
+      "last_seen": "2026-10-02T15:34:09+00:00",
+      "pass_rate": 0.775,
       "passed": 62,
       "repos": [
         "OG-DW/sofa_docs",
@@ -235,16 +235,16 @@
         "otto-ec/kraken_samplenator",
         "unknown/unknown"
       ],
-      "runs": 79,
+      "runs": 80,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "undocumented-decision",
-        "logic-error",
         "general",
-        "missing-tests",
-        "hardcoded-configuration"
+        "logic-error",
+        "hardcoded-configuration",
+        "missing-tests"
       ],
       "waived_findings": 0
     }
@@ -256,29 +256,29 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 118,
+    "attested": 119,
     "attested_rate": 0.992,
-    "block_rate": 0.235,
-    "blocked": 28,
+    "block_rate": 0.242,
+    "blocked": 29,
     "developers_count": 3,
     "findings": {
-      "blocker": 15,
-      "high": 113,
-      "info": 52,
-      "low": 157,
-      "medium": 247
+      "blocker": 22,
+      "high": 141,
+      "info": 55,
+      "low": 174,
+      "medium": 290
     },
-    "findings_per_run": 4.91,
+    "findings_per_run": 5.68,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.235,
-    "flagged": 28,
+    "flag_rate": 0.242,
+    "flagged": 29,
     "intents": {
       "commit": 105,
-      "deploy": 11,
+      "deploy": 12,
       "maintenance": 3
     },
-    "last_seen": "2026-10-02T14:43:35+00:00",
-    "pass_rate": 0.765,
+    "last_seen": "2026-10-02T15:34:09+00:00",
+    "pass_rate": 0.758,
     "passed": 91,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
@@ -293,7 +293,7 @@
       "otto-ec/kraken_samplenator",
       "unknown/unknown"
     ],
-    "runs": 119,
+    "runs": 120,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
@@ -442,41 +442,41 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 1,
+      "attested": 2,
       "attested_rate": 1.0,
       "block_rate": 1.0,
-      "blocked": 1,
+      "blocked": 2,
       "developers_count": 1,
       "findings": {
-        "blocker": 1,
-        "high": 16,
-        "info": 12,
-        "low": 28,
-        "medium": 26
+        "blocker": 8,
+        "high": 44,
+        "info": 15,
+        "low": 45,
+        "medium": 69
       },
-      "findings_per_run": 83.0,
+      "findings_per_run": 90.5,
       "first_seen": "2026-10-02T14:43:35+00:00",
       "flag_rate": 1.0,
-      "flagged": 1,
+      "flagged": 2,
       "intents": {
-        "deploy": 1
+        "deploy": 2
       },
-      "last_seen": "2026-10-02T14:43:35+00:00",
+      "last_seen": "2026-10-02T15:34:09+00:00",
       "pass_rate": 0.0,
       "passed": 0,
       "repos": [
         "arijitaich-og1o/sofa-terraform-sandbox"
       ],
-      "runs": 1,
+      "runs": 2,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
         "general",
-        "logic-error",
         "missing-negative-tests",
         "scalability-risk",
-        "hardcoded-configuration"
+        "hardcoded-configuration",
+        "missing-security-tests"
       ],
       "waived_findings": 0
     },
