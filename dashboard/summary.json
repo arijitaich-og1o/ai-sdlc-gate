@@ -49,9 +49,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 100,
+      "attested": 101,
       "attested_rate": 0.99,
-      "block_rate": 0.149,
+      "block_rate": 0.147,
       "blocked": 15,
       "developers_count": 1,
       "findings": {
@@ -61,18 +61,18 @@
         "low": 71,
         "medium": 89
       },
-      "findings_per_run": 2.19,
+      "findings_per_run": 2.17,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.149,
+      "flag_rate": 0.147,
       "flagged": 15,
       "intents": {
-        "commit": 94,
+        "commit": 95,
         "deploy": 4,
         "maintenance": 3
       },
-      "last_seen": "2026-10-02T13:44:01+00:00",
-      "pass_rate": 0.851,
-      "passed": 86,
+      "last_seen": "2026-10-02T13:45:16+00:00",
+      "pass_rate": 0.853,
+      "passed": 87,
       "repos": [
         "OG-DW/sofa_docs",
         "arijitaich-og1o/ai-sdlc-gate",
@@ -80,7 +80,7 @@
         "oneo-dice/oggpt-x-infra",
         "unknown/unknown"
       ],
-      "runs": 101,
+      "runs": 102,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -140,8 +140,8 @@
       "waived_findings": 0
     }
   },
-  "events": 117,
-  "generated_at": "2026-10-02T13:44:19+00:00",
+  "events": 118,
+  "generated_at": "2026-10-02T13:45:34+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -204,9 +204,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 77,
+      "attested": 78,
       "attested_rate": 1.0,
-      "block_rate": 0.208,
+      "block_rate": 0.205,
       "blocked": 16,
       "developers_count": 2,
       "findings": {
@@ -216,23 +216,23 @@
         "low": 52,
         "medium": 73
       },
-      "findings_per_run": 2.44,
+      "findings_per_run": 2.41,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.208,
+      "flag_rate": 0.205,
       "flagged": 16,
       "intents": {
-        "commit": 74,
+        "commit": 75,
         "maintenance": 3
       },
-      "last_seen": "2026-10-02T13:44:01+00:00",
-      "pass_rate": 0.792,
-      "passed": 61,
+      "last_seen": "2026-10-02T13:45:16+00:00",
+      "pass_rate": 0.795,
+      "passed": 62,
       "repos": [
         "OG-DW/sofa_docs",
         "otto-ec/kraken_samplenator",
         "unknown/unknown"
       ],
-      "runs": 77,
+      "runs": 78,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -253,9 +253,9 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 116,
-    "attested_rate": 0.991,
-    "block_rate": 0.231,
+    "attested": 117,
+    "attested_rate": 0.992,
+    "block_rate": 0.229,
     "blocked": 27,
     "developers_count": 3,
     "findings": {
@@ -265,18 +265,18 @@
       "low": 129,
       "medium": 221
     },
-    "findings_per_run": 4.28,
+    "findings_per_run": 4.25,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.231,
+    "flag_rate": 0.229,
     "flagged": 27,
     "intents": {
-      "commit": 104,
+      "commit": 105,
       "deploy": 10,
       "maintenance": 3
     },
-    "last_seen": "2026-10-02T13:44:01+00:00",
-    "pass_rate": 0.769,
-    "passed": 90,
+    "last_seen": "2026-10-02T13:45:16+00:00",
+    "pass_rate": 0.771,
+    "passed": 91,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
       "OG-DW/sofa_docs",
@@ -289,7 +289,7 @@
       "otto-ec/kraken_samplenator",
       "unknown/unknown"
     ],
-    "runs": 117,
+    "runs": 118,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
@@ -696,9 +696,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 67,
+      "attested": 68,
       "attested_rate": 1.0,
-      "block_rate": 0.134,
+      "block_rate": 0.132,
       "blocked": 9,
       "developers_count": 1,
       "findings": {
@@ -708,21 +708,21 @@
         "low": 27,
         "medium": 31
       },
-      "findings_per_run": 1.33,
+      "findings_per_run": 1.31,
       "first_seen": "2026-09-30T22:56:27+00:00",
-      "flag_rate": 0.134,
+      "flag_rate": 0.132,
       "flagged": 9,
       "intents": {
-        "commit": 64,
+        "commit": 65,
         "maintenance": 3
       },
-      "last_seen": "2026-10-02T13:44:01+00:00",
-      "pass_rate": 0.866,
-      "passed": 58,
+      "last_seen": "2026-10-02T13:45:16+00:00",
+      "pass_rate": 0.868,
+      "passed": 59,
       "repos": [
         "unknown/unknown"
       ],
-      "runs": 67,
+      "runs": 68,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
