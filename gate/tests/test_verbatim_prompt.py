@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import re
 
+import pytest
+
 from ai_sdlc_gate import changes
 from ai_sdlc_gate.changes import ChangedFile, ChangeSet, pick_fence, render_changeset
 from ai_sdlc_gate.intent import detect_intent
@@ -149,7 +151,6 @@ def test_quote_check_can_be_switched_off():
 
 # ----------------------------------------------------------------------------- verify_findings, branch by branch
 
-import pytest  # noqa: E402
 
 ENTITY_CASES = [
     # (file body, title, description, category, expected unverified)
@@ -231,3 +232,16 @@ def test_metrics_event_carries_the_unverified_count(cfg, skills_dir):
     event = build_event(report)
     assert event["unverified_count"] == report.stats["unverified"] > 0
     assert not validate_event(event)
+
+
+def test_badge_attribute_cannot_be_broken_out_of():
+    import xml.etree.ElementTree as ET
+
+    from ai_sdlc_gate.metrics import badge_svg
+
+    label, value = 'x" onload="alert(1)', "<script>alert(1)</script>"
+    root = ET.fromstring(badge_svg(label, value))
+    # The crafted text stays inside the attribute value and inside text nodes; no handler or element is created.
+    assert root.get("aria-label") == f"{label}: {value}"
+    assert "onload" not in root.attrib
+    assert not list(root.iter("{http://www.w3.org/2000/svg}script"))

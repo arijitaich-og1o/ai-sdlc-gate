@@ -442,6 +442,8 @@ def verify_findings(findings: list[dict[str, Any]], cs: ChangeSet, non_skippable
         reason = ""
         entities = {m.group(0).lower() for m in _ENTITY_RE.finditer(claim)}
         about_missing_escape = bool(_MISSING_ESCAPE_RE.search(f"{f.get('category', '')}\n{claim}"))
+        # The rules are exclusive and the entity rule goes first: a finding about entity text is judged only on
+        # whether that text is in the file, never on its quotes (which then hold the entities, not the code).
         if not about_missing_escape and (entities or _ENTITY_TITLE_RE.search(str(f.get("title") or ""))):
             present = {m.group(0).lower() for m in _ENTITY_RE.finditer(hay)}
             if not (entities & present if entities else present):

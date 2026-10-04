@@ -22,7 +22,9 @@ GitHub credential; this repository's own pull requests are recorded by the Self 
 
 Compact by design (≤ 60 KB, no full findings text): repository, actor, ref, sha, PR number, run URL, intent and
 how it was detected, phases, verdict, whether the run was flagged (any finding at/above threshold before skips)
-and blocked, counts per severity, waived count, skip request (phases, validity, reason ≤ 500 chars), per-phase
+and blocked, counts per severity, waived count, late count, unverified count (findings whose quoted code or claimed
+HTML entities are not in the file, so they were reported as advisory; a rising rate points at prompt or skill
+problems rather than at developers), skip request (phases, validity, reason ≤ 500 chars), per-phase
 verdicts and skill versions, top categories, up to 40 finding briefs (phase, severity, category, title, file),
 token usage and duration.
 
