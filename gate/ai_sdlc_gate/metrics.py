@@ -48,7 +48,7 @@ def build_event(report: GateReport) -> dict[str, Any]:
         if f.get("waived"):
             waived += 1
     thr = severity_rank(report.threshold)
-    flagged = any(severity_rank(f["severity"]) >= thr and not f.get("late") for f in findings)
+    flagged = any(severity_rank(f["severity"]) >= thr and not f.get("late") and not f.get("unverified") for f in findings)
     brief = [
         {
             "phase": f.get("phase"),

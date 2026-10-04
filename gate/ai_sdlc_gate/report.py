@@ -35,7 +35,12 @@ def _loc(f: dict) -> str:
 
 
 def _finding_line(f: dict) -> str:
-    waived = " _(waived)_" if f.get("waived") else (" _(late, advisory)_" if f.get("late") else "")
+    waived = (
+        " _(waived)_" if f.get("waived")
+        else " _(late, advisory)_" if f.get("late")
+        else " _(unverified, advisory)_" if f.get("unverified")
+        else ""
+    )
     loc = _loc(f)
     head = f"- {SEV_ICON.get(f['severity'], '')} **{_md(f['severity'], 20).upper()}** `{_md(f['category'], 60)}` {_md(f['title'], 300)}{waived}"
     if loc:
@@ -159,9 +164,13 @@ def to_text(report: GateReport, full_report_path: str | None = None, max_finding
         lines.append("")
         lines.append("Why:")
         lines.extend(f"  - {r}" for r in report.fail_reasons)
-    blocking = [f for f in report.all_findings() if severity_rank(f["severity"]) >= thr and not f.get("waived") and not f.get("late")]
+    blocking = [
+        f for f in report.all_findings()
+        if severity_rank(f["severity"]) >= thr and not f.get("waived") and not f.get("late") and not f.get("unverified")
+    ]
     late = [f for f in report.all_findings() if f.get("late")]
-    advisory = [f for f in report.all_findings() if f not in blocking and f not in late]
+    unverified = [f for f in report.all_findings() if f.get("unverified") and not f.get("late")]
+    advisory = [f for f in report.all_findings() if f not in blocking and f not in late and f not in unverified]
     if blocking:
         lines.append("")
         lines.append("Findings that block this change:")
@@ -183,6 +192,14 @@ def to_text(report: GateReport, full_report_path: str | None = None, max_finding
             lines.append(f"  [{f['severity'].upper():7}] {loc}  {f['title']}")
         if len(late) > 10:
             lines.append(f"  ... and {len(late) - 10} more in the full report")
+    if unverified:
+        lines.append("")
+        lines.append(f"Unverified findings (advisory): {len(unverified)} whose quoted code or claimed encoding is not in the file:")
+        for f in unverified[:10]:
+            loc = f"{f['file']}:{f['line']}" if f.get("file") and f.get("line") else (f.get("file") or "-")
+            lines.append(f"  [{f['severity'].upper():7}] {loc}  {f['title']}")
+        if len(unverified) > 10:
+            lines.append(f"  ... and {len(unverified) - 10} more in the full report")
     if advisory:
         lines.append("")
         lines.append(f"Advisory findings below the threshold: {len(advisory)} (see the full report)")

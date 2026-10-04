@@ -129,6 +129,10 @@ gate:
     # without blocking (secrets, credentials, vulnerable dependencies and blockers still block); `block` treats them
     # like any other finding.
     late_findings: advisory
+    # Evidence check after the model: a finding that quotes code which does not occur in the file is reported as
+    # advisory instead of blocking (secrets, credentials and gate manipulation are exempt). Claims of HTML entities
+    # in code that contains none are always advisory, whatever this is set to.
+    verify_quotes: true
     # Remember findings and reviewed code per repository and branch on the developer's machine.
     ledger: true
 
