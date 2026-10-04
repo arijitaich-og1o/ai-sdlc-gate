@@ -23,6 +23,7 @@ from xml.sax.saxutils import escape
 import httpx
 
 from .config import SEVERITIES, severity_rank
+from .httpcfg import ssl_context
 from .runner import GateReport
 
 MAX_PAYLOAD_BYTES = 60_000
@@ -136,6 +137,7 @@ def dispatch_event(event: dict[str, Any], repo: str, token: str, event_type: str
         },
         json={"event_type": event_type, "client_payload": {"event": event}},
         timeout=30,
+        verify=ssl_context(),
     )
     if resp.status_code not in (204, 200):
         raise RuntimeError(f"repository_dispatch failed: HTTP {resp.status_code}: {resp.text[:300]}")

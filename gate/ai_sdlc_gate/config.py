@@ -35,6 +35,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "max_retries": 3,
         "temperature": 0,
         "max_output_tokens": 8000,
+        # Organisation SDLC endpoint (server/). When set, `ai-sdlc-gate configure` uses it by default: the client
+        # authenticates with the developer's Microsoft token and stores no cloud credential, so onboarding needs no
+        # access to the central GitHub repository. Overridable per machine with AI_SDLC_GATE_ENDPOINT_URL; empty
+        # falls back to the key broker (the platform/admin path that requires repository write access).
+        "endpoint_url": "",
     },
     "phases": DEFAULT_PHASES,
     "intents": {

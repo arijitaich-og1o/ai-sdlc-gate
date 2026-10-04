@@ -104,9 +104,9 @@ if (([Environment]::GetEnvironmentVariable("GIT_CONFIG_PARAMETERS", "User")) -li
 }
 if ($env:GIT_CONFIG_PARAMETERS -like "*core.hooksPath=*ai-sdlc-gate*") { Remove-Item Env:\GIT_CONFIG_PARAMETERS -ErrorAction SilentlyContinue }
 
-Say "Step 3 of 3: preparing the review engine (uses your GitHub sign-in)"
+Say "Step 3 of 3: preparing the review engine"
 Gate configure --config $config
-if ($LASTEXITCODE -ne 0) { Say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' after signing in to GitHub (gh auth login)." }
+if ($LASTEXITCODE -ne 0) { Say "The review engine could not be prepared yet; run 'ai-sdlc-gate configure' again once you have signed in (Microsoft work account; or 'gh auth login' if your organisation uses the key broker)." }
 
 Say "Verifying"
 Gate validate-skills --config $config | Select-Object -Last 1

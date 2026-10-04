@@ -367,6 +367,51 @@ def cmd_metrics_build(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def cmd_report_skip(args: argparse.Namespace) -> int:
+    """Notify the organisation endpoint that the developer bypassed the gate with `--no-verify`.
+
+    Called by the git shim, so it must be fire-and-forget: it NEVER blocks, slows or fails the developer's git
+    command. Any problem (not signed in, offline, no endpoint configured) is swallowed and it exits 0. It reuses
+    the developer's Microsoft token, so the skip is attributed to their verified identity; it sends only the
+    repo/ref/sha metadata, never diff content.
+    """
+    # Record the skip locally first, so it stays observable even if the endpoint POST below is lost (offline,
+    # DNS failure, credential rotation): an operator can audit ~/.ai-sdlc-gate/skip-reports.log post-hoc.
+    try:
+        from datetime import datetime, timezone
+        home = os.environ.get("AI_SDLC_GATE_HOME") or os.path.join(os.path.expanduser("~"), ".ai-sdlc-gate")
+        os.makedirs(home, exist_ok=True)
+        with open(os.path.join(home, "skip-reports.log"), "a", encoding="utf-8") as fh:
+            fh.write("\t".join([datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                                str(args.command or ""), str(args.repo or ""), str(args.sha or "")]) + "\n")
+    except Exception:
+        pass
+    try:
+        import httpx
+
+        from .httpcfg import ssl_context
+        cfg = Config.load(args.config)
+        stored = secrets_store.load()
+        url = ""
+        if stored is not None and stored.provider == "endpoint":
+            url = str((stored.data or {}).get("endpoint_url") or "")
+        url = url or str(cfg.llm.get("endpoint_url") or "")
+        if not url:
+            return EXIT_PASS  # no endpoint configured (e.g. key-broker/openai mode) — nothing to notify
+        token = identity_mod.endpoint_token(cfg)
+        httpx.post(
+            url.rstrip("/") + "/v1/skip",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"repo": args.repo or "", "ref": args.ref or "", "sha": args.sha or "",
+                  "command": args.command or "", "reason": args.reason or ""},
+            timeout=httpx.Timeout(args.timeout if args.timeout else 4.0),
+            verify=ssl_context(),
+        )
+    except Exception:
+        pass  # telemetry must never break or delay a git operation
+    return EXIT_PASS
+
+
 # ----------------------------------------------------------------------------- parser
 
 def build_parser() -> argparse.ArgumentParser:
@@ -612,6 +657,21 @@ def cmd_configure(args: argparse.Namespace) -> int:
         st = secrets_store.store(args.base_url, args.api_key, models=models, mode="manual")
         print("Review engine ready.")
         return EXIT_PASS
+    # Preferred onboarding path: the organisation's own SDLC endpoint. When the policy (or this machine's
+    # AI_SDLC_GATE_ENDPOINT_URL) names one, use it — the client authenticates with the developer's Microsoft token
+    # and stores no cloud credential, so a developer needs no access to the central repository. The key broker
+    # below stays available for the platform/admins via --no-endpoint.
+    endpoint = (os.environ.get("AI_SDLC_GATE_ENDPOINT_URL") or cfg.llm.get("endpoint_url") or "").strip()
+    if endpoint and not getattr(args, "no_endpoint", False):
+        try:
+            llm_mod.validate_base_url(endpoint)
+        except llm_mod.LLMError as exc:
+            _eprint(f"configure: {exc}")
+            return EXIT_FAIL
+        secrets_store.store(models=[], mode="endpoint", provider="endpoint", data={"endpoint_url": endpoint.rstrip("/")})
+        print("Review engine ready (organisation endpoint).", flush=True)
+        return EXIT_PASS
+
     cred = ghauth.find_credential(token_env="AI_SDLC_GATE_GITHUB_TOKEN")
     if cred is None:
         _eprint(
@@ -670,12 +730,14 @@ def _verify_litellm_key(base_url: str, api_key: str) -> str | None:
     """Return a human-readable problem description, or None when the key works."""
     import httpx
 
+    from .httpcfg import ssl_context
+
     if not api_key.startswith("sk-"):
         return "the API key must start with 'sk-' (the secret includes a label or prefix)"
     url = base_url.rstrip("/")
     url = f"{url}/models" if url.endswith("/v1") else f"{url}/v1/models"
     try:
-        resp = httpx.get(url, headers={"Authorization": f"Bearer {api_key}"}, timeout=20)
+        resp = httpx.get(url, headers={"Authorization": f"Bearer {api_key}"}, timeout=20, verify=ssl_context())
     except httpx.HTTPError as exc:
         return f"could not reach the gateway: {type(exc).__name__}"
     if resp.status_code in (401, 403):
@@ -711,6 +773,7 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
     cf = sub.add_parser("configure", help="prepare the review engine on this machine (uses your GitHub sign-in)")
     cf.add_argument("--config"), cf.add_argument("--base-url"), cf.add_argument("--api-key", help="store this key instead of using the key broker (with --base-url)")
     cf.add_argument("--endpoint-url", help="use the organisation's SDLC review endpoint; the client sends its Microsoft token and stores no cloud credential")
+    cf.add_argument("--no-endpoint", action="store_true", help="ignore a configured organisation endpoint and use the key broker (platform/admin path)")
     cf.add_argument("--models", help="comma separated model names to store with --api-key")
     cf.add_argument("--repo", help="central repository (default from policy)"), cf.add_argument("--ref", help="branch of the central repository (default main)")
     cf.add_argument("--check", action="store_true", help="exit 0 if the review engine is set up, 1 otherwise")
@@ -721,6 +784,13 @@ def _add_client_parsers(sub: argparse._SubParsersAction) -> None:
 
     up = sub.add_parser("update", help="refresh policy, skills and engine on this machine now")
     up.set_defaults(func=cmd_update)
+
+    rs = sub.add_parser("report-skip", help=argparse.SUPPRESS)  # internal: the git shim calls this on --no-verify
+    rs.add_argument("--config")
+    rs.add_argument("--repo"), rs.add_argument("--ref"), rs.add_argument("--sha")
+    rs.add_argument("--command"), rs.add_argument("--reason")
+    rs.add_argument("--timeout", type=float)
+    rs.set_defaults(func=cmd_report_skip)
 
 
 def cmd_update(args: argparse.Namespace) -> int:

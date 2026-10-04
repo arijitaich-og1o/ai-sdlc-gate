@@ -22,6 +22,8 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 import httpx
+
+from .httpcfg import ssl_context
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
@@ -117,7 +119,7 @@ def fetch_config(
     sleep: Callable[[float], None] = time.sleep,
     client: httpx.Client | None = None,
 ) -> LiteLLMConfig:
-    http = client or httpx.Client(timeout=60, follow_redirects=True)
+    http = client or httpx.Client(timeout=60, follow_redirects=True, verify=ssl_context())
     hdr = _headers(token)
     request_id = secrets.token_hex(16)
     private, public_pem = generate_keypair()
