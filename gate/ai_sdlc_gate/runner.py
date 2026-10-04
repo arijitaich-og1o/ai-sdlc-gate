@@ -392,7 +392,12 @@ _MISSING_ESCAPE_RE = re.compile(
     r"xss|cross[- ]site|unescaped|not (?:html[- ]|properly )?(?:escaped|encoded|sanitized)|without (?:html[- ])?(?:escaping|encoding)|sanitiz",
     re.IGNORECASE,
 )
-_QUOTE_RE = re.compile(r"`([^`\n]{3,200})`")
+# Inline code only. A multi-line block in a finding is usually the suggested fix or an illustration, not a claim
+# about what the file says, so it is deliberately not checked (and so never downgrades a finding).
+# Inline quotes are matched at any length so backticks pair up in order (a 1-character `<` must not leave its closing
+# backtick to pair with the next quote's opening one); too-short or too-long quotes are filtered out afterwards.
+_BLOCK_RE = re.compile(r"```.*?(?:```|$)", re.DOTALL)
+_QUOTE_RE = re.compile(r"`([^`\n]*)`")
 # A quote "looks like code" (rather than a bare identifier or a file name) when it carries an operator or a space.
 _CODE_SHAPED_RE = re.compile(r"[\s()\[\]{}<>=!&|+*/%;,:]")
 
@@ -410,11 +415,18 @@ def _haystack(f: Any) -> str:
 def verify_findings(findings: list[dict[str, Any]], cs: ChangeSet, non_skippable: set[str], check_quotes: bool = True) -> int:
     """Mark findings whose evidence is not in the file as `unverified` (advisory, never blocking). Returns the count.
 
+    Mutates `findings` in place: each downgraded finding gets `unverified=True` and an `unverified_note`.
+
     Two deterministic checks, both against the file text as the developer wrote it:
     - a claim that the code contains HTML entities is unverified when the file contains none of the entities named;
-      this is the false positive the old escaped prompt produced, and the check holds even for protected categories;
+      this is the false positive the old escaped prompt produced, and the check holds even for protected categories,
+      because entity text either is in the file or is not;
     - a finding that quotes code is unverified when none of its quotes occur in the file. Protected categories
       (secrets, gate manipulation) are exempt from this one: a secret finding is never downgraded on a heuristic.
+
+    Policy: an unverified finding is reported but never blocks, whatever its severity. A finding whose own evidence
+    is absent from the file cannot be acted on by the developer, and blocking on it is what made the gate impossible
+    to pass honestly. Capping severity instead of a binary downgrade would be the natural extension.
     """
     files = {f.path: f for f in [*cs.files, *cs.excluded_files] if not f.binary}
     cache: dict[str, str] = {}
@@ -423,7 +435,9 @@ def verify_findings(findings: list[dict[str, Any]], cs: ChangeSet, non_skippable
         src = files.get(f.get("file") or "")
         if src is None:
             continue
-        hay = cache.setdefault(src.path, _haystack(src))
+        if src.path not in cache:  # one scan per file, however many findings cite it
+            cache[src.path] = _haystack(src)
+        hay = cache[src.path]
         claim = f"{f.get('title', '')}\n{f.get('description', '')}"
         reason = ""
         entities = {m.group(0).lower() for m in _ENTITY_RE.finditer(claim)}
@@ -433,7 +447,12 @@ def verify_findings(findings: list[dict[str, Any]], cs: ChangeSet, non_skippable
             if not (entities & present if entities else present):
                 reason = "it reports HTML entities / escaping, but the file contains no such entity text"
         elif check_quotes and f.get("category") not in non_skippable:
-            quotes = [q.strip() for q in _QUOTE_RE.findall(claim) if q.strip()]
+            # Quotes with entity text are about escaping (owned by the entity rule above), e.g. an XSS finding's
+            # "`<` must become `&lt;`", so they are no evidence either way here.
+            quotes = [
+                q.strip() for q in _QUOTE_RE.findall(_BLOCK_RE.sub(" ", claim))
+                if 3 <= len(q.strip()) <= 200 and not _ENTITY_RE.search(q)
+            ]
             if any(_CODE_SHAPED_RE.search(q) for q in quotes) and not any(_norm(q) in hay for q in quotes):
                 reason = "the code it quotes does not occur in the file"
         if reason:

@@ -193,13 +193,19 @@ def pick_fence(texts: Iterable[str]) -> str:
 
     Untrusted text is shown to the model verbatim; only the tags that carry this id delimit it. The id is drawn after
     the content exists, so the content cannot know it, and it is re-drawn in the (practically impossible) case that
-    it already occurs in the content.
+    it already occurs in the content. It is a content boundary, not a credential: it only has to be unpredictable to
+    whoever wrote the content, which 64 random bits are. Collisions over the 2^64 space are negligible, so failing
+    `_FENCE_ATTEMPTS` draws in a row means the random source is broken and the prompt must not be built.
     """
     pool = [t for t in texts if t]
-    while True:
+    for _ in range(_FENCE_ATTEMPTS):
         fence = secrets.token_hex(8)
         if not any(fence in t for t in pool):
             return fence
+    raise RuntimeError(f"could not draw a prompt fence id absent from the content in {_FENCE_ATTEMPTS} attempts")
+
+
+_FENCE_ATTEMPTS = 100
 
 
 def fenced(tag: str, body: str, fence: str, attrs: str = "") -> str:

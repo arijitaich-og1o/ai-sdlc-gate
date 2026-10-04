@@ -145,3 +145,89 @@ def test_quote_check_can_be_switched_off():
     entity = _finding("HTML entities in executable Python code", "app/main.py")
     assert verify_findings([invented, entity], cs, set(), check_quotes=False) == 1
     assert entity.get("unverified") and not invented.get("unverified")
+
+
+# ----------------------------------------------------------------------------- verify_findings, branch by branch
+
+import pytest  # noqa: E402
+
+ENTITY_CASES = [
+    # (file body, title, description, category, expected unverified)
+    ("a = 1 &amp;&amp; 2\n", "Escaped `&amp;` in code", "d", "correctness", False),           # claimed entity is in the file
+    ("a = 1 && 2\n", "Escaped `&amp;` in code", "d", "correctness", True),                     # claimed entity is not
+    ("x = '&gt;'\n", "Stray `&gt;` and `&lt;` entities", "d", "correctness", False),           # one claimed entity present is enough
+    ("x = '&quot;'\n", "Stray `&gt;` entity", "d", "correctness", True),                      # a different entity does not count
+    ("if a > b:\n", "HTML entities in executable code", "d", "code-injection", True),           # title claim, file has no entity
+    ("x = '&nbsp;'\n", "HTML entities in executable code", "d", "code-injection", False),       # title claim, file has one
+    ("print('<b>' + n)\n", "Output not escaped", "`<` must become `&lt;`", "correctness", False),   # missing-escape wording
+    ("print('<b>' + n)\n", "Raw output", "`<` must become `&lt;`", "xss", False),                  # missing-escape category
+    ("if a > b:\n", "HTML entities in code", "d", "hardcoded-credential", True),                # entity rule applies to protected too
+]
+
+
+@pytest.mark.parametrize("body,title,desc,cat,expected", ENTITY_CASES)
+def test_verify_findings_entity_rule(body, title, desc, cat, expected):
+    cs = _cs(("f.py", body))
+    f = _finding(title, "f.py", line=1, cat=cat, desc=desc)
+    assert verify_findings([f], cs, {"hardcoded-credential"}) == int(expected)
+    assert bool(f.get("unverified")) is expected
+    if expected:
+        assert f["unverified_note"].startswith("not counted towards blocking")
+
+
+QUOTE_CASES = [
+    # (title, description, category, expected unverified)
+    ("Comparison `if a > b` is inverted", "d", "correctness", False),                    # quoted code is in the file
+    ("Uses `os.system(cmd)` on input", "d", "command-injection", True),                 # quoted code is not
+    ("`pick` is undocumented", "d", "documentation", False),                             # bare identifier: not code-shaped
+    ("`missing_fn` is never defined", "d", "correctness", False),                        # bare identifier absent: still kept
+    ("Bad call", "`os.system(cmd)` here, near `a -> b`", "correctness", False),          # any one quote present is enough
+    ("Key `API_KEY = 'x'` committed", "d", "secret-exposure", False),                    # protected category exempt
+    ("Unsafe block", "```\ndef foo():\n    eval(x)\n```", "correctness", False),         # multi-line blocks are not checked
+    ("Unsafe `eval(x)`", "d", "correctness", True),
+    ("No quotes at all", "plain prose about the file", "correctness", False),
+    ("Mixed use of `<` and `>` operators", "d", "correctness", False),                  # short quotes must not pair up across prose
+]
+
+
+@pytest.mark.parametrize("title,desc,cat,expected", QUOTE_CASES)
+def test_verify_findings_quote_rule(title, desc, cat, expected):
+    cs = _cs(("app/main.py", PY))
+    f = _finding(title, "app/main.py", desc=desc, cat=cat)
+    assert verify_findings([f], cs, {"secret-exposure"}) == int(expected)
+    assert bool(f.get("unverified")) is expected
+
+
+def test_verify_findings_checks_removed_lines_and_skips_unknown_files():
+    cs = ChangeSet(files=[ChangedFile(path="old.py", status="D", diff="-os.system(cmd)\n")])
+    removed = _finding("Deleted `os.system(cmd)` call was the only guard", "old.py")
+    elsewhere = _finding("Uses `os.system(cmd)`", "not/in/change.py")
+    no_file = {**_finding("Uses `os.system(cmd)`", "x"), "file": None}
+    assert verify_findings([removed, elsewhere, no_file], cs, set()) == 0
+
+
+def test_verify_findings_scans_each_file_once(monkeypatch):
+    from ai_sdlc_gate import runner
+
+    calls = []
+    real = runner._haystack
+    monkeypatch.setattr(runner, "_haystack", lambda f: calls.append(f.path) or real(f))
+    cs = _cs(("a.py", PY), ("b.py", SH))
+    findings = [_finding(f"Uses `eval({i})`", p) for i in range(20) for p in ("a.py", "b.py")]
+    verify_findings(findings, cs, set())
+    assert sorted(calls) == ["a.py", "b.py"]
+
+
+def test_fence_draws_are_bounded(monkeypatch):
+    monkeypatch.setattr(changes.secrets, "token_hex", lambda n: "deadbeefdeadbeef")
+    with pytest.raises(RuntimeError, match="fence"):
+        pick_fence(["deadbeefdeadbeef"])
+
+
+def test_metrics_event_carries_the_unverified_count(cfg, skills_dir):
+    from ai_sdlc_gate.metrics import build_event, validate_event
+
+    report, _ = _gate(cfg, skills_dir, _cs(("app/main.py", PY)), [_finding("HTML entities in executable Python code", "app/main.py")])
+    event = build_event(report)
+    assert event["unverified_count"] == report.stats["unverified"] > 0
+    assert not validate_event(event)

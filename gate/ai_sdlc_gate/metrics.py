@@ -89,6 +89,7 @@ def build_event(report: GateReport) -> dict[str, Any]:
         "counts": counts,
         "waived_count": waived,
         "late_count": sum(1 for f in findings if f.get("late")),
+        "unverified_count": sum(1 for f in findings if f.get("unverified")),
         "findings_total": len(findings),
         "skip": {
             "requested": report.skip.requested,
