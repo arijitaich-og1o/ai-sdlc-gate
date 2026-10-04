@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import fnmatch
+import secrets
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from xml.sax.saxutils import escape as _xml_escape, quoteattr as _xml_quoteattr
+from xml.sax.saxutils import quoteattr as _xml_quoteattr
 
 from . import gitutil
 from .config import Config
@@ -186,30 +188,68 @@ def _fill(cfg: Config, cs: ChangeSet, rows, diff_fn, content_fn) -> None:
             cs.files.append(cf)
 
 
-def render_changeset(cs: ChangeSet, include_full_content: bool = True, budget: int | None = None) -> str:
+def pick_fence(texts: Iterable[str]) -> str:
+    """A random fence id that occurs in none of `texts`.
+
+    Untrusted text is shown to the model verbatim; only the tags that carry this id delimit it. The id is drawn after
+    the content exists, so the content cannot know it, and it is re-drawn in the (practically impossible) case that
+    it already occurs in the content. It is a content boundary, not a credential: it only has to be unpredictable to
+    whoever wrote the content, which 64 random bits are. Collisions over the 2^64 space are negligible, so failing
+    `_FENCE_ATTEMPTS` draws in a row means the random source is broken and the prompt must not be built.
+    """
+    pool = [t for t in texts if t]
+    for _ in range(_FENCE_ATTEMPTS):
+        fence = secrets.token_hex(8)
+        if not any(fence in t for t in pool):
+            return fence
+    raise RuntimeError(f"could not draw a prompt fence id absent from the content in {_FENCE_ATTEMPTS} attempts")
+
+
+_FENCE_ATTEMPTS = 100
+
+
+def fenced(tag: str, body: str, fence: str, attrs: str = "") -> str:
+    """`body` verbatim between `<tag fence="id">` and `</tag fence="id">`.
+
+    The body is not escaped, so the model sees `<`, `>` and `&` exactly as written. A `</tag>` inside the body cannot
+    close the block because it does not carry the fence id.
+    """
+    return f'<{tag}{attrs} fence="{fence}">\n{body}\n</{tag} fence="{fence}">'
+
+
+def changeset_texts(cs: ChangeSet) -> list[str]:
+    """Every piece of untrusted text `render_changeset` puts into the prompt (for choosing a fence id)."""
+    out = list(cs.commit_messages)
+    for f in cs.files:
+        out.extend([f.path, f.status, f.diff, f.content or ""])
+    return out
+
+
+def render_changeset(cs: ChangeSet, include_full_content: bool = True, budget: int | None = None, fence: str | None = None) -> str:
     """Render the change set for the model, with each file fenced in explicit delimiters.
 
-    File names, statuses and bodies are treated as untrusted: attributes are XML-quoted and content is
-    XML-escaped so a crafted path or file body cannot forge or close the surrounding tags.
+    File names, statuses and bodies are treated as untrusted. Attributes are XML-quoted. Bodies are shown verbatim
+    (escaping them made the model report `&gt;` / `&amp;` as defects in code that has none) and are delimited by
+    tags carrying a random fence id, so a crafted path or file body still cannot forge or close the surrounding tags.
     """
+    fence = fence or pick_fence(changeset_texts(cs))
     parts: list[str] = []
     if cs.commit_messages:
-        parts.append("<commit_messages>\n" + _xml_escape("\n---\n".join(cs.commit_messages)) + "\n</commit_messages>")
+        parts.append(fenced("commit_messages", "\n---\n".join(cs.commit_messages), fence))
     used = sum(len(p) for p in parts)
     for f in cs.files:
-        attrs = ' binary="true"' if f.binary else ""
-        block = [f'<file path={_xml_quoteattr(f.path)} status={_xml_quoteattr(f.status)}{attrs}>']
+        attrs = f" path={_xml_quoteattr(f.path)} status={_xml_quoteattr(f.status)}" + (' binary="true"' if f.binary else "")
+        block: list[str] = []
         if f.binary:
             block.append("[binary file omitted]")
         else:
             if f.diff:
-                block.append("<diff>\n" + _xml_escape(f.diff.rstrip()) + "\n</diff>")
+                block.append(fenced("diff", f.diff.rstrip(), fence))
             if include_full_content and f.content is not None and f.status != "D":
-                block.append("<content_after_change>\n" + _xml_escape(f.content.rstrip()) + "\n</content_after_change>")
-        block.append("</file>")
-        text = "\n".join(block)
+                block.append(fenced("content_after_change", f.content.rstrip(), fence))
+        text = fenced("file", "\n".join(block), fence, attrs)
         if budget is not None and used + len(text) > budget:
-            parts.append(f'<file path={_xml_quoteattr(f.path)} status={_xml_quoteattr(f.status)}>[omitted: change set exceeded review budget]</file>')
+            parts.append(fenced("file", "[omitted: change set exceeded review budget]", fence, f" path={_xml_quoteattr(f.path)} status={_xml_quoteattr(f.status)}"))
             continue
         used += len(text)
         parts.append(text)

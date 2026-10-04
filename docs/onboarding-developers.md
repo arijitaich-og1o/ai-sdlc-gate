@@ -67,6 +67,11 @@ The gate is designed to give you the complete list in one go and then stay consi
 - The gate remembers what it reported on your branch and which code it has already reviewed. Fixed findings
   disappear; findings it notices later on code it had already reviewed are shown as **late** and do not block
   (except secrets, credentials and known-vulnerable dependencies). New code is always reviewed in full.
+- The reviewer sees your code exactly as written. A finding whose evidence is not in your file (it quotes code
+  that does not occur there, or claims HTML entities such as `&gt;` the file does not contain) is shown as
+  **unverified** and does not block. Secret and credential findings are never downgraded this way. If an
+  unverified finding is in fact right, fix it anyway; if the gate keeps producing them, report it to the gate
+  owners. `gate.review.verify_quotes: false` turns off the quote check (the HTML-entity check always runs).
 
 A blocked commit prints a compact list of the blocking findings with file, line and fix. The full report of the
 last run is kept at `~/.ai-sdlc-gate/last-report.md`; `ai-sdlc-gate last` shows it again (`--md` for the full

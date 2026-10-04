@@ -174,7 +174,7 @@ def test_untrusted_content_is_delimited_and_skill_is_in_prompt(cfg, skills_dir):
     run_gate(cfg, llm, skills, cs, detect_intent(cfg, explicit="commit"), parse_skip(cfg, []))
     system, user = llm.calls[0]
     assert "UNTRUSTED DATA" in system
-    assert "<phase_skill" in user and "<change_set>" in user and 'path="evil.py"' in user
+    assert "<phase_skill" in user and "<change_set fence=" in user and 'path="evil.py"' in user
 
 
 # ----------------------------------------------------------------------------- git collection

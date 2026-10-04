@@ -49,7 +49,7 @@ def build_event(report: GateReport) -> dict[str, Any]:
         if f.get("waived"):
             waived += 1
     thr = severity_rank(report.threshold)
-    flagged = any(severity_rank(f["severity"]) >= thr and not f.get("late") for f in findings)
+    flagged = any(severity_rank(f["severity"]) >= thr and not f.get("late") and not f.get("unverified") for f in findings)
     brief = [
         {
             "phase": f.get("phase"),
@@ -89,6 +89,7 @@ def build_event(report: GateReport) -> dict[str, Any]:
         "counts": counts,
         "waived_count": waived,
         "late_count": sum(1 for f in findings if f.get("late")),
+        "unverified_count": sum(1 for f in findings if f.get("unverified")),
         "findings_total": len(findings),
         "skip": {
             "requested": report.skip.requested,
@@ -385,12 +386,18 @@ def dashboard_markdown(summary: dict[str, Any]) -> str:
 
 # ----------------------------------------------------------------------------- SVG scoreboard & badges
 
+def _attr(text: str) -> str:
+    """Escape for a double-quoted XML attribute. `escape()` alone leaves `"` intact, which is fine in text nodes but
+    would let a value close the attribute and add an event handler such as `onload=`."""
+    return escape(text, {'"': "&quot;"})
+
+
 def badge_svg(label: str, value: str, color: str = "#2ea043") -> str:
     lw = 6 * len(label) + 14
     vw = 6 * len(value) + 14
     w = lw + vw
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="20" role="img" aria-label="{escape(label)}: {escape(value)}">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="20" role="img" aria-label="{_attr(label)}: {_attr(value)}">'
         f'<linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>'
         f'<clipPath id="r"><rect width="{w}" height="20" rx="3" fill="#fff"/></clipPath>'
         f'<g clip-path="url(#r)"><rect width="{lw}" height="20" fill="#555"/><rect x="{lw}" width="{vw}" height="20" fill="{color}"/><rect width="{w}" height="20" fill="url(#s)"/></g>'
