@@ -1,20 +1,20 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-04T19:18:08+00:00 from 121 gate run(s)._
+_Generated 2026-10-05T04:46:53+00:00 from 122 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 121 |
+| Gate runs | 122 |
 | Pass rate | 76% |
 | Runs flagged (findings at/above threshold) | 29 (24%) |
 | Runs blocked | 29 (24%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 5.9 |
+| Findings per run | 5.85 |
 | Runs with local client attestation | 99% |
-| Active developers / repositories | 3 / 11 |
+| Active developers / repositories | 3 / 12 |
 | Top finding categories | undocumented-decision, general, missing-tests, hardcoded-configuration, observability-gap |
 
 ## Monthly trend
@@ -22,13 +22,13 @@ _Generated 2026-10-04T19:18:08+00:00 from 121 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 81 | 78% | 18 | 0 | 9 | 91 | 156 |
+| 2026-10 | 82 | 78% | 18 | 0 | 9 | 91 | 156 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 105 | 84% | 17 | 17 | 0/0 | 0 | 4.13 | 99% | general, undocumented-decision, observability-gap | 2026-10-04 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 106 | 84% | 17 | 17 | 0/0 | 0 | 4.09 | 99% | general, undocumented-decision, observability-gap | 2026-10-05 |
 | anitha.bantu@og1o.in (@Anitha9765) | 9 | 22% | 7 | 7 | 0/0 | 0 | 5.0 | 100% | logic-error, breaking-api-change, missing-contract-tests | 2026-10-01 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
@@ -45,6 +45,7 @@ _Generated 2026-10-04T19:18:08+00:00 from 121 gate run(s)._
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
 | Anitha9765/psw_internal-proxy_AnithaB | 1 | 0% | 1 | 0 | 1 | 7.0 | general, logic-error, dead-code |
+| OG-DW/sofa_poc_fabro | 1 | 100% | 0 | 0 | 1 | 0.0 | - |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
 | otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
 

@@ -49,9 +49,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 104,
-      "attested_rate": 0.99,
-      "block_rate": 0.162,
+      "attested": 105,
+      "attested_rate": 0.991,
+      "block_rate": 0.16,
       "blocked": 17,
       "developers_count": 1,
       "findings": {
@@ -61,27 +61,28 @@
         "low": 134,
         "medium": 172
       },
-      "findings_per_run": 4.13,
+      "findings_per_run": 4.09,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.162,
+      "flag_rate": 0.16,
       "flagged": 17,
       "intents": {
-        "commit": 96,
+        "commit": 97,
         "deploy": 6,
         "maintenance": 3
       },
-      "last_seen": "2026-10-04T19:17:49+00:00",
-      "pass_rate": 0.838,
-      "passed": 88,
+      "last_seen": "2026-10-05T04:46:40+00:00",
+      "pass_rate": 0.84,
+      "passed": 89,
       "repos": [
         "OG-DW/sofa_docs",
+        "OG-DW/sofa_poc_fabro",
         "arijitaich-og1o/ai-sdlc-gate",
         "arijitaich-og1o/sofa-terraform-sandbox",
         "oneo-dice/oggpt-x-backend",
         "oneo-dice/oggpt-x-infra",
         "unknown/unknown"
       ],
-      "runs": 105,
+      "runs": 106,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -141,8 +142,8 @@
       "waived_findings": 0
     }
   },
-  "events": 121,
-  "generated_at": "2026-10-04T19:18:08+00:00",
+  "events": 122,
+  "generated_at": "2026-10-05T04:46:53+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -205,9 +206,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 81,
+      "attested": 82,
       "attested_rate": 1.0,
-      "block_rate": 0.222,
+      "block_rate": 0.22,
       "blocked": 18,
       "developers_count": 2,
       "findings": {
@@ -217,26 +218,27 @@
         "low": 115,
         "medium": 156
       },
-      "findings_per_run": 4.95,
+      "findings_per_run": 4.89,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.222,
+      "flag_rate": 0.22,
       "flagged": 18,
       "intents": {
-        "commit": 76,
+        "commit": 77,
         "deploy": 2,
         "maintenance": 3
       },
-      "last_seen": "2026-10-04T19:17:49+00:00",
-      "pass_rate": 0.778,
-      "passed": 63,
+      "last_seen": "2026-10-05T04:46:40+00:00",
+      "pass_rate": 0.78,
+      "passed": 64,
       "repos": [
         "OG-DW/sofa_docs",
+        "OG-DW/sofa_poc_fabro",
         "arijitaich-og1o/ai-sdlc-gate",
         "arijitaich-og1o/sofa-terraform-sandbox",
         "otto-ec/kraken_samplenator",
         "unknown/unknown"
       ],
-      "runs": 81,
+      "runs": 82,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -257,9 +259,9 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 120,
+    "attested": 121,
     "attested_rate": 0.992,
-    "block_rate": 0.24,
+    "block_rate": 0.238,
     "blocked": 29,
     "developers_count": 3,
     "findings": {
@@ -269,21 +271,22 @@
       "low": 192,
       "medium": 304
     },
-    "findings_per_run": 5.9,
+    "findings_per_run": 5.85,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.24,
+    "flag_rate": 0.238,
     "flagged": 29,
     "intents": {
-      "commit": 106,
+      "commit": 107,
       "deploy": 12,
       "maintenance": 3
     },
-    "last_seen": "2026-10-04T19:17:49+00:00",
-    "pass_rate": 0.76,
-    "passed": 92,
+    "last_seen": "2026-10-05T04:46:40+00:00",
+    "pass_rate": 0.762,
+    "passed": 93,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
       "OG-DW/sofa_docs",
+      "OG-DW/sofa_poc_fabro",
       "arijitaich-og1o/ai-sdlc-gate",
       "arijitaich-og1o/sofa-terraform-sandbox",
       "oneo-dice/oggpt-x-backend",
@@ -294,7 +297,7 @@
       "otto-ec/kraken_samplenator",
       "unknown/unknown"
     ],
-    "runs": 121,
+    "runs": 122,
     "skip_rate": 0.0,
     "skips_granted": 0,
     "skips_requested": 0,
@@ -392,6 +395,43 @@
         "requirement-mismatch",
         "missing-documentation"
       ],
+      "waived_findings": 0
+    },
+    "OG-DW/sofa_poc_fabro": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 1,
+      "attested_rate": 1.0,
+      "block_rate": 0.0,
+      "blocked": 0,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 0,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 0
+      },
+      "findings_per_run": 0.0,
+      "first_seen": "2026-10-05T04:46:40+00:00",
+      "flag_rate": 0.0,
+      "flagged": 0,
+      "intents": {
+        "commit": 1
+      },
+      "last_seen": "2026-10-05T04:46:40+00:00",
+      "pass_rate": 1.0,
+      "passed": 1,
+      "repos": [
+        "OG-DW/sofa_poc_fabro"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [],
       "waived_findings": 0
     },
     "arijitaich-og1o/ai-sdlc-gate": {
