@@ -1,34 +1,34 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-05T05:10:52+00:00 from 125 gate run(s)._
+_Generated 2026-10-05T05:40:15+00:00 from 126 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 125 |
+| Gate runs | 126 |
 | Pass rate | 74% |
-| Runs flagged (findings at/above threshold) | 32 (26%) |
-| Runs blocked | 32 (26%) |
+| Runs flagged (findings at/above threshold) | 33 (26%) |
+| Runs blocked | 33 (26%) |
 | Skips requested / granted | 0 / 0 |
 | Findings waived via skips | 0 |
-| Findings per run | 6.85 |
+| Findings per run | 6.94 |
 | Runs with local client attestation | 99% |
 | Active developers / repositories | 3 / 12 |
-| Top finding categories | undocumented-decision, general, missing-tests, hardcoded-configuration, observability-gap |
+| Top finding categories | undocumented-decision, general, hardcoded-configuration, missing-tests, observability-gap |
 
 ## Monthly trend
 
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 85 | 75% | 21 | 0 | 9 | 122 | 235 |
+| 2026-10 | 86 | 74% | 22 | 0 | 9 | 129 | 244 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 109 | 82% | 20 | 20 | 0/0 | 0 | 5.28 | 99% | general, observability-gap, undocumented-decision | 2026-10-05 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 110 | 81% | 21 | 21 | 0/0 | 0 | 5.4 | 99% | general, observability-gap, undocumented-decision | 2026-10-05 |
 | anitha.bantu@og1o.in (@Anitha9765) | 9 | 22% | 7 | 7 | 0/0 | 0 | 5.0 | 100% | logic-error, breaking-api-change, missing-contract-tests | 2026-10-01 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
@@ -40,7 +40,7 @@ _Generated 2026-10-05T05:10:52+00:00 from 125 gate run(s)._
 | arijitaich-og1o/ai-sdlc-gate | 24 | 92% | 2 | 0 | 1 | 1.83 | missing-tests, missing-negative-tests, observability-gap |
 | OG-DW/sofa_docs | 8 | 62% | 3 | 0 | 1 | 12.25 | general, undocumented-decision, observability-gap |
 | otto-ec/kraken_samplenator | 8 | 25% | 6 | 0 | 1 | 4.75 | breaking-api-change, logic-error, inconsistent-api-contract |
-| OG-DW/sofa_poc_fabro | 4 | 25% | 3 | 0 | 1 | 35.5 | general, hardcoded-configuration, observability-gap |
+| OG-DW/sofa_poc_fabro | 5 | 20% | 4 | 0 | 1 | 32.0 | general, hardcoded-configuration, observability-gap |
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
