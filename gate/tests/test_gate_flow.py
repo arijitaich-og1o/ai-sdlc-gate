@@ -268,3 +268,16 @@ def test_text_rendering_lists_blocking_findings(cfg, skills_dir):
     assert "SDLC-Skip-Reason" in text and "ai-sdlc-gate last" in text
     ok = to_text(_run(cfg, skills, []))
     assert ok.startswith("AI SDLC Gate: PASSED") and "SDLC-Skip" not in ok
+
+
+def test_gate_manipulation_is_scoped_to_text_addressed_to_the_reviewer():
+    # The category cannot be waived, so a broad rule ("anything that looks like instructions") blocked ordinary
+    # changelog and migration notes with no way out. The prompt must keep the two apart.
+    from ai_sdlc_gate.runner import SYSTEM_PROMPT
+
+    rule = SYSTEM_PROMPT.split("1. ", 1)[1].split("\n2. ", 1)[0]
+    assert "ONLY for text that addresses the reviewer" in rule
+    assert "NEVER `gate-manipulation`" in rule
+    for written_for_people in ("changelogs", "migration notes", "READMEs", "runbooks", "code comments"):
+        assert written_for_people in rule
+    assert "looks like instructions to you" not in rule
