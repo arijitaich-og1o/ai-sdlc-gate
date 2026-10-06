@@ -1,20 +1,20 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-06T05:27:45+00:00 from 140 gate run(s)._
+_Generated 2026-10-06T10:10:05+00:00 from 141 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 140 |
-| Pass rate | 69% |
-| Runs flagged (findings at/above threshold) | 43 (31%) |
-| Runs blocked | 43 (31%) |
+| Gate runs | 141 |
+| Pass rate | 70% |
+| Runs flagged (findings at/above threshold) | 43 (30%) |
+| Runs blocked | 43 (30%) |
 | Skips requested / granted | 3 / 3 |
 | Findings waived via skips | 30 |
-| Findings per run | 9.49 |
+| Findings per run | 9.43 |
 | Runs with local client attestation | 99% |
-| Active developers / repositories | 3 / 13 |
+| Active developers / repositories | 3 / 14 |
 | Top finding categories | general, hardcoded-configuration, missing-tests, undocumented-decision, observability-gap |
 
 ## Monthly trend
@@ -22,14 +22,14 @@ _Generated 2026-10-06T05:27:45+00:00 from 140 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 100 | 68% | 32 | 3 | 24 | 211 | 427 |
+| 2026-10 | 101 | 68% | 32 | 3 | 24 | 211 | 429 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 119 | 75% | 30 | 30 | 3/3 | 30 | 8.63 | 99% | general, hardcoded-configuration, observability-gap | 2026-10-06 |
-| anitha.bantu@og1o.in (@Anitha9765) | 14 | 43% | 8 | 8 | 0/0 | 0 | 4.71 | 100% | logic-error, breaking-api-change, missing-contract-tests | 2026-10-05 |
+| anitha.bantu@og1o.in (@Anitha9765) | 15 | 47% | 8 | 8 | 0/0 | 0 | 4.53 | 100% | logic-error, breaking-api-change, missing-contract-tests | 2026-10-06 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
 ## Repositories
@@ -49,6 +49,7 @@ _Generated 2026-10-06T05:27:45+00:00 from 140 gate run(s)._
 | Anitha9765/psw_internal-proxy_AnithaB | 1 | 0% | 1 | 0 | 1 | 7.0 | general, logic-error, dead-code |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
 | otto-ec/flagship_customer_service | 1 | 100% | 0 | 0 | 1 | 10.0 | hardcoded-configuration, undocumented-decision, data-protection-design-gap |
+| otto-ec/kraken_suppressions | 1 | 100% | 0 | 0 | 1 | 2.0 | hardcoded-configuration, general |
 
 ### Reading this dashboard
 
