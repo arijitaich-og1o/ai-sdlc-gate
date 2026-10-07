@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-07T13:12:38+00:00 from 152 gate run(s)._
+_Generated 2026-10-07T13:17:50+00:00 from 153 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 152 |
+| Gate runs | 153 |
 | Pass rate | 68% |
-| Runs flagged (findings at/above threshold) | 48 (32%) |
-| Runs blocked | 48 (32%) |
+| Runs flagged (findings at/above threshold) | 49 (32%) |
+| Runs blocked | 49 (32%) |
 | Skips requested / granted | 4 / 4 |
 | Findings waived via skips | 42 |
-| Findings per run | 10.12 |
+| Findings per run | 11.75 |
 | Runs with local client attestation | 99% |
 | Active developers / repositories | 3 / 16 |
 | Top finding categories | general, hardcoded-configuration, missing-tests, undocumented-decision, observability-gap |
@@ -22,13 +22,13 @@ _Generated 2026-10-07T13:12:38+00:00 from 152 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 112 | 67% | 37 | 4 | 24 | 247 | 503 |
+| 2026-10 | 113 | 66% | 38 | 4 | 24 | 317 | 648 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
-| arijit.aich@og1o.in (@arijitaich-og1o) | 122 | 73% | 33 | 33 | 4/4 | 42 | 9.97 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-07 |
+| arijit.aich@og1o.in (@arijitaich-og1o) | 123 | 72% | 34 | 34 | 4/4 | 42 | 11.98 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-07 |
 | anitha.bantu@og1o.in (@Anitha9765) | 23 | 56% | 10 | 10 | 0/0 | 0 | 3.83 | 100% | logic-error, undocumented-decision, breaking-api-change | 2026-10-07 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
@@ -36,7 +36,7 @@ _Generated 2026-10-07T13:12:38+00:00 from 152 gate run(s)._
 
 | Repository | Runs | Pass rate | Blocked | Skips granted | Developers | Findings/run | Top categories |
 |---|---|---|---|---|---|---|---|
-| unknown/unknown | 68 | 87% | 9 | 0 | 1 | 1.31 | debug-statement, missing-tests, missing-documentation |
+| unknown/unknown | 69 | 86% | 10 | 0 | 1 | 5.03 | debug-statement, missing-tests, logic-error |
 | arijitaich-og1o/ai-sdlc-gate | 25 | 88% | 3 | 0 | 1 | 3.04 | missing-tests, missing-negative-tests, missing-resilience |
 | otto-ec/kraken_samplenator | 15 | 53% | 7 | 0 | 1 | 3.93 | breaking-api-change, logic-error, inconsistent-api-contract |
 | arijitaich-og1o/creditlens | 9 | 0% | 9 | 4 | 1 | 62.22 | general, hardcoded-configuration, breaking-api-change |
