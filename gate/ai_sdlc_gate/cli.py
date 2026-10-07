@@ -13,6 +13,7 @@ from . import metrics as metrics_mod
 from .changes import collect_paths, collect_range, collect_staged
 from .config import Config
 from .evaluate import evaluate_skill
+from . import gitutil
 from .gitutil import GitError, repo_root
 from . import identity as identity_mod
 from . import ledger as ledger_mod
@@ -125,8 +126,16 @@ def cmd_run(args: argparse.Namespace) -> int:
         except Exception:
             local_identity = None
 
+    # The hooks pass a slug parsed from github.com remotes only; anything else (no remote, Azure DevOps, GitLab)
+    # arrived empty or as a raw URL, which made the run unattributable or got it rejected by the metrics store.
+    repo = args.repo or os.environ.get("GITHUB_REPOSITORY", "")
+    if not metrics_mod.REPO_RE.match(repo or ""):
+        try:
+            repo = gitutil.repo_slug(root)
+        except Exception:
+            repo = ""
     context = {
-        "repo": args.repo or os.environ.get("GITHUB_REPOSITORY", ""),
+        "repo": repo,
         "actor": args.actor or os.environ.get("GITHUB_ACTOR", ""),
         "ref": args.ref or os.environ.get("GITHUB_REF_NAME", cs.branch),
         "sha": args.sha or os.environ.get("GITHUB_SHA", cs.head),
@@ -411,12 +420,65 @@ def cmd_triage(args: argparse.Namespace) -> int:
 def cmd_kpi_export(args: argparse.Namespace) -> int:
     from . import kpi as kpi_mod
 
+    import yaml
+
+    from . import kpi_sources
+
     events = metrics_mod.load_events(Path(args.events_dir))
+    git_rows = kpi_sources.read_jsonl(args.git or [])
+    pr_rows = kpi_sources.read_jsonl(args.prs or [])
+    teams = None
+    if args.teams:
+        data = yaml.safe_load(Path(args.teams).read_text(encoding="utf-8")) or {}
+        raw = data.get("teams") if isinstance(data, dict) else None
+        if not isinstance(raw, dict) or not all(isinstance(g, list) for g in raw.values()):
+            _eprint("team map: expected `teams: {<team>: [<owner/repo glob>, ...]}`")
+            return EXIT_ERROR
+        teams = {str(t): [str(g) for g in globs] for t, globs in raw.items()}
+        repos = {str(e.get("repo") or "") for e in events} | {str(r.get("repo") or "") for r in git_rows + pr_rows}
+        for problem in kpi_mod.validate_teams(teams, {r for r in repos if r}):
+            _eprint(f"team map: {problem}")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    for name, content in kpi_mod.export(events).items():
+    salt = kpi_sources.person_salt(identity_mod.sdlc_home())
+    for name, content in kpi_mod.export(events, git_rows=git_rows, pr_rows=pr_rows, teams=teams, salt=salt).items():
         (out / name).write_text(content, encoding="utf-8", newline="\n")
-    print(f"KPI export from {len(events)} events written to {out}")
+    print(f"KPI export from {len(events)} events, {len(git_rows)} commits, {len(pr_rows)} pull requests written to {out}")
+    return EXIT_PASS
+
+
+def cmd_kpi_collect_git(args: argparse.Namespace) -> int:
+    from . import kpi_sources
+
+    salt = kpi_sources.person_salt(identity_mod.sdlc_home())
+    rows = kpi_sources.collect_git(args.repo_dir, salt, slug=args.slug, ref=args.ref, since=args.since)
+    kpi_sources.write_jsonl(rows, args.out)
+    print(f"{len(rows)} commits of {rows[0]['repo'] if rows else args.slug or args.repo_dir} written to {args.out}")
+    return EXIT_PASS
+
+
+def cmd_kpi_collect_prs(args: argparse.Namespace) -> int:
+    from . import kpi_sources
+
+    if args.via_gh:
+        fetch = kpi_sources.gh_fetch()
+    else:
+        cred = ghauth.find_credential(token_env=args.token_env)
+        if cred is None:
+            _eprint("no GitHub credential found (gh auth login, or set the token environment variable, or use --via-gh)")
+            return EXIT_FAIL
+        fetch = kpi_sources.github_fetch(cred.token)
+    try:
+        rows = kpi_sources.collect_prs(args.slug, fetch, max_prs=args.max)
+    except Exception as exc:  # network or permission problem: report it, write nothing
+        _eprint(f"could not read pull requests of {args.slug}: {exc}")
+        return EXIT_FAIL
+    finally:
+        close = getattr(fetch, "close", None)
+        if close is not None:
+            close()
+    kpi_sources.write_jsonl(rows, args.out)
+    print(f"{len(rows)} pull requests of {args.slug} written to {args.out}")
     return EXIT_PASS
 
 
@@ -559,9 +621,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     kp = sub.add_parser("kpi", help="KPI dataset and dashboard from stored metrics events")
     ksub = kp.add_subparsers(dest="kcmd", required=True)
-    ke = ksub.add_parser("export", help="write kpi-runs.csv/json, kpi-summary.json and kpi-dashboard.html")
+    ke = ksub.add_parser("export", help="write kpi-runs.csv/json, kpi-triage.csv, kpi-summary.json and kpi-dashboard.html")
     ke.add_argument("--events-dir", required=True), ke.add_argument("--out", required=True)
+    ke.add_argument("--git", nargs="*", help="commit files from `kpi collect-git` (JSONL)")
+    ke.add_argument("--prs", nargs="*", help="pull request files from `kpi collect-prs` (JSONL)")
+    ke.add_argument("--teams", help="YAML team map: teams: {<team>: [<owner/repo glob>, ...]}")
     ke.set_defaults(func=cmd_kpi_export)
+    kg = ksub.add_parser("collect-git", help="commit metadata of one repository (no names, messages or code)")
+    kg.add_argument("--repo-dir", required=True), kg.add_argument("--out", required=True)
+    kg.add_argument("--slug", help="owner/name; default: derived from the origin remote")
+    kg.add_argument("--ref", default="HEAD", help="branch to read (default: the checked-out one)"), kg.add_argument("--since")
+    kg.set_defaults(func=cmd_kpi_collect_git)
+    kq = ksub.add_parser("collect-prs", help="closed pull requests of one GitHub repository: cycle time and review effort")
+    kq.add_argument("--slug", required=True), kq.add_argument("--out", required=True)
+    kq.add_argument("--max", type=int, default=200), kq.add_argument("--token-env", default="AI_SDLC_GATE_TOKEN")
+    kq.add_argument("--via-gh", action="store_true", help="call the API through the GitHub CLI's sign-in instead of a token")
+    kq.set_defaults(func=cmd_kpi_collect_prs)
     _add_client_parsers(sub)
     return p
 

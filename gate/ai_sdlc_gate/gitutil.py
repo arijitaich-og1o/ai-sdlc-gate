@@ -1,6 +1,7 @@
 """Thin wrappers around git. All calls use argument lists (no shell)."""
 from __future__ import annotations
 
+import re
 import subprocess
 from pathlib import Path
 
@@ -31,8 +32,55 @@ def repo_root(cwd: str | Path | None = None) -> Path:
 
 
 def current_branch(cwd: str | Path | None = None) -> str:
+    """The branch being worked on, also for an unborn branch (first commit) and during a rebase.
+
+    `rev-parse --abbrev-ref HEAD` answers `HEAD` in both cases, which left a fail -> pass sequence unattributable
+    in the metrics. `symbolic-ref` names the branch even before its first commit; during a rebase HEAD is detached
+    and git records the branch being rebased in `rebase-merge/head-name` or `rebase-apply/head-name`.
+    """
+    out = run_git(["symbolic-ref", "--short", "-q", "HEAD"], cwd=cwd, check=False).strip()
+    if out:
+        return out
+    git_dir = run_git(["rev-parse", "--absolute-git-dir"], cwd=cwd, check=False).strip()
+    for sub in ("rebase-merge", "rebase-apply"):
+        head_name = Path(git_dir) / sub / "head-name" if git_dir else None
+        if head_name is not None and head_name.is_file():
+            name = head_name.read_text(encoding="utf-8").strip()
+            return name.removeprefix("refs/heads/") or "HEAD"
     out = run_git(["rev-parse", "--abbrev-ref", "HEAD"], cwd=cwd, check=False).strip()
     return out or "HEAD"
+
+
+_SLUG_PATTERNS = [
+    # GitHub, GitLab, Bitbucket (https, ssh and scp-like forms): host/owner/name(.git)
+    re.compile(r"(?:github\.com|gitlab\.com|bitbucket\.org)[:/]+(?P<owner>[^/\s]+)/(?P<name>[^/\s]+?)(?:\.git)?/?$"),
+    # Azure DevOps: dev.azure.com/org/project/_git/repo, org@vs-ssh.visualstudio.com:v3/org/project/repo, org.visualstudio.com
+    re.compile(r"dev\.azure\.com/(?P<owner>[^/\s]+)/[^/\s]+/_git/(?P<name>[^/\s]+?)/?$"),
+    re.compile(r"ssh\.dev\.azure\.com:v3/(?P<owner>[^/\s]+)/[^/\s]+/(?P<name>[^/\s]+?)/?$"),
+    re.compile(r"(?P<owner>[^/.@\s]+)\.visualstudio\.com/(?:[^/\s]+/)?_git/(?P<name>[^/\s]+?)/?$"),
+]
+_SLUG_PART = re.compile(r"[^A-Za-z0-9_.-]+")
+
+
+def repo_slug(cwd: str | Path | None = None) -> str:
+    """`owner/name` for the repository, so every gate run can be attributed to a repository in the metrics.
+
+    Derived from the `origin` remote for GitHub, GitLab, Bitbucket and Azure DevOps URLs. A repository without a
+    recognised remote becomes `local/<folder name>`: still attributable, and never an empty or raw URL (which the
+    metrics store rejects, dropping the run entirely).
+    """
+    url = run_git(["remote", "get-url", "origin"], cwd=cwd, check=False).strip()
+    for pat in _SLUG_PATTERNS:
+        m = pat.search(url)
+        if m:
+            owner, name = (_SLUG_PART.sub("-", m.group(g)).strip("-.") for g in ("owner", "name"))
+            if owner and name:
+                return f"{owner}/{name}"
+    try:
+        folder = repo_root(cwd).name
+    except GitError:
+        folder = Path(cwd or ".").resolve().name
+    return f"local/{_SLUG_PART.sub('-', folder).strip('-.') or 'repo'}"
 
 
 def head_author(cwd: str | Path | None = None) -> tuple[str, str]:

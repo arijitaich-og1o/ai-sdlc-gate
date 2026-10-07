@@ -1,7 +1,11 @@
 """Static, self-contained KPI dashboard (one HTML file, data embedded, no external scripts).
 
-Untrusted text in the data (repository names, branch names, skip reasons) is embedded as JSON with `</` escaped so
-it cannot close the script tag, and the page only ever writes it with textContent, never innerHTML.
+Laid out like an adoption-and-impact slide: usage tiles, per-team adoption curves, cases by month, then quality,
+measured outcomes, feedback and data coverage. Every number comes from kpi-summary.json; a KPI without data shows
+"no data yet" with the command that would collect it, never an estimate.
+
+Untrusted text in the data (team and repository names, branch names, skip reasons) is embedded as JSON with every
+`<` escaped so it cannot close the script tag, and the page only ever writes it with textContent and setAttribute.
 """
 from __future__ import annotations
 
@@ -23,7 +27,7 @@ _TEMPLATE = r"""<!doctype html>
 <style>
   :root {
     --purple: #434098; --red: #EB001F; --lilac: #EDECFC; --ink: #1d1b3a; --muted: #5d5b7a;
-    --line: #d9d7f0; --card: #ffffff; --bg: #f7f7fc; --good: #1f8a4c; --warn: #b26b00;
+    --line: #d9d7f0; --card: #ffffff; --bg: #f7f7fc; --warn: #b26b00;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 "Source Sans 3", system-ui, sans-serif; }
@@ -35,33 +39,29 @@ _TEMPLATE = r"""<!doctype html>
   .bar select { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
   main { padding: 20px 24px 32px; max-width: 1280px; margin: 0 auto; }
   h2 { font: 600 16px/1.3 Lexend, system-ui, sans-serif; color: var(--purple); margin: 26px 0 10px; }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
   .tile { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; border-top: 4px solid var(--purple); }
+  .tile.accent { border-top-color: var(--red); }
   .tile .k { font-size: 13px; color: var(--muted); font-weight: 600; }
   .tile .v { font: 700 28px/1.2 Lexend, system-ui, sans-serif; margin: 4px 0; }
   .tile .d { font-size: 13px; color: var(--muted); }
-  .tile.na .v { color: var(--muted); font-size: 18px; }
+  .tile.na .v { color: var(--muted); font-size: 17px; }
   .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 16px; }
   .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
   .panel h3 { font: 600 14px/1.3 Lexend, system-ui, sans-serif; margin: 0 0 8px; }
-  .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
-  .legend i { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 5px; }
-  .legend .sw-purple { background: var(--purple); }
-  .legend .sw-red { background: var(--red); }
-  .legend .sw-bar { background: var(--lilac); height: 10px; border: 1px solid var(--purple); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
   svg text { font: 12px "Source Sans 3", system-ui, sans-serif; fill: var(--muted); }
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
   th { color: var(--muted); font-weight: 600; }
   .note { font-size: 13px; color: var(--muted); }
-  .warn { color: var(--warn); }
   footer { max-width: 1280px; margin: 0 auto; padding: 0 24px 32px; font-size: 13px; color: var(--muted); }
-  @media (max-width: 520px) { header, .bar, main { padding-left: 16px; padding-right: 16px; } .grid2 { grid-template-columns: 1fr; } }
+  @media (max-width: 520px) { header, .bar, main, footer { padding-left: 16px; padding-right: 16px; } .grid2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <header>
-  <h1>AI SDLC Gate: delivery quality KPIs</h1>
+  <h1>AI SDLC Gate: adoption and impact</h1>
   <p id="period"></p>
 </header>
 <div class="bar">
@@ -70,45 +70,55 @@ _TEMPLATE = r"""<!doctype html>
   <span class="note" id="scopenote"></span>
 </div>
 <main>
-  <h2>Quality, speed, risk and cost</h2>
-  <div class="tiles" id="tiles"></div>
-
-  <h2>Trends (all repositories, by ISO week)</h2>
+  <h2>Adoption and usage</h2>
+  <div class="tiles" id="usage"></div>
   <div class="grid2">
-    <div class="panel"><h3>Gate pass rate and block rate</h3><div class="legend"><span><i class="sw-purple"></i>pass rate</span><span><i class="sw-red"></i>block rate</span></div><div id="trendRates"></div></div>
-    <div class="panel"><h3>Gate runs and blocking findings per run</h3><div class="legend"><span><i class="sw-bar"></i>runs</span><span><i class="sw-red"></i>blocker + high per run</span></div><div id="trendRuns"></div></div>
+    <div class="panel"><h3>Adoption curve per team (gate runs per week)</h3><div class="legend" id="adoptionLegend"></div><div id="adoption"></div><p class="note" id="phaseRule"></p></div>
+    <div class="panel"><h3>Cases by month (gate runs, stacked by team)</h3><div class="legend" id="casesLegend"></div><div id="cases"></div></div>
   </div>
 
-  <h2>Where quality is lost</h2>
+  <h2>Quality caught before merge</h2>
+  <div class="tiles" id="quality"></div>
   <div class="grid2">
     <div class="panel"><h3>Fail rate by SDLC phase</h3><div id="phases"></div></div>
     <div class="panel"><h3>Most frequent finding categories</h3><div id="cats"></div></div>
   </div>
 
-  <h2>Value and trust</h2>
+  <h2>Measured outcomes (git history and pull requests)</h2>
   <div class="grid2">
-    <div class="panel"><h3>Time saved estimate (net of gate waiting time)</h3><div id="saved"></div></div>
-    <div class="panel"><h3>False-positive rate by phase (developer triage)</h3><div id="fpphase"></div></div>
+    <div class="panel"><h3>Reverts and fix commits: gated repositories before / after adoption, and ungated</h3><div id="quality_outcome"></div></div>
+    <div class="panel"><h3>Pull request review: before / after adoption, and ungated</h3><div id="review_effect"></div></div>
   </div>
 
-  <h2>Exceptions and data quality</h2>
+  <h2>Feedback and exceptions</h2>
   <div class="grid2">
+    <div class="panel"><h3>Developer feedback on findings (triage labels)</h3><div id="feedback"></div></div>
     <div class="panel"><h3>Skip requests (SDLC-Skip trailers)</h3><div id="skips"></div></div>
-    <div class="panel"><h3>Data coverage</h3><div id="coverage"></div></div>
   </div>
+
+  <h2>Data coverage</h2>
+  <div class="panel"><div id="coverage"></div></div>
 </main>
-<footer id="footer">
-  These KPIs describe the delivery system, not people. Compare a team or repository with its own history; do not
-  rank teams or developers against each other. Definitions and formulas: docs/kpi/README.md.
+<footer>
+  Every number is measured from the gate's run events, developer triage labels, git history and pull requests; none is
+  estimated. These KPIs describe the delivery system, not people: no individual is shown, counts of fewer than
+  <span id="mingroup"></span> people are suppressed, and teams are compared with their own history, not ranked.
+  Definitions and formulas: docs/kpi/README.md.
 </footer>
 <script id="kpi-data" type="application/json">__KPI_DATA__</script>
 <script>
 (function () {
   "use strict";
-  var DATA = JSON.parse(document.getElementById("kpi-data").textContent);
-  var S = DATA.summary;
+  var S = JSON.parse(document.getElementById("kpi-data").textContent).summary;
   var NS = "http://www.w3.org/2000/svg";
   var PHASES = {"1": "Planning", "2": "Requirements", "3": "Design", "4": "Development", "5": "Testing", "6": "Deployment", "7": "Maintenance", "8": "Security"};
+  var PALETTE = ["#434098", "#EB001F", "#8E8BD0", "#F28B99", "#2B2966", "#B8B6E8", "#7A0010", "#5D5B7A"];
+  var TEAMS = Object.keys(S.teams);
+  var UNATTRIBUTED = "(unattributed)";
+  var COLOR = {};
+  // Real teams get the palette in order; runs without a known repository get neutral grey, never a team colour.
+  TEAMS.filter(function (t) { return t !== UNATTRIBUTED; }).forEach(function (t, i) { COLOR[t] = PALETTE[i % PALETTE.length]; });
+  COLOR[UNATTRIBUTED] = "#a9a7bd";
 
   function el(tag, attrs, text) {
     var e = document.createElement(tag);
@@ -122,101 +132,105 @@ _TEMPLATE = r"""<!doctype html>
     if (text !== undefined) e.textContent = String(text);
     return e;
   }
-  function pct(x) { return x === null || x === undefined ? null : Math.round(x * 1000) / 10 + "%"; }
-  function num(x, d) { return x === null || x === undefined ? null : Number(x).toFixed(d === undefined ? 1 : d); }
   function clear(id) { var n = document.getElementById(id); while (n.firstChild) n.removeChild(n.firstChild); return n; }
+  function isNum(x) { return x !== null && x !== undefined && !isNaN(x); }
+  function pct(x) { return isNum(x) ? Math.round(x * 1000) / 10 + "%" : null; }
+  function num(x, d) { return isNum(x) ? Number(x).toFixed(d === undefined ? 1 : d) : null; }
+  function int(x) { return isNum(x) ? Math.round(x).toLocaleString("en") : null; }
 
-  var TILES = [
-    ["gate_pass_rate", "Gate pass rate", pct, "Runs that passed every required phase."],
-    ["first_time_right_rate", "First-time-right", pct, "Branches whose first gate run passed."],
-    ["block_rate", "Block rate", pct, "Runs stopped by a high or blocker finding."],
-    ["blocking_findings_per_run", "Blocking findings / run", function (x) { return num(x, 2); }, "Blocker + high findings per gate run."],
-    ["security_critical_run_rate", "Security-critical runs", pct, "Runs with a secret, credential or vulnerable dependency."],
-    ["time_to_green_hours_median", "Median time to green", function (x) { return x === null ? null : num(x, 1) + " h"; }, "From a blocked run to the next passing run on a branch."],
-    ["skip_granted_rate", "Skip rate", pct, "Runs with a valid SDLC-Skip waiver."],
-    ["unverified_finding_share", "Unverified findings", pct, "Findings without evidence in the file (gate precision signal)."],
-    ["gate_latency_s_p50", "Gate latency p50 / p90", null, "Review time per run, seconds."],
-    ["tokens_per_run", "Tokens / run", function (x) { return x === null ? null : Math.round(x).toLocaleString("en"); }, "Model tokens per metered run (cost driver)."],
-    ["blocking_findings_per_kloc", "Blocking findings / 1k lines", function (x) { return num(x, 2); }, "Blocker + high per 1,000 changed lines (runs that report size)."],
-    ["time_saved", "Est. time saved / run", null, "Net developer hours per gate run: defects fixed before merge minus waiting for the gate."],
-    ["false_positives", "False-positive rate", null, "Share of triaged findings labelled false positive."]
-  ];
-  var NA_REASON = {
-    first_time_right_rate: "no run with a known repository and branch",
-    time_to_green_hours_median: "no blocked branch has turned green yet",
-    unverified_finding_share: "no findings in scope",
-    tokens_per_run: "no run reported token usage",
-    blocking_findings_per_kloc: "no run reports changed lines yet (engines from this release on do)",
-    time_saved: "no gate runs in scope"
-  };
+  // A legend swatch is a small SVG square: hash-pinned styles allow no style attributes.
+  function swatch(color) {
+    var s = svgEl("svg", {width: 12, height: 10, viewBox: "0 0 12 10"});
+    s.appendChild(svgEl("rect", {width: 12, height: 10, rx: 2, fill: color}));
+    return s;
+  }
 
-  function renderTiles(k) {
-    var box = clear("tiles");
-    TILES.forEach(function (t) {
-      var value;
-      if (t[0] === "gate_latency_s_p50") {
-        value = k.gate_latency_s_p50 === null ? null : num(k.gate_latency_s_p50, 0) + " / " + num(k.gate_latency_s_p90, 0) + " s";
-      } else if (t[0] === "time_saved") {
-        value = k.time_saved.net_hours_per_run === null ? null : num(k.time_saved.net_hours_per_run, 2) + " h";
-      } else if (t[0] === "false_positives") {
-        value = pct(k.false_positives.rate);
-        if (value === null) NA_REASON.false_positives = "insufficient data (" + k.false_positives.labels + " of " + S.min_triage_labels + " labels needed)";
-      } else {
-        value = t[2](k[t[0]]);
-      }
-      var tile = el("div", {"class": "tile" + (value === null ? " na" : "")});
-      tile.appendChild(el("div", {"class": "k"}, t[1]));
-      tile.appendChild(el("div", {"class": "v"}, value === null ? "n/a" : value));
-      var desc = value === null ? "Not available: " + (NA_REASON[t[0]] || "not enough data") : t[3];
-      // Small samples are flagged, so a median over two recoveries is not read as a trend.
-      if (value !== null && t[0] === "time_to_green_hours_median") desc += " Based on " + k.time_to_green_recoveries + " recover" + (k.time_to_green_recoveries === 1 ? "y." : "ies.");
-      if (value !== null && t[0] === "first_time_right_rate") desc += " " + k.first_time_right_branches + " branches.";
-      if (value !== null && t[0] === "time_saved") desc += " Estimate; precision " + k.time_saved.precision_source + ".";
-      if (value !== null && t[0] === "false_positives") desc += " " + k.false_positives.labels + " labels.";
-      tile.appendChild(el("div", {"class": "d"}, desc));
-      box.appendChild(tile);
+  // A tile shows a measured value, or "no data yet" and what would collect it.
+  function tiles(id, specs) {
+    var box = clear(id);
+    specs.forEach(function (s) {
+      var v = s.value;
+      var t = el("div", {"class": "tile" + (v === null ? " na" : "") + (s.accent ? " accent" : "")});
+      t.appendChild(el("div", {"class": "k"}, s.label));
+      t.appendChild(el("div", {"class": "v"}, v === null ? "no data yet" : v));
+      t.appendChild(el("div", {"class": "d"}, v === null ? s.missing : s.desc));
+      box.appendChild(t);
     });
   }
 
-  function lineChart(id, weeks, series, maxY, fmt) {
-    var box = clear(id), W = 520, H = 220, L = 44, R = 12, T = 10, B = 34;
-    var svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, width: "100%", role: "img"});
+  function legend(id, teams) {
+    var box = clear(id);
+    teams.forEach(function (t) {
+      var s = el("span");
+      s.appendChild(swatch(COLOR[t] || "#5D5B7A"));
+      s.appendChild(document.createTextNode(" " + t));
+      box.appendChild(s);
+    });
+  }
+
+  function adoptionChart() {
+    var box = clear("adoption"), W = 560, H = 240, L = 40, R = 96, T = 10, B = 34;
+    var teams = Object.keys(S.adoption);
+    legend("adoptionLegend", teams);
+    if (!teams.length) { box.appendChild(el("p", {"class": "note"}, "No gate runs yet.")); return; }
+    var weeks = {};
+    teams.forEach(function (t) { S.adoption[t].weeks.forEach(function (w) { weeks[w.week] = true; }); });
+    weeks = Object.keys(weeks).sort();
+    var max = Math.max(1, S.rules.active_week_runs);
+    teams.forEach(function (t) { S.adoption[t].weeks.forEach(function (w) { max = Math.max(max, w.runs); }); });
     var n = weeks.length, x = function (i) { return L + (n <= 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1)); };
-    var y = function (v) { return T + (H - T - B) * (1 - v / maxY); };
-    for (var g = 0; g <= 4; g++) {
-      var gv = maxY * g / 4;
-      svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: y(gv), y2: y(gv), stroke: "#d9d7f0"}));
-      svg.appendChild(svgEl("text", {x: L - 6, y: y(gv) + 4, "text-anchor": "end"}, fmt(gv)));
+    var y = function (v) { return T + (H - T - B) * (1 - v / max); };
+    var svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, width: "100%", role: "img"});
+    [0, max / 2, max].forEach(function (g) {
+      svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: y(g), y2: y(g), stroke: "#d9d7f0"}));
+      svg.appendChild(svgEl("text", {x: L - 6, y: y(g) + 4, "text-anchor": "end"}, Math.round(g)));
+    });
+    svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: y(S.rules.active_week_runs), y2: y(S.rules.active_week_runs), stroke: "#b26b00", "stroke-dasharray": "4 4"}));
+    weeks.forEach(function (w, i) { if (n <= 8 || i % Math.ceil(n / 8) === 0) svg.appendChild(svgEl("text", {x: x(i), y: H - 12, "text-anchor": "middle"}, w.replace(/^\d{4}-/, ""))); });
+    var labels = [];
+    teams.forEach(function (t) {
+      var pts = S.adoption[t].weeks.map(function (w) { return [x(weeks.indexOf(w.week)), y(w.runs)]; });
+      if (pts.length > 1) svg.appendChild(svgEl("polyline", {points: pts.map(function (p) { return p.join(","); }).join(" "), fill: "none", stroke: COLOR[t], "stroke-width": 2.5}));
+      pts.forEach(function (p) { svg.appendChild(svgEl("circle", {cx: p[0], cy: p[1], r: 3, fill: COLOR[t]})); });
+      var last = pts[pts.length - 1];
+      labels.push({x: last[0] + 6, y: last[1] + 4, text: S.adoption[t].phase, color: COLOR[t]});
+    });
+    // Lines often end close together: push the end labels apart so each stays readable.
+    labels.sort(function (a, b) { return a.y - b.y; });
+    for (var li = 1; li < labels.length; li++) {
+      if (labels[li].y - labels[li - 1].y < 13) labels[li].y = labels[li - 1].y + 13;
     }
-    weeks.forEach(function (w, i) {
-      if (n <= 8 || i % Math.ceil(n / 8) === 0) svg.appendChild(svgEl("text", {x: x(i), y: H - 12, "text-anchor": "middle"}, w.replace(/^\d{4}-/, "")));
-    });
-    series.forEach(function (s) {
-      var pts = [];
-      s.values.forEach(function (v, i) { if (v !== null) pts.push([x(i), y(v)]); });
-      if (pts.length > 1) svg.appendChild(svgEl("polyline", {points: pts.map(function (p) { return p.join(","); }).join(" "), fill: "none", stroke: s.color, "stroke-width": 2.5}));
-      pts.forEach(function (p) { svg.appendChild(svgEl("circle", {cx: p[0], cy: p[1], r: 3.5, fill: s.color})); });
-    });
+    labels.forEach(function (l) { svg.appendChild(svgEl("text", {x: l.x, y: l.y, fill: l.color}, l.text)); });
     box.appendChild(svg);
+    document.getElementById("phaseRule").textContent = "Phase per team from its runs per week (dashed line: " + S.rules.active_week_runs +
+      " runs, an active week). " + S.rules.regular_streak_weeks + " consecutive active weeks = regular, " + S.rules.operational_streak_weeks +
+      " = operational, otherwise experimental.";
   }
 
-  function barsAndLine(id, weeks, bars, line) {
-    var box = clear(id), W = 520, H = 220, L = 44, R = 44, T = 10, B = 34;
+  function casesChart() {
+    var box = clear("cases"), W = 560, H = 240, L = 40, R = 12, T = 18, B = 34;
+    var months = Object.keys(S.cases_by_month);
+    var teams = {};
+    months.forEach(function (m) { Object.keys(S.cases_by_month[m]).forEach(function (t) { teams[t] = true; }); });
+    teams = Object.keys(teams).sort();
+    legend("casesLegend", teams);
+    if (!months.length) { box.appendChild(el("p", {"class": "note"}, "No gate runs yet.")); return; }
+    var totals = months.map(function (m) { return teams.reduce(function (a, t) { return a + (S.cases_by_month[m][t] || 0); }, 0); });
+    var max = Math.max.apply(null, totals.concat([1])), bw = (W - L - R) / months.length;
+    var y = function (v) { return T + (H - T - B) * (1 - v / max); };
     var svg = svgEl("svg", {viewBox: "0 0 " + W + " " + H, width: "100%", role: "img"});
-    var n = Math.max(weeks.length, 1), bw = (W - L - R) / n;
-    var maxB = Math.max.apply(null, bars.concat([1])), maxL = Math.max.apply(null, line.filter(function (v) { return v !== null; }).concat([1]));
-    var yb = function (v) { return T + (H - T - B) * (1 - v / maxB); }, yl = function (v) { return T + (H - T - B) * (1 - v / maxL); };
-    svg.appendChild(svgEl("text", {x: L - 6, y: yb(maxB) + 4, "text-anchor": "end"}, maxB));
-    svg.appendChild(svgEl("text", {x: W - R + 6, y: yl(maxL) + 4}, maxL.toFixed(1)));
-    svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: yb(0), y2: yb(0), stroke: "#d9d7f0"}));
-    weeks.forEach(function (w, i) {
-      svg.appendChild(svgEl("rect", {x: L + i * bw + bw * 0.15, y: yb(bars[i]), width: bw * 0.7, height: yb(0) - yb(bars[i]), fill: "#EDECFC", stroke: "#434098"}));
-      if (n <= 8 || i % Math.ceil(n / 8) === 0) svg.appendChild(svgEl("text", {x: L + i * bw + bw / 2, y: H - 12, "text-anchor": "middle"}, w.replace(/^\d{4}-/, "")));
+    svg.appendChild(svgEl("line", {x1: L, x2: W - R, y1: y(0), y2: y(0), stroke: "#d9d7f0"}));
+    months.forEach(function (m, i) {
+      var acc = 0, x0 = L + i * bw + bw * 0.2;
+      teams.forEach(function (t) {
+        var v = S.cases_by_month[m][t] || 0;
+        if (!v) return;
+        svg.appendChild(svgEl("rect", {x: x0, y: y(acc + v), width: bw * 0.6, height: y(acc) - y(acc + v), fill: COLOR[t] || "#5D5B7A"}));
+        acc += v;
+      });
+      svg.appendChild(svgEl("text", {x: x0 + bw * 0.3, y: y(acc) - 4, "text-anchor": "middle"}, acc));
+      svg.appendChild(svgEl("text", {x: x0 + bw * 0.3, y: H - 12, "text-anchor": "middle"}, m));
     });
-    var pts = [];
-    line.forEach(function (v, i) { if (v !== null) pts.push([L + i * bw + bw / 2, yl(v)]); });
-    if (pts.length > 1) svg.appendChild(svgEl("polyline", {points: pts.map(function (p) { return p.join(","); }).join(" "), fill: "none", stroke: "#EB001F", "stroke-width": 2.5}));
-    pts.forEach(function (p) { svg.appendChild(svgEl("circle", {cx: p[0], cy: p[1], r: 3.5, fill: "#EB001F"})); });
     box.appendChild(svg);
   }
 
@@ -235,110 +249,105 @@ _TEMPLATE = r"""<!doctype html>
     box.appendChild(svg);
   }
 
-  function renderScope(name) {
-    var k = name === "__all__" ? S.overall : S.repos[name];
-    renderTiles(k);
-    document.getElementById("scopenote").textContent = k.runs + " gate runs in scope";
-    var phases = Object.keys(k.phase_fail_rate).filter(function (p) { return k.phase_fail_rate[p] !== null; })
-      .map(function (p) { return [p + " " + (PHASES[p] || ""), k.phase_fail_rate[p]]; });
-    hbars("phases", phases, function (v) { return pct(v); }, "#434098");
-    // The JSON is written with sorted keys, so order by count here (ties alphabetically, for a stable picture).
-    var cats = Object.keys(k.top_categories).map(function (c) { return [c, k.top_categories[c]]; })
-      .sort(function (a, b) { return b[1] - a[1] || (a[0] < b[0] ? -1 : 1); });
-    hbars("cats", cats, function (v) { return v; }, "#EB001F");
-    renderSaved(k.time_saved);
-    renderFp(k.false_positives);
-  }
-
-  function table(id, rows, head) {
-    var box = clear(id), t = el("table");
-    if (head) { var hr = el("tr"); head.forEach(function (h) { hr.appendChild(el("th", {}, h)); }); t.appendChild(hr); }
-    rows.forEach(function (r) {
-      var tr = el("tr");
-      r.forEach(function (c, i) { tr.appendChild(el("td", i === r.length - 1 && r.length > 2 ? {"class": "note"} : {}, c)); });
-      t.appendChild(tr);
-    });
+  function table(id, head, rows, emptyText) {
+    var box = clear(id);
+    if (!rows.length) { box.appendChild(el("p", {"class": "note"}, emptyText)); return box; }
+    var t = el("table"), hr = el("tr");
+    head.forEach(function (h) { hr.appendChild(el("th", {}, h)); });
+    t.appendChild(hr);
+    rows.forEach(function (r) { var tr = el("tr"); r.forEach(function (c) { tr.appendChild(el("td", {}, c === null ? "n/a" : c)); }); t.appendChild(tr); });
     box.appendChild(t);
     return box;
   }
 
-  function renderSaved(ts) {
-    var a = ts.assumptions;
-    var box = table("saved", [
-      ["Blocking findings caught (once per blocked streak)", String(ts.caught_blocking_findings), "Lower bound: attributable branches only."],
-      ["Precision applied", pct(ts.precision), ts.precision_source],
-      ["Fix cost before / after merge", a.fix_hours_pre_merge + " h / " + a.fix_hours_post_merge + " h", "Assumption (5x escalation)."],
-      ["Gross hours saved", num(ts.gross_hours, 1) + " h", "caught x precision x (after - before)"],
-      ["Developer time waiting for the gate", num(ts.gate_wait_hours, 1) + " h", "Sum of gate run durations."],
-      ["Net hours saved", num(ts.net_hours, 1) + " h", "gross - waiting"]
+  var COHORT = {gated_before: "Gated repos, before adoption", gated_after: "Gated repos, after adoption", ungated: "Repos never gated"};
+
+  function render(scope) {
+    var k = scope === "__all__" ? S.overall : S.teams[scope];
+    var u = scope === "__all__" ? {gate_users: S.users.total_gate_users, coverage: null} : (S.users.by_team[scope] || {gate_users: null, coverage: null});
+    var teamsAll = Object.keys(S.adoption);
+    var operational = teamsAll.filter(function (t) { return S.adoption[t].phase === "operational"; }).length;
+    document.getElementById("scopenote").textContent = k.runs + " gate runs in scope";
+    tiles("usage", [
+      {label: "Cases (gate runs)", value: int(k.runs), desc: "Commits and pushes reviewed by the gate."},
+      {label: "Active repositories", value: int(k.active_repos), desc: "Repositories with at least one gate run."},
+      {label: scope === "__all__" ? "Teams operational" : "Adoption phase", value: scope === "__all__" ? operational + " of " + teamsAll.length : ((S.adoption[scope] || {}).phase || null),
+       desc: "By the adoption rule under the curve.", missing: "No runs for this team."},
+      {label: "Gate users", value: int(u.gate_users), desc: "Distinct verified developers" + (isNum(u.coverage) ? "; " + pct(u.coverage) + " of committers in gated repos." : "."),
+       missing: "Fewer than " + S.rules.min_group + " people (suppressed), or no verified sign-ins."},
+      {label: "Blocks resolved before merge", value: int(k.blocks_resolved), accent: true,
+       desc: int(k.blocking_findings_resolved) + " blocking findings fixed; " + int(k.blocks) + " blocked branches in total.", missing: "No blocked branch has turned green yet."},
+      {label: "Median fix cycle", value: isNum(k.time_to_green_hours_median) ? num(k.time_to_green_hours_median, 1) + " h" : null, accent: true,
+       desc: "Block to next passing run, median " + num(k.fix_iterations_median, 0) + " blocked run(s); " + k.time_to_green_recoveries + " recoveries.",
+       missing: "No blocked branch has turned green yet."},
+      {label: "Positive feedback", value: pct(k.feedback.positive_share), desc: k.feedback.labels + " labels; " + (pct(k.feedback.label_coverage) || "0%") + " of findings labelled.",
+       missing: k.feedback.labels + " of " + S.rules.min_triage_labels + " labels needed; developers label with `ai-sdlc-gate triage`."},
+      {label: "Tokens per run p50 / p90", value: isNum(k.tokens_p50) ? int(k.tokens_p50) + " / " + int(k.tokens_p90) : null,
+       desc: int(k.tokens_total) + " tokens in scope; " + pct(k.token_metered_share) + " of runs report usage.", missing: "No run reported token usage."},
+      {label: "Run time p50 / p90", value: isNum(k.gate_latency_s_p50) ? num(k.gate_latency_s_p50, 0) + " / " + num(k.gate_latency_s_p90, 0) + " s" : null,
+       desc: "Time a developer waits for the gate.", missing: "No run reported its duration."}
     ]);
-    box.appendChild(el("p", {"class": "note"}, "An estimate, not a measurement: human review time saved needs PR review data the gate does not collect yet (see docs/kpi/README.md)."));
+    tiles("quality", [
+      {label: "Gate pass rate", value: pct(k.gate_pass_rate), desc: "Runs that passed every required phase."},
+      {label: "First-time-right", value: pct(k.first_time_right_rate), desc: "Branches whose first run passed; " + k.first_time_right_branches + " branches.",
+       missing: "No run with a known repository and branch."},
+      {label: "Block rate", value: pct(k.block_rate), desc: "Runs stopped by a high or blocker finding."},
+      {label: "Blocking findings per run", value: num(k.blocking_findings_per_run, 2), desc: "Blocker + high per gate run."},
+      {label: "Blocking findings per 1k lines", value: num(k.blocking_findings_per_kloc, 2), desc: "Over runs that report changed lines.",
+       missing: "Runs report changed lines from gate engines released with PR #34 on."},
+      {label: "Security-critical runs", value: pct(k.security_critical_run_rate), accent: true, desc: "Secret, credential or vulnerable dependency caught."}
+    ]);
+    hbars("phases", Object.keys(k.phase_fail_rate).filter(function (p) { return isNum(k.phase_fail_rate[p]); })
+      .map(function (p) { return [p + " " + (PHASES[p] || ""), k.phase_fail_rate[p]]; }), pct, "#434098");
+    // The JSON is written with sorted keys, so order by count here (ties alphabetically, for a stable picture).
+    hbars("cats", Object.keys(k.top_categories).map(function (c) { return [c, k.top_categories[c]]; })
+      .sort(function (a, b) { return b[1] - a[1] || (a[0] < b[0] ? -1 : 1); }), function (v) { return v; }, "#EB001F");
+    var fb = k.feedback;
+    table("feedback", ["Phase", "False-positive rate", "Labels"], Object.keys(fb.by_phase).map(function (p) {
+      return [p + " " + (PHASES[p] || ""), fb.by_phase[p].rate === null ? "insufficient data" : pct(fb.by_phase[p].rate), String(fb.by_phase[p].labels)];
+    }), "No data yet: no findings labelled. Developers label findings with `ai-sdlc-gate triage <n> --label accepted|false-positive|wont-fix`; a rate is shown from " +
+      S.rules.min_triage_labels + " labels per group.");
   }
 
-  function renderFp(fp) {
-    var phases = Object.keys(fp.by_phase);
-    if (!phases.length) {
-      clear("fpphase").appendChild(el("p", {"class": "note"},
-        "Insufficient data: no findings triaged yet. Developers label findings with `ai-sdlc-gate triage`; a rate is shown from " + S.min_triage_labels + " labels per group."));
-      return;
-    }
-    table("fpphase", phases.map(function (p) {
-      var g = fp.by_phase[p];
-      return [p + " " + (PHASES[p] || ""), g.rate === null ? "insufficient data" : pct(g.rate), g.labels + " labels"];
-    }), ["Phase", "False-positive rate", "Sample"]);
-  }
-
-  // Header, scope selector, trends.
-  var runs = S.overall.runs;
-  document.getElementById("period").textContent = runs
-    ? "Period " + S.period.from.slice(0, 10) + " to " + S.period.to.slice(0, 10) + "  ·  " + runs + " gate runs  ·  " + Object.keys(S.repos).length + " repositories"
+  var src = S.sources;
+  document.getElementById("period").textContent = S.overall.runs
+    ? "Period " + S.period.from.slice(0, 10) + " to " + S.period.to.slice(0, 10) + "  ·  " + src.gate_runs + " gate runs  ·  " + src.git_commits +
+      " commits from " + src.git_repos + " repos  ·  " + src.pull_requests + " pull requests"
     : "No gate runs in the dataset.";
+  document.getElementById("mingroup").textContent = S.rules.min_group;
   var scope = document.getElementById("scope");
-  scope.appendChild(el("option", {value: "__all__"}, "All repositories"));
-  Object.keys(S.repos).forEach(function (r) { scope.appendChild(el("option", {value: r}, r + " (" + S.repos[r].runs + ")")); });
-  scope.addEventListener("change", function () { renderScope(scope.value); });
+  scope.appendChild(el("option", {value: "__all__"}, "All teams"));
+  TEAMS.forEach(function (t) { scope.appendChild(el("option", {value: t}, t + " (" + S.teams[t].runs + ")")); });
+  scope.addEventListener("change", function () { render(scope.value); });
+  adoptionChart();
+  casesChart();
 
-  var weeks = Object.keys(S.weeks);
-  lineChart("trendRates", weeks, [
-    {color: "#434098", values: weeks.map(function (w) { return S.weeks[w].gate_pass_rate; })},
-    {color: "#EB001F", values: weeks.map(function (w) { return S.weeks[w].block_rate; })}
-  ], 1, function (v) { return Math.round(v * 100) + "%"; });
-  barsAndLine("trendRuns", weeks, weeks.map(function (w) { return S.weeks[w].runs; }), weeks.map(function (w) { return S.weeks[w].blocking_findings_per_run; }));
+  table("quality_outcome", ["Cohort", "Commits", "Repos", "Revert rate", "Fix-commit rate"],
+    S.quality_outcome ? Object.keys(S.quality_outcome).map(function (c) { var q = S.quality_outcome[c];
+      return [COHORT[c] || c, int(q.commits), int(q.repos), pct(q.revert_rate), pct(q.fix_commit_rate)]; }) : [],
+    "No data yet: collect each repository's history with `ai-sdlc-gate kpi collect-git --repo-dir <clone> --out <file>` and pass it to `kpi export --git`.");
+  table("review_effect", ["Cohort", "PRs", "Cycle h (median)", "Reviews (median)", "Changes requested", "Review comments (median)", "Revert PRs"],
+    S.review_effect ? Object.keys(S.review_effect).map(function (c) { var r = S.review_effect[c];
+      return [COHORT[c] || c, int(r.prs), num(r.cycle_hours_median, 1), num(r.reviews_median, 0), pct(r.changes_requested_share), num(r.review_comments_median, 0), pct(r.revert_pr_rate)]; }) : [],
+    "No data yet: collect pull requests with `ai-sdlc-gate kpi collect-prs --slug <owner/repo> --out <file>` and pass them to `kpi export --prs`.");
 
-  var sk = clear("skips");
-  if (!S.skip_reasons.length) {
-    sk.appendChild(el("p", {"class": "note"}, "No skip requests in the period."));
-  } else {
-    var t = el("table"), hr = el("tr");
-    ["Date", "Repository", "Phases", "Reason"].forEach(function (h) { hr.appendChild(el("th", {}, h)); });
-    t.appendChild(hr);
-    S.skip_reasons.slice(-12).reverse().forEach(function (s) {
-      var tr = el("tr");
-      tr.appendChild(el("td", {}, s.ts.slice(0, 10)));
-      tr.appendChild(el("td", {}, s.repo));
-      tr.appendChild(el("td", {}, s.phases.join(", ") || "-"));
-      tr.appendChild(el("td", {}, s.reason || "(no reason)"));
-      t.appendChild(tr);
-    });
-    sk.appendChild(t);
-  }
+  table("skips", ["Date", "Repository", "Phases", "Reason"], S.skip_reasons.slice(-12).reverse().map(function (s) {
+    return [s.ts.slice(0, 10), s.repo, s.phases.join(", ") || "-", s.reason || "(no reason)"];
+  }), "No skip requests in the period.");
 
-  var o = S.overall, cov = clear("coverage"), ct = el("table");
-  [
-    ["Runs attributable to a repository and branch", pct(o.attributable_share), "Needed for first-time-right and time to green."],
-    ["Runs reporting token usage", pct(o.token_metered_share), "Needed for the cost KPI."],
-    ["Runs reporting changed lines", o.sized_run_share ? pct(o.sized_run_share) : "missing", "Needed to normalise findings per 1,000 changed lines (engines from this release on)."],
-    ["Findings triaged by developers", o.false_positives.labels ? String(o.false_positives.labels) + " labels" : "not tracked", "Needed for the false-positive rate; the unverified share is an automatic lower bound."]
-  ].forEach(function (r) {
-    var tr = el("tr");
-    tr.appendChild(el("td", {}, r[0]));
-    tr.appendChild(el("td", {"class": (r[1] === "missing" || r[1] === "not tracked") ? "warn" : ""}, r[1] === null ? "n/a" : r[1]));
-    tr.appendChild(el("td", {"class": "note"}, r[2]));
-    ct.appendChild(tr);
-  });
-  cov.appendChild(ct);
+  var o = S.overall;
+  table("coverage", ["Stream", "Status", "Needed for"], [
+    ["Gate run events", src.gate_runs + " runs", "every run-based KPI"],
+    ["Runs attributable to a repository and branch", pct(o.attributable_share), "first-time-right, fix cycle, blocks resolved (newer engines attribute every run)"],
+    ["Team map", src.team_map ? "provided" : "not provided: teams are GitHub owners", "exact team attribution (`kpi export --teams`)"],
+    ["Runs reporting changed lines", pct(o.sized_run_share), "findings per 1k lines"],
+    ["Runs reporting tokens", pct(o.token_metered_share), "cost"],
+    ["Triage labels", o.feedback.labels + " (" + (pct(o.feedback.label_coverage) || "0%") + " of findings)", "feedback and false-positive rate"],
+    ["Git history", src.git_commits ? src.git_commits + " commits, " + src.git_repos + " repos" : "no data yet", "revert and fix-commit rates, committer coverage"],
+    ["Pull requests", src.pull_requests ? src.pull_requests + " PRs, " + src.pr_repos + " repos" : "no data yet", "review cycle time and rounds"]
+  ], "");
 
-  renderScope("__all__");
+  render("__all__");
 })();
 </script>
 </body>
@@ -374,9 +383,9 @@ def render_dashboard(summary: dict[str, Any], rows: list[dict[str, Any]] | None 
     payload = json.dumps({"summary": summary}, sort_keys=True, separators=(",", ":"))
     # Escaping contract, tested by test_dashboard_embeds_data_safely_and_has_no_external_scripts and
     # test_hostile_repo_names_and_comment_closers_stay_data (gate/tests/test_kpi.py): every `<` in the JSON
-    # payload is replaced by the six-character JSON escape `\u003c`. JSON.parse reads it back as `<`, but the HTML
-    # parser never sees a `<` inside the data block, so neither `</script` nor `<!--` can occur there (and `-->`
-    # means nothing without a preceding `<!--`). The page writes data only through textContent and setAttribute,
-    # and the Content-Security-Policy pins its one script by hash.
+    # payload is replaced by its six-character JSON unicode escape (backslash, u, 003c). JSON.parse reads it back
+    # as `<`, but the HTML parser never sees a `<` inside the data block, so neither `</script` nor `<!--` can occur
+    # there (and `-->` means nothing without a preceding `<!--`). The page writes data only through textContent and
+    # setAttribute, and the Content-Security-Policy pins its one script by hash.
     payload = payload.replace("<", "\\u003c")
     return _TEMPLATE.replace("__CSP__", content_security_policy()).replace("__KPI_DATA__", payload)

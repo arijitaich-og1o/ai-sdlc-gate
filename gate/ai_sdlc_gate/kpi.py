@@ -1,21 +1,30 @@
-"""KPI dataset: turn stored gate metrics events into a tidy, metadata-only dataset and compute the KPIs in
+"""KPI dataset: turn the gate's measured data streams into a tidy, metadata-only dataset and compute the KPIs in
 docs/kpi/README.md.
 
-Privacy by design: a row carries no developer identity (no login, no e-mail), no finding titles, no file paths and
-no code. KPIs are meant for team / repository / week granularity, never for ranking individuals.
+Measured only. Every number is counted or timed from a data stream: gate run events, finding labels developers set,
+git history of the gated repositories and GitHub pull requests. Nothing is estimated from assumed parameters;
+a KPI without data is reported as None ("no data yet") together with what would collect it.
 
-Deterministic: rows are sorted by (ts, run_id) and every aggregate is a pure function of the rows, so the same
-events always produce byte-identical CSV / JSON.
+Privacy by design: a row carries no developer identity (no login, no e-mail), no finding titles, no file paths and
+no code. KPIs are for team / repository / period granularity, never for ranking individuals; any count of people
+below MIN_GROUP is suppressed.
+
+Deterministic: rows are sorted and every aggregate is a pure function of the inputs, so the same inputs always
+produce byte-identical CSV / JSON.
 """
 from __future__ import annotations
 
 import csv
+import fnmatch
 import io
 import json
+import secrets
 import statistics
 from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any, Iterable
+
+from .kpi_sources import person_key
 
 DATASET_VERSION = 1
 SEVERITIES = ("blocker", "high", "medium", "low", "info")
@@ -24,6 +33,7 @@ SECURITY_CRITICAL = ("secret-exposure", "hardcoded-credential", "known-vulnerabl
 # Refs that do not identify a branch, so a fail -> pass sequence on them cannot be attributed to one piece of work.
 _ANONYMOUS_REFS = {"", "HEAD"}
 _UNKNOWN_REPO = "unknown/unknown"
+UNATTRIBUTED_TEAM = "(unattributed)"
 
 # Column order of the CSV export (the contract for the Measurement tool; additive changes only).
 COLUMNS = [
@@ -34,23 +44,22 @@ COLUMNS = [
     "categories", "duration_s", "prompt_tokens", "completion_tokens",
     # Appended in dataset version 1 (additive): empty for events from engines that did not count lines yet.
     "lines_added", "lines_removed",
+    "team",
 ]
 
 # One row per finding label a developer set with `ai-sdlc-gate triage` (see triage.py).
 TRIAGE_COLUMNS = ["run_id", "ts", "week", "repo", "phase", "category", "severity", "label"]
 
-# Time saved (K12) is an estimate. Every input that is not measured is named here and shown on the dashboard.
-TIME_SAVED_ASSUMPTIONS = {
-    # Fixing a blocking finding while the change is still open: the developer has the context, nothing to redeploy.
-    "fix_hours_pre_merge": 0.5,
-    # Fixing the same defect after merge: rediscovery, a new branch and review, possibly a redeploy. 5x the
-    # pre-merge cost, the conservative end of the defect-cost escalation reported in the literature.
-    "fix_hours_post_merge": 2.5,
-    # Share of blocking findings that are real, used until enough findings are triaged to measure it.
-    "assumed_precision": 0.8,
-}
-# Below this many labels the false-positive rate is reported as insufficient data (None).
+# Below this many labels a feedback / false-positive rate is reported as insufficient data (None).
 MIN_TRIAGE_LABELS = 10
+# Counts of people (gate users, committers) below this are suppressed: works-council rule, no small-group exposure.
+MIN_GROUP = 5
+
+# Adoption phases, defined once for every team (not tuned per team). A week is "active" for a team with at least
+# ACTIVE_WEEK_RUNS gate runs. The phase in a week follows the run of consecutive active weeks ending there.
+ACTIVE_WEEK_RUNS = 5
+REGULAR_STREAK = 2       # 2 consecutive active weeks  -> regular
+OPERATIONAL_STREAK = 4   # 4 consecutive active weeks  -> operational; anything less with runs -> experimental
 
 
 def _ts(value: str) -> datetime:
@@ -62,6 +71,29 @@ def _week(ts: datetime) -> str:
     return f"{y}-W{w:02d}"
 
 
+def _week_index(week: str) -> int:
+    y, w = week.split("-W")
+    return datetime.fromisocalendar(int(y), int(w), 1).toordinal() // 7
+
+
+# ----------------------------------------------------------------------------- teams
+
+def team_of(repo: str, teams: dict[str, list[str]] | None = None) -> str:
+    """The team a repository belongs to: the first matching glob of the team map, else its GitHub owner.
+
+    The owner fallback is measured (it is part of the slug) but coarse; a team map (`--teams`, see the README)
+    makes it exact. Runs without a known repository are `(unattributed)`.
+    """
+    if not repo or repo == _UNKNOWN_REPO:
+        return UNATTRIBUTED_TEAM
+    for team, globs in sorted((teams or {}).items()):
+        if any(fnmatch.fnmatchcase(repo.lower(), g.lower()) for g in globs):
+            return team
+    return repo.split("/", 1)[0]
+
+
+# ----------------------------------------------------------------------------- the run dataset
+
 def _categories(event: dict[str, Any]) -> dict[str, int]:
     """Category -> finding count. The brief (capped at 40 per run) gives counts; older events only list names."""
     brief = event.get("findings_brief") or []
@@ -70,19 +102,20 @@ def _categories(event: dict[str, Any]) -> dict[str, int]:
     return {str(c): 1 for c in sorted(event.get("top_categories") or [])}
 
 
-def to_row(event: dict[str, Any]) -> dict[str, Any]:
+def to_row(event: dict[str, Any], teams: dict[str, list[str]] | None = None) -> dict[str, Any]:
     """One metadata-only row per gate run."""
     ts = _ts(event["ts"])
     counts = event.get("counts") or {}
     skip = event.get("skip") or {}
     usage = event.get("llm_usage") or {}
     phase_results = event.get("phase_results") or []
+    repo = str(event.get("repo") or _UNKNOWN_REPO)
     return {
         "run_id": event["id"],
         "ts": ts.isoformat(timespec="seconds"),
         "week": _week(ts),
         "month": ts.strftime("%Y-%m"),
-        "repo": str(event.get("repo") or _UNKNOWN_REPO),
+        "repo": repo,
         "ref": str(event.get("ref") or ""),
         "event_name": str(event.get("event_name") or ""),
         "intent": str(event.get("intent") or ""),
@@ -108,13 +141,49 @@ def to_row(event: dict[str, Any]) -> dict[str, Any]:
         "completion_tokens": int(usage.get("completion_tokens") or 0),
         "lines_added": int(event["lines_added"]) if "lines_added" in event else None,
         "lines_removed": int(event["lines_removed"]) if "lines_removed" in event else None,
+        "team": team_of(repo, teams),
     }
 
 
-def build_rows(events: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
-    rows = [to_row(e) for e in events]
+def build_rows(events: Iterable[dict[str, Any]], teams: dict[str, list[str]] | None = None) -> list[dict[str, Any]]:
+    rows = [to_row(e, teams) for e in events]
     rows.sort(key=lambda r: (r["ts"], r["run_id"]))
     return rows
+
+
+def gate_users(events: Iterable[dict[str, Any]], teams: dict[str, list[str]] | None, salt: str) -> list[tuple[str, str, str]]:
+    """(team, month, person key) per run with a verified developer: used only for suppressed distinct counts.
+
+    Kept in memory and apart from the exported rows on purpose: no export carries a per-person key.
+    """
+    out = []
+    for e in events:
+        email = str(e.get("developer_email") or "").strip().lower()
+        if email:
+            out.append((team_of(str(e.get("repo") or _UNKNOWN_REPO), teams), _ts(e["ts"]).strftime("%Y-%m"), person_key(email, salt)))
+    return out
+
+
+def validate_teams(teams: dict[str, list[str]], repos: Iterable[str]) -> list[str]:
+    """Problems in a team map against the repositories in the data: unusable globs, overlaps, unused teams.
+
+    Overlaps are resolved deterministically (the first team in name order wins), but they are reported so the map
+    can be made exact.
+    """
+    problems = []
+    for team, globs in sorted(teams.items()):
+        for g in globs:
+            if "/" not in g:
+                problems.append(f"team {team!r}: glob {g!r} has no owner/ part, so it can match no repository slug")
+    repos = sorted(set(repos))
+    for repo in repos:
+        hits = [t for t, globs in sorted(teams.items()) if any(fnmatch.fnmatchcase(repo.lower(), g.lower()) for g in globs)]
+        if len(hits) > 1:
+            problems.append(f"repository {repo!r} matches teams {hits}; it is counted for {hits[0]!r}")
+    for team, globs in sorted(teams.items()):
+        if not any(any(fnmatch.fnmatchcase(r.lower(), g.lower()) for g in globs) for r in repos):
+            problems.append(f"team {team!r} matches no repository in the data")
+    return problems
 
 
 def build_triage_rows(events: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -135,18 +204,20 @@ def build_triage_rows(events: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def triage_to_csv(rows: list[dict[str, Any]]) -> str:
+def _csv(rows: list[dict[str, Any]], columns: list[str]) -> str:
     buf = io.StringIO()
-    w = csv.DictWriter(buf, fieldnames=TRIAGE_COLUMNS, lineterminator="\n")
+    w = csv.DictWriter(buf, fieldnames=columns, lineterminator="\n", extrasaction="ignore")
     w.writeheader()
     w.writerows(rows)
     return buf.getvalue()
 
 
+def triage_to_csv(rows: list[dict[str, Any]]) -> str:
+    return _csv(rows, TRIAGE_COLUMNS)
+
+
 def rows_to_csv(rows: list[dict[str, Any]]) -> str:
-    buf = io.StringIO()
-    w = csv.DictWriter(buf, fieldnames=COLUMNS, lineterminator="\n")
-    w.writeheader()
+    flat = []
     for r in rows:
         out = dict(r)
         for k in ("phases", "failed_phases", "skip_phases"):
@@ -154,11 +225,11 @@ def rows_to_csv(rows: list[dict[str, Any]]) -> str:
         out["categories"] = ";".join(f"{c}:{n}" for c, n in r["categories"].items())
         for k in ("blocked", "flagged", "skip_requested", "skip_valid"):
             out[k] = "true" if r[k] else "false"
-        w.writerow(out)
-    return buf.getvalue()
+        flat.append(out)
+    return _csv(flat, COLUMNS)
 
 
-# ----------------------------------------------------------------------------- KPIs
+# ----------------------------------------------------------------------------- helpers
 
 def _rate(num: int, den: int) -> float | None:
     return round(num / den, 4) if den else None
@@ -173,6 +244,11 @@ def _quantile(values: list[float], q: float) -> float | None:
     return round(statistics.quantiles(vs, n=100, method="inclusive")[int(q * 100) - 1], 2)
 
 
+def _suppressed(n: int) -> int | None:
+    """A count of people, or None when the group is too small to show (MIN_GROUP)."""
+    return n if n >= MIN_GROUP else None
+
+
 def _work_key(r: dict[str, Any]) -> tuple[str, str] | None:
     """The piece of work a run belongs to: (repo, branch). None when the run cannot be attributed."""
     if r["repo"] == _UNKNOWN_REPO or r["ref"] in _ANONYMOUS_REFS:
@@ -180,23 +256,41 @@ def _work_key(r: dict[str, Any]) -> tuple[str, str] | None:
     return (r["repo"], r["ref"])
 
 
-def time_to_green_hours(rows: list[dict[str, Any]]) -> list[float]:
-    """Hours from the first failing run on a branch to the next passing run on it (one value per recovery)."""
+# ----------------------------------------------------------------------------- blocks and fix cycles
+
+def block_streaks(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Each streak of failing runs on a branch: its first run's blocking findings, length and how it ended.
+
+    A finding stays in the report on every run until it is fixed, so a streak counts the blocker + high findings
+    of its first run only. `resolved_after_h` is the measured time to the next passing run on the branch (None if
+    the branch has not turned green yet). Unattributable runs are left out.
+    """
     by_work: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for r in rows:
         key = _work_key(r)
         if key is not None:
             by_work[key].append(r)
-    out: list[float] = []
-    for runs in by_work.values():
-        failed_at: datetime | None = None
+    streaks: list[dict[str, Any]] = []
+    for key, runs in sorted(by_work.items()):
+        current: dict[str, Any] | None = None
         for r in sorted(runs, key=lambda x: x["ts"]):
-            if r["verdict"] == "fail" and failed_at is None:
-                failed_at = _ts(r["ts"])
-            elif r["verdict"] == "pass" and failed_at is not None:
-                out.append(round((_ts(r["ts"]) - failed_at).total_seconds() / 3600, 3))
-                failed_at = None
-    return out
+            if r["verdict"] == "fail":
+                if current is None:
+                    current = {"repo": key[0], "team": r["team"], "start": r["ts"], "failing_runs": 0,
+                               "blocking_findings": r["findings_blocker"] + r["findings_high"], "resolved_after_h": None}
+                current["failing_runs"] += 1
+            elif r["verdict"] == "pass" and current is not None:
+                current["resolved_after_h"] = round((_ts(r["ts"]) - _ts(current["start"])).total_seconds() / 3600, 3)
+                streaks.append(current)
+                current = None
+        if current is not None:
+            streaks.append(current)
+    return streaks
+
+
+def time_to_green_hours(rows: list[dict[str, Any]]) -> list[float]:
+    """Hours from the first failing run on a branch to the next passing run on it (one value per recovery)."""
+    return [s["resolved_after_h"] for s in block_streaks(rows) if s["resolved_after_h"] is not None]
 
 
 def first_time_right(rows: list[dict[str, Any]]) -> tuple[int, int]:
@@ -209,13 +303,16 @@ def first_time_right(rows: list[dict[str, Any]]) -> tuple[int, int]:
     return sum(1 for r in first.values() if r["verdict"] == "pass"), len(first)
 
 
-def false_positive_rates(triage_rows: list[dict[str, Any]]) -> dict[str, Any]:
-    """K13: share of labelled findings marked false positive, overall, per phase and per category.
+# ----------------------------------------------------------------------------- feedback
 
-    Labels are a sample: developers label what they dispute or confirm, not every finding, so the rate is reported
-    only from MIN_TRIAGE_LABELS labels up (per group too) and always with its label count.
+def feedback(triage_rows: list[dict[str, Any]], findings_in_scope: int) -> dict[str, Any]:
+    """Developer feedback on findings: positive share, false-positive rate and how many findings were labelled.
+
+    `accepted` is positive feedback, `false-positive` negative; `wont-fix` confirms the finding but declines it,
+    so it counts towards coverage and the false-positive rate but not towards positive feedback. Rates are shown
+    only from MIN_TRIAGE_LABELS labels up (per group too), always with the label count.
     """
-    def rate(rs: list[dict[str, Any]]) -> float | None:
+    def fp_rate(rs: list[dict[str, Any]]) -> float | None:
         return _rate(sum(1 for r in rs if r["label"] == "false-positive"), len(rs)) if len(rs) >= MIN_TRIAGE_LABELS else None
 
     by_phase: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -223,62 +320,28 @@ def false_positive_rates(triage_rows: list[dict[str, Any]]) -> dict[str, Any]:
     for r in triage_rows:
         by_phase[str(r["phase"])].append(r)
         by_cat[r["category"]].append(r)
+    counts = Counter(r["label"] for r in triage_rows)
+    rated = counts["accepted"] + counts["false-positive"]
     return {
         "labels": len(triage_rows),
-        "label_counts": dict(sorted(Counter(r["label"] for r in triage_rows).items())),
-        "rate": rate(triage_rows),
-        "by_phase": {p: {"labels": len(rs), "rate": rate(rs)} for p, rs in sorted(by_phase.items())},
-        "by_category": {c: {"labels": len(rs), "rate": rate(rs)} for c, rs in sorted(by_cat.items())},
+        "label_counts": dict(sorted(counts.items())),
+        "label_coverage": _rate(len(triage_rows), findings_in_scope),
+        "positive_share": _rate(counts["accepted"], rated) if rated >= MIN_TRIAGE_LABELS else None,
+        "rate": fp_rate(triage_rows),
+        "by_phase": {p: {"labels": len(rs), "rate": fp_rate(rs)} for p, rs in sorted(by_phase.items())},
+        "by_category": {c: {"labels": len(rs), "rate": fp_rate(rs)} for c, rs in sorted(by_cat.items())},
     }
 
 
-def caught_blocking_findings(rows: list[dict[str, Any]]) -> int:
-    """Blocking findings counted once per blocked streak on a branch.
-
-    A finding stays in the report on every run until it is fixed, so summing findings over runs would count one
-    defect several times. Each streak of failing runs on a branch counts the blocker + high findings of its first
-    run only. Unattributable runs are left out, so this is a lower bound.
-    """
-    by_work: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
-    for r in rows:
-        key = _work_key(r)
-        if key is not None:
-            by_work[key].append(r)
-    caught = 0
-    for runs in by_work.values():
-        in_streak = False
-        for r in sorted(runs, key=lambda x: x["ts"]):
-            if r["verdict"] == "fail" and not in_streak:
-                caught += r["findings_blocker"] + r["findings_high"]
-                in_streak = True
-            elif r["verdict"] == "pass":
-                in_streak = False
-    return caught
+# Kept for callers of the previous name.
+def false_positive_rates(triage_rows: list[dict[str, Any]]) -> dict[str, Any]:
+    return feedback(triage_rows, 0)
 
 
-def time_saved(rows: list[dict[str, Any]], fp: dict[str, Any]) -> dict[str, Any]:
-    """K12: estimated developer hours saved by catching blocking defects before merge, net of gate waiting time."""
-    a = TIME_SAVED_ASSUMPTIONS
-    caught = caught_blocking_findings(rows)
-    measured = fp["rate"] is not None
-    precision = round(1 - fp["rate"], 4) if measured else a["assumed_precision"]
-    gross = caught * precision * (a["fix_hours_post_merge"] - a["fix_hours_pre_merge"])
-    wait = sum(r["duration_s"] for r in rows) / 3600
-    n = len(rows)
-    return {
-        "caught_blocking_findings": caught,
-        "precision": precision,
-        "precision_source": "measured from triage labels" if measured else "assumed",
-        "gross_hours": round(gross, 1),
-        "gate_wait_hours": round(wait, 1),
-        "net_hours": round(gross - wait, 1),
-        "net_hours_per_run": round((gross - wait) / n, 2) if n else None,
-        "assumptions": dict(a),
-    }
-
+# ----------------------------------------------------------------------------- per-scope KPIs
 
 def compute_kpis(rows: list[dict[str, Any]], triage_rows: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    """The KPIs of docs/kpi/README.md over `rows`. A value is None when the data cannot support it."""
+    """The run-based KPIs of docs/kpi/README.md over `rows`. A value is None when the data cannot support it."""
     n = len(rows)
     passed = sum(1 for r in rows if r["verdict"] == "pass")
     blocked = sum(1 for r in rows if r["blocked"])
@@ -294,80 +357,230 @@ def compute_kpis(rows: list[dict[str, Any]], triage_rows: list[dict[str, Any]] |
         cats.update(r["categories"])
     sec_runs = sum(1 for r in rows if any(c in r["categories"] for c in SECURITY_CRITICAL))
     findings_total = sum(r["findings_total"] for r in rows)
-    ttg = time_to_green_hours(rows)
+    streaks = block_streaks(rows)
+    resolved = [s for s in streaks if s["resolved_after_h"] is not None]
     durations = [r["duration_s"] for r in rows if r["duration_s"] > 0]
     metered = [r for r in rows if r["prompt_tokens"] or r["completion_tokens"]]
+    tokens = [r["prompt_tokens"] + r["completion_tokens"] for r in metered]
     sized = [r for r in rows if r["lines_added"] is not None]
     changed = sum(r["lines_added"] + r["lines_removed"] for r in sized)
-    fp = false_positive_rates(triage_rows or [])
     return {
         "runs": n,
+        "active_repos": len({r["repo"] for r in rows if r["repo"] != _UNKNOWN_REPO}),
         "gate_pass_rate": _rate(passed, n),
         "first_time_right_rate": _rate(ftr_ok, ftr_n),
         "first_time_right_branches": ftr_n,
         "block_rate": _rate(blocked, n),
         "blocking_findings_per_run": round(blocking / n, 3) if n else None,
-        # Only runs whose event reports changed lines (engines from this release on) count, on both sides.
+        # Only runs whose event reports changed lines (engines from PR #34 on) count, on both sides.
         "blocking_findings_per_kloc": round(sum(r["findings_blocker"] + r["findings_high"] for r in sized) / changed * 1000, 2) if changed else None,
         "sized_run_share": _rate(len(sized), n),
         "phase_fail_rate": {str(p): _rate(phase_fails[p], phase_runs[p]) for p in sorted(phase_runs)},
         "security_critical_run_rate": _rate(sec_runs, n),
         "top_categories": dict(cats.most_common(8)),
-        "time_to_green_hours_median": _quantile(ttg, 0.5),
-        "time_to_green_recoveries": len(ttg),
+        # Caught and resolved before merge: blocks on a branch that a later passing run on that branch cleared.
+        "blocks": len(streaks),
+        "blocks_resolved": len(resolved),
+        "blocking_findings_resolved": sum(s["blocking_findings"] for s in resolved),
+        "time_to_green_hours_median": _quantile([s["resolved_after_h"] for s in resolved], 0.5),
+        "time_to_green_recoveries": len(resolved),
+        "fix_iterations_median": _quantile([float(s["failing_runs"]) for s in resolved], 0.5),
         "skip_request_rate": _rate(sum(1 for r in rows if r["skip_requested"]), n),
         "skip_granted_rate": _rate(sum(1 for r in rows if r["skip_valid"]), n),
         "waived_findings": sum(r["waived"] for r in rows),
         "unverified_finding_share": _rate(sum(r["unverified"] for r in rows), findings_total),
         "gate_latency_s_p50": _quantile(durations, 0.5),
         "gate_latency_s_p90": _quantile(durations, 0.9),
-        "tokens_per_run": round(sum(r["prompt_tokens"] + r["completion_tokens"] for r in metered) / len(metered)) if metered else None,
+        "tokens_per_run": round(sum(tokens) / len(tokens)) if tokens else None,
+        "tokens_p50": _quantile([float(t) for t in tokens], 0.5),
+        "tokens_p90": _quantile([float(t) for t in tokens], 0.9),
+        "tokens_total": sum(tokens),
         "token_metered_share": _rate(len(metered), n),
         "attributable_share": _rate(sum(1 for r in rows if _work_key(r) is not None), n),
-        "time_saved": time_saved(rows, fp),
-        "false_positives": fp,
+        "feedback": feedback(triage_rows or [], findings_total),
     }
 
 
-def kpi_summary(rows: list[dict[str, Any]], triage_rows: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    """Overall, per-week and per-repository KPIs: the payload the dashboard renders."""
-    triage_rows = triage_rows or []
-    weeks: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    repos: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    t_weeks: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    t_repos: dict[str, list[dict[str, Any]]] = defaultdict(list)
+# ----------------------------------------------------------------------------- adoption
+
+def adoption(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Per team: runs per ISO week from its first run to the last week in the data, with the measured phase."""
+    weeks_all = sorted({r["week"] for r in rows})
+    if not weeks_all:
+        return {}
+    last = _week_index(weeks_all[-1])
+    out: dict[str, Any] = {}
+    by_team: dict[str, Counter] = defaultdict(Counter)
     for r in rows:
-        weeks[r["week"]].append(r)
-        repos[r["repo"]].append(r)
+        by_team[r["team"]][r["week"]] += 1
+    for team, counts in sorted(by_team.items()):
+        first = min(_week_index(w) for w in counts)
+        index_to_week = {_week_index(w): w for w in weeks_all}
+        series = []
+        streak = 0
+        for i in range(first, last + 1):
+            # Mondays have ordinals 7k + 1 (date(1, 1, 1) is a Monday), so week index k starts on ordinal 7k + 1.
+            week = index_to_week.get(i) or datetime.fromordinal(i * 7 + 1).strftime("%G-W%V")
+            runs = counts.get(week, 0)
+            streak = streak + 1 if runs >= ACTIVE_WEEK_RUNS else 0
+            phase = "operational" if streak >= OPERATIONAL_STREAK else "regular" if streak >= REGULAR_STREAK else "experimental"
+            series.append({"week": week, "runs": runs, "phase": phase})
+        out[team] = {"first_run": min(r["ts"] for r in rows if r["team"] == team)[:10], "weeks": series,
+                     "phase": series[-1]["phase"]}
+    return out
+
+
+def cases_by_month(rows: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
+    out: dict[str, Counter] = defaultdict(Counter)
+    for r in rows:
+        out[r["month"]][r["team"]] += 1
+    return {m: dict(sorted(c.items())) for m, c in sorted(out.items())}
+
+
+def users(gate_user_rows: list[tuple[str, str, str]], git_rows: list[dict[str, Any]], teams: dict[str, list[str]] | None,
+          gated_repos: set[str]) -> dict[str, Any]:
+    """Distinct gate users and, where git history is available, committers in the same teams' gated repositories.
+
+    Every count below MIN_GROUP is suppressed (None). Coverage compares two people sets keyed the same way; it is
+    only reported when both are shown. The gate keys people by their verified sign-in e-mail and git by the commit
+    e-mail; when developers commit with another address, coverage reads low, never high.
+    """
+    gate_by_team: dict[str, set[str]] = defaultdict(set)
+    for team, _, key in gate_user_rows:
+        gate_by_team[team].add(key)
+    git_by_team: dict[str, set[str]] = defaultdict(set)
+    for g in git_rows:
+        if g["repo"] in gated_repos and not g.get("merge"):
+            git_by_team[team_of(g["repo"], teams)].add(g["author"])
+    out = {}
+    for team in sorted(set(gate_by_team) | set(git_by_team)):
+        u, c = _suppressed(len(gate_by_team[team])), _suppressed(len(git_by_team[team]))
+        out[team] = {"gate_users": u, "committers": c,
+                     "coverage": _rate(len(gate_by_team[team] & git_by_team[team]), len(git_by_team[team])) if u and c else None}
+    all_gate = {k for _, _, k in gate_user_rows}
+    out_total = _suppressed(len(all_gate))
+    return {"total_gate_users": out_total, "by_team": out}
+
+
+# ----------------------------------------------------------------------------- outcomes from git and PRs
+
+def _adoption_dates(rows: list[dict[str, Any]]) -> dict[str, str]:
+    first: dict[str, str] = {}
+    for r in rows:
+        if r["repo"] != _UNKNOWN_REPO and (r["repo"] not in first or r["ts"] < first[r["repo"]]):
+            first[r["repo"]] = r["ts"]
+    return first
+
+
+def _cohort(repo: str, ts: str, adopted: dict[str, str]) -> str:
+    if repo not in adopted:
+        return "ungated"
+    return "gated_after" if _ts(ts) >= _ts(adopted[repo]) else "gated_before"
+
+
+def quality_outcome(git_rows: list[dict[str, Any]], adopted: dict[str, str]) -> dict[str, Any] | None:
+    """Revert and fix-commit rates of non-merge commits: gated repos before / after their first gate run, and
+    repositories never gated. None without git history."""
+    if not git_rows:
+        return None
+    groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for g in git_rows:
+        if not g.get("merge"):
+            groups[_cohort(g["repo"], g["ts"], adopted)].append(g)
+    return {
+        c: {"commits": len(gs), "repos": len({g["repo"] for g in gs}),
+            "revert_rate": _rate(sum(1 for g in gs if g["revert"]), len(gs)),
+            "fix_commit_rate": _rate(sum(1 for g in gs if g["fix"]), len(gs))}
+        for c, gs in sorted(groups.items())
+    }
+
+
+def review_effect(pr_rows: list[dict[str, Any]], adopted: dict[str, str]) -> dict[str, Any] | None:
+    """Merged pull requests: cycle time (opened -> merged), review rounds and review comments, per cohort.
+    None without PR data."""
+    merged = [p for p in pr_rows if p.get("merged_at")]
+    if not merged:
+        return None
+    groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for p in merged:
+        groups[_cohort(p["repo"], p["merged_at"], adopted)].append(p)
+    out = {}
+    for c, ps in sorted(groups.items()):
+        cycle = [(_ts(p["merged_at"]) - _ts(p["created_at"])).total_seconds() / 3600 for p in ps]
+        out[c] = {
+            "prs": len(ps), "repos": len({p["repo"] for p in ps}),
+            "cycle_hours_median": _quantile(cycle, 0.5),
+            "reviews_median": _quantile([float(p["reviews"]) for p in ps if p.get("reviews") is not None], 0.5),
+            "changes_requested_share": _rate(sum(1 for p in ps if (p.get("changes_requested") or 0) > 0), len(ps)),
+            "review_comments_median": _quantile([float(p["review_comments"]) for p in ps if p.get("review_comments") is not None], 0.5),
+            "revert_pr_rate": _rate(sum(1 for p in ps if p.get("revert")), len(ps)),
+        }
+    return out
+
+
+# ----------------------------------------------------------------------------- summary and export
+
+def kpi_summary(rows: list[dict[str, Any]], triage_rows: list[dict[str, Any]] | None = None, *,
+                gate_user_rows: list[tuple[str, str, str]] | None = None, git_rows: list[dict[str, Any]] | None = None,
+                pr_rows: list[dict[str, Any]] | None = None, teams: dict[str, list[str]] | None = None) -> dict[str, Any]:
+    """Every KPI: overall, per ISO week, per repository and per team, plus adoption and outcome comparisons."""
+    triage_rows = triage_rows or []
+    git_rows = git_rows or []
+    pr_rows = pr_rows or []
+    groups: dict[str, dict[str, list[dict[str, Any]]]] = {"week": defaultdict(list), "repo": defaultdict(list), "team": defaultdict(list)}
+    tgroups: dict[str, dict[str, list[dict[str, Any]]]] = {"week": defaultdict(list), "repo": defaultdict(list), "team": defaultdict(list)}
+    for r in rows:
+        for g in groups:
+            groups[g][r[g]].append(r)
     for t in triage_rows:
-        t_weeks[t["week"]].append(t)
-        t_repos[t["repo"]].append(t)
+        tgroups["week"][t["week"]].append(t)
+        tgroups["repo"][t["repo"]].append(t)
+        tgroups["team"][team_of(t["repo"], teams)].append(t)
+    adopted = _adoption_dates(rows)
     return {
         "dataset_version": DATASET_VERSION,
         "period": {"from": rows[0]["ts"] if rows else None, "to": rows[-1]["ts"] if rows else None},
         "overall": compute_kpis(rows, triage_rows),
-        "weeks": {w: compute_kpis(rs, t_weeks.get(w)) for w, rs in sorted(weeks.items())},
-        "repos": {k: compute_kpis(rs, t_repos.get(k)) for k, rs in sorted(repos.items())},
+        "weeks": {k: compute_kpis(v, tgroups["week"].get(k)) for k, v in sorted(groups["week"].items())},
+        "repos": {k: compute_kpis(v, tgroups["repo"].get(k)) for k, v in sorted(groups["repo"].items())},
+        "teams": {k: compute_kpis(v, tgroups["team"].get(k)) for k, v in sorted(groups["team"].items())},
+        "adoption": adoption(rows),
+        "cases_by_month": cases_by_month(rows),
+        "users": users(gate_user_rows or [], git_rows, teams, set(adopted)),
+        "quality_outcome": quality_outcome(git_rows, adopted),
+        "review_effect": review_effect(pr_rows, adopted),
+        "sources": {"gate_runs": len(rows), "triage_labels": len(triage_rows), "git_commits": len(git_rows),
+                    "git_repos": len({g["repo"] for g in git_rows}), "pull_requests": len(pr_rows),
+                    "pr_repos": len({p["repo"] for p in pr_rows}), "team_map": bool(teams)},
         "skip_reasons": [
             {"ts": r["ts"], "repo": r["repo"], "phases": r["skip_phases"], "reason": r["skip_reason"]}
             for r in rows if r["skip_requested"]
         ],
-        "min_triage_labels": MIN_TRIAGE_LABELS,
+        "rules": {"min_triage_labels": MIN_TRIAGE_LABELS, "min_group": MIN_GROUP, "active_week_runs": ACTIVE_WEEK_RUNS,
+                  "regular_streak_weeks": REGULAR_STREAK, "operational_streak_weeks": OPERATIONAL_STREAK},
     }
 
 
-def export(events: Iterable[dict[str, Any]]) -> dict[str, str]:
-    """All export artefacts as {file name: content}. Pure function of the events."""
+def export(events: Iterable[dict[str, Any]], *, git_rows: list[dict[str, Any]] | None = None,
+           pr_rows: list[dict[str, Any]] | None = None, teams: dict[str, list[str]] | None = None,
+           salt: str | None = None) -> dict[str, str]:
+    """All export artefacts as {file name: content}. Pure function of the inputs.
+
+    `salt` must be the key `kpi collect-git` used, for committer coverage to match people across git and the gate.
+    Without one, a random key keeps the distinct counts right but makes coverage meaningless (it is then None,
+    because no git person key can match).
+    """
     from .kpi_dashboard import render_dashboard
 
     events = list(events)
-    rows = build_rows(events)
+    rows = build_rows(events, teams)
     triage_rows = build_triage_rows(events)
-    summary = kpi_summary(rows, triage_rows)
+    summary = kpi_summary(rows, triage_rows, gate_user_rows=gate_users(events, teams, salt or secrets.token_hex(16)),
+                          git_rows=git_rows, pr_rows=pr_rows, teams=teams)
     return {
         "kpi-runs.csv": rows_to_csv(rows),
         "kpi-runs.json": json.dumps({"dataset_version": DATASET_VERSION, "columns": COLUMNS, "rows": rows}, indent=1, sort_keys=True) + "\n",
         "kpi-triage.csv": triage_to_csv(triage_rows),
         "kpi-summary.json": json.dumps(summary, indent=1, sort_keys=True) + "\n",
-        "kpi-dashboard.html": render_dashboard(summary, rows),
+        "kpi-dashboard.html": render_dashboard(summary),
     }

@@ -52,7 +52,7 @@ def test_blocking_findings_per_kloc_counts_only_sized_runs():
     k = kpi.compute_kpis(kpi.build_rows([sized, unsized]))
     assert k["blocking_findings_per_kloc"] == 10.0  # 2 findings / 200 lines, the unsized run is left out
     assert k["sized_run_share"] == 0.5
-    assert kpi.export([sized])["kpi-runs.csv"].splitlines()[1].endswith(",150,50")
+    assert kpi.export([sized])["kpi-runs.csv"].splitlines()[1].endswith(",150,50,org")  # then the team column
 
 
 # ----------------------------------------------------------------------------- triage
@@ -128,43 +128,41 @@ def _labelled(n_fp: int, n_ok: int, phase: int = 4, cat: str = "missing-tests") 
     return ev(100 + n_fp + 10 * n_ok + phase, "2026-10-03T10:00:00+00:00", triage=labels)
 
 
-def test_false_positive_rate_needs_enough_labels():
+def test_feedback_needs_enough_labels_and_reports_coverage():
     few = kpi.export([_labelled(2, 3)])
-    s = json.loads(few["kpi-summary.json"])["overall"]["false_positives"]
-    assert s["labels"] == 5 and s["rate"] is None
-    assert "insufficient data" in few["kpi-dashboard.html"].lower()
+    s = json.loads(few["kpi-summary.json"])["overall"]["feedback"]
+    assert s["labels"] == 5 and s["rate"] is None and s["positive_share"] is None
 
     events = [_labelled(3, 9, phase=4), _labelled(1, 1, phase=8, cat="xss")]
-    s = json.loads(kpi.export(events)["kpi-summary.json"])["overall"]["false_positives"]
+    s = json.loads(kpi.export(events)["kpi-summary.json"])["overall"]["feedback"]
     assert s["labels"] == 14 and s["rate"] == round(4 / 14, 4)
+    assert s["positive_share"] == round(10 / 14, 4)  # accepted / (accepted + false-positive)
+    assert s["label_coverage"] is None  # the labelled runs report no findings of their own: coverage undefined
     assert s["by_phase"]["4"] == {"labels": 12, "rate": 0.25}
     assert s["by_phase"]["8"] == {"labels": 2, "rate": None}  # too few in that group
     assert s["label_counts"] == {"accepted": 10, "false-positive": 4}
     assert kpi.export(events)["kpi-triage.csv"].splitlines()[0] == ",".join(kpi.TRIAGE_COLUMNS)
 
 
-# ----------------------------------------------------------------------------- time saved
+# ----------------------------------------------------------------------------- blocks resolved (measured)
 
-def test_caught_findings_count_once_per_blocked_streak():
+def test_blocks_count_once_per_streak_and_only_resolved_ones_count_as_fixed():
     rows = kpi.build_rows([
         ev(1, "2026-10-01T09:00:00+00:00", "fail", counts={"high": 3}),
         ev(2, "2026-10-01T10:00:00+00:00", "fail", counts={"high": 3}),  # same findings again: not counted twice
         ev(3, "2026-10-01T11:00:00+00:00", "pass"),
-        ev(4, "2026-10-02T09:00:00+00:00", "fail", counts={"blocker": 1, "high": 1}),
+        ev(4, "2026-10-02T09:00:00+00:00", "fail", counts={"blocker": 1, "high": 1}),  # never turns green
         ev(5, "2026-10-02T09:30:00+00:00", "fail", ref="HEAD", counts={"high": 7}),  # unattributable: left out
     ])
-    assert kpi.caught_blocking_findings(rows) == 5
+    k = kpi.compute_kpis(rows)
+    assert (k["blocks"], k["blocks_resolved"], k["blocking_findings_resolved"]) == (2, 1, 3)
+    assert k["time_to_green_hours_median"] == 2.0 and k["fix_iterations_median"] == 2.0
 
 
-def test_time_saved_formula_and_measured_precision():
-    rows = kpi.build_rows([ev(1, "2026-10-01T09:00:00+00:00", "fail", counts={"high": 10}, duration_s=360.0),
-                           ev(2, "2026-10-01T10:00:00+00:00", "pass", duration_s=360.0)])
-    a = kpi.TIME_SAVED_ASSUMPTIONS
-    t = kpi.time_saved(rows, kpi.false_positive_rates([]))
-    assert t["precision_source"] == "assumed" and t["precision"] == a["assumed_precision"]
-    assert t["gross_hours"] == round(10 * a["assumed_precision"] * (a["fix_hours_post_merge"] - a["fix_hours_pre_merge"]), 1)
-    assert t["gate_wait_hours"] == 0.2 and t["net_hours"] == round(t["gross_hours"] - 0.2, 1)
-    assert t["net_hours_per_run"] == round((t["gross_hours"] - 0.2) / 2, 2)
-    fp = kpi.false_positive_rates(kpi.build_triage_rows([_labelled(5, 15)]))
-    t2 = kpi.time_saved(rows, fp)
-    assert t2["precision_source"] == "measured from triage labels" and t2["precision"] == 0.75
+def test_nothing_is_estimated_from_assumed_parameters():
+    """Arijit, 2026-10-07: "we cannot have any assumption". No assumed constant, no estimated KPI."""
+    assert not hasattr(kpi, "TIME_SAVED_ASSUMPTIONS") and not hasattr(kpi, "time_saved")
+    summary = json.loads(kpi.export([ev(1, "2026-10-01T09:00:00+00:00", "fail", counts={"high": 2})])["kpi-summary.json"])
+    blob = json.dumps(summary).lower()
+    for word in ("assum", "time_saved", "precision", "estimate"):
+        assert word not in blob, word
