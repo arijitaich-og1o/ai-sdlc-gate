@@ -24,7 +24,9 @@ Compact by design (≤ 60 KB, no full findings text): repository, actor, ref, sh
 how it was detected, phases, verdict, whether the run was flagged (any finding at/above threshold before skips)
 and blocked, counts per severity, waived count, late count, unverified count (findings whose quoted code or claimed
 HTML entities are not in the file, so they were reported as advisory; a rising rate points at prompt or skill
-problems rather than at developers), skip request (phases, validity, reason ≤ 500 chars), per-phase
+problems rather than at developers), changed lines (`lines_added` / `lines_removed`, from this release on), the
+developer's finding labels since the last recorded run (`triage`: phase, category, severity and label only; see
+[kpi/README.md](kpi/README.md)), skip request (phases, validity, reason ≤ 500 chars), per-phase
 verdicts and skill versions, top categories, up to 40 finding briefs (phase, severity, category, title, file),
 token usage and duration.
 

@@ -106,6 +106,10 @@ def build_event(report: GateReport) -> dict[str, Any]:
         "top_categories": [c for c, _ in cats.most_common(8)],
         "findings_brief": brief,
         "files": int(report.stats.get("files", 0)),
+        # Absent (not 0) on reports from older engines, so size-normalised KPIs skip those runs instead of
+        # treating them as empty changes.
+        **({"lines_added": int(report.stats["lines_added"]), "lines_removed": int(report.stats.get("lines_removed", 0))}
+           if "lines_added" in report.stats else {}),
         "llm_usage": report.llm_usage,
         "duration_s": round(sum(p.duration_s for p in report.phases), 1),
     }

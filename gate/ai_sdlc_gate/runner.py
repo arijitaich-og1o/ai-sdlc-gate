@@ -591,6 +591,7 @@ def run_gate(
             "developer_email": (verified[0] if verified else (cs.author_email or "")).lower(),
             "email_verified": bool(verified),
         }
+    lines_added, lines_removed = cs.line_counts()
     return GateReport(
         intent=intent,
         phases=results,
@@ -603,6 +604,8 @@ def run_gate(
             "files": len(cs.files),
             "excluded": len(cs.excluded),
             "bytes": cs.total_bytes,
+            "lines_added": lines_added,
+            "lines_removed": lines_removed,
             "commits": len(cs.commit_messages),
             "mode": cs.mode,
             "base": cs.base,

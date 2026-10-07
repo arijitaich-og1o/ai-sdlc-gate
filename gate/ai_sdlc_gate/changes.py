@@ -82,6 +82,21 @@ class ChangeSet:
     def total_bytes(self) -> int:
         return sum(f.size for f in self.files)
 
+    def line_counts(self) -> tuple[int, int]:
+        """(lines added, lines removed) across the reviewed files' diffs, for size-normalised metrics.
+
+        Counts only `+`/`-` body lines, not the `+++`/`---` file headers. A truncated diff undercounts, which keeps
+        per-line rates conservative rather than inflating them.
+        """
+        added = removed = 0
+        for f in self.files:
+            for line in (f.diff or "").splitlines():
+                if line.startswith("+") and not line.startswith("+++"):
+                    added += 1
+                elif line.startswith("-") and not line.startswith("---"):
+                    removed += 1
+        return added, removed
+
 
 def matches_any(path: str, globs: list[str]) -> bool:
     p = PurePosixPath(path).as_posix()
