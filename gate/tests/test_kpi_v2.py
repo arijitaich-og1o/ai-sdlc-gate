@@ -219,3 +219,40 @@ def test_team_map_problems_are_reported():
 def test_pr_collector_rejects_owners_github_cannot_have():
     with pytest.raises(ValueError):
         kpi_sources.collect_prs("owner.with.dots/repo", lambda path: [])
+
+
+# ----------------------------------------------------------------------------- gh output decoding (Windows)
+
+def test_gh_fetch_decodes_utf8_whatever_the_locale(monkeypatch):
+    """gh writes UTF-8; on Windows the locale is cp1252, where a non-ASCII PR body made the read return None."""
+    import subprocess
+    import sys
+
+    body = json.dumps([{"number": 1, "title": "Fix für Größen – ✓ 日本"}], ensure_ascii=False)
+    real_run = subprocess.run
+    calls = []
+
+    def fake_run(cmd, **kw):
+        calls.append(kw)
+        # A real child process writing UTF-8 bytes, decoded with whatever arguments gh_fetch passes.
+        script = "import sys; sys.stdout.buffer.write(" + repr(body.encode("utf-8")) + ")"
+        return real_run([sys.executable, "-c", script], **kw)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    assert kpi_sources.gh_fetch()("/repos/org/app/pulls") == json.loads(body)
+    assert calls[0]["encoding"] == "utf-8"
+
+
+def test_a_failed_page_read_is_an_error_not_zero_prs():
+    for bad in (None, {"message": "Bad credentials"}, "oops"):
+        with pytest.raises(RuntimeError, match="unexpected response"):
+            kpi_sources.collect_prs("org/app", lambda path, bad=bad: bad)
+    assert kpi_sources.collect_prs("org/app", lambda path: []) == []  # an empty list is a real "no PRs"
+
+
+def test_gh_fetch_reports_empty_output(monkeypatch):
+    import subprocess
+
+    monkeypatch.setattr(subprocess, "run", lambda cmd, **kw: subprocess.CompletedProcess(cmd, 0, stdout="", stderr=""))
+    with pytest.raises(RuntimeError, match="no output"):
+        kpi_sources.gh_fetch()("/repos/org/app/pulls")
