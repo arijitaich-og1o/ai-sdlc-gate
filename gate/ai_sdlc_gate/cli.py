@@ -16,6 +16,7 @@ from .evaluate import evaluate_skill
 from .gitutil import GitError, repo_root
 from . import identity as identity_mod
 from . import ledger as ledger_mod
+from . import triage as triage_mod
 from . import ghauth
 from . import keybroker
 from . import llm as llm_mod
@@ -330,6 +331,11 @@ def cmd_emit_metrics(args: argparse.Namespace) -> int:
     if cred and cred.username and not report.context.get("actor"):
         report.context["actor"] = cred.username
     event = metrics_mod.build_event(report)
+    # Finding labels the developer set since the last recorded run ride along; marked sent only after dispatch.
+    labels = triage_mod.pending(identity_mod.sdlc_home()) if args.dispatch else []
+    if labels:
+        event["triage"] = triage_mod.for_event(labels)
+        event = metrics_mod.shrink_event(event)
     _write(args.output, json.dumps(event, indent=2))
     if args.dispatch:
         cfg = Config.load(args.config)
@@ -342,6 +348,7 @@ def cmd_emit_metrics(args: argparse.Namespace) -> int:
         except (ValueError, RuntimeError) as exc:
             _eprint(f"metrics dispatch failed: {exc}")
             return EXIT_FAIL
+        triage_mod.mark_sent(identity_mod.sdlc_home(), [e["id"] for e in labels])
         print(f"metrics event {event['id']} recorded ({cred.source})")
     else:
         print(json.dumps(event, indent=2))
@@ -364,6 +371,40 @@ def cmd_metrics_build(args: argparse.Namespace) -> int:
     summary = metrics_mod.build_dashboard(Path(args.events_dir), Path(args.out))
     org = summary["organisation"]
     print(f"dashboard built from {summary['events']} events: runs={org['runs']} pass_rate={org['pass_rate']} blocked={org['blocked']} skips_granted={org['skips_granted']}")
+    return EXIT_PASS
+
+
+def cmd_triage(args: argparse.Namespace) -> int:
+    """List the last run's findings, or label one: accepted / false-positive / wont-fix."""
+    home = identity_mod.sdlc_home()
+    path = home / "last-report.json"
+    if not path.is_file():
+        _eprint("no gate run recorded on this machine yet")
+        return EXIT_FAIL
+    report = json.loads(path.read_text(encoding="utf-8"))
+    findings = triage_mod.report_findings(report)
+    run_ts = str(report.get("generated_at") or "")
+    labelled = {(e.get("finding_id"), int(e.get("phase") or 0)): e["label"] for e in triage_mod.load(home) if e.get("run_ts") == run_ts}
+    if args.finding is None:
+        if not findings:
+            print("The last gate run has no findings.")
+            return EXIT_PASS
+        for f in findings:
+            loc = f"{f.get('file')}:{f.get('line')}" if f.get("file") and f.get("line") else (f.get("file") or "-")
+            mark = labelled.get((f.get("id"), int(f.get("phase") or 0)))
+            print(f"{f['n']:>3}. [{f['severity']}] phase {f['phase']} {f['category']}: {f['title']}  ({loc})" + (f"  -> {mark}" if mark else ""))
+        print("\nLabel one with: ai-sdlc-gate triage <number> --label accepted|false-positive|wont-fix [--note TEXT]")
+        return EXIT_PASS
+    if not args.label:
+        _eprint("--label is required when a finding is given")
+        return EXIT_ERROR
+    match = [f for f in findings if str(f["n"]) == args.finding or f.get("id") == args.finding]
+    if len(match) != 1:
+        _eprint(f"no single finding {args.finding!r} in the last run; run `ai-sdlc-gate triage` to list them")
+        return EXIT_FAIL
+    f = match[0]
+    triage_mod.record(home, report, f, args.label, args.note or "")
+    print(f"labelled #{f['n']} ({f['category']}, phase {f['phase']}) as {args.label}; it is recorded with your next gate run")
     return EXIT_PASS
 
 
@@ -510,6 +551,11 @@ def build_parser() -> argparse.ArgumentParser:
     mb = msub.add_parser("build")
     mb.add_argument("--events-dir", required=True), mb.add_argument("--out", required=True)
     mb.set_defaults(func=cmd_metrics_build)
+
+    tr = sub.add_parser("triage", help="label a finding of the last run: accepted, false-positive or wont-fix")
+    tr.add_argument("finding", nargs="?", help="finding number from the list (or its id); omit to list the findings")
+    tr.add_argument("--label", choices=triage_mod.LABELS), tr.add_argument("--note", help="kept on this machine only")
+    tr.set_defaults(func=cmd_triage)
 
     kp = sub.add_parser("kpi", help="KPI dataset and dashboard from stored metrics events")
     ksub = kp.add_subparsers(dest="kcmd", required=True)

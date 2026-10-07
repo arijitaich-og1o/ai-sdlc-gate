@@ -191,6 +191,6 @@ def test_cli_kpi_export_writes_all_artefacts(tmp_path):
         ingest_event(ev(i, f"2026-10-0{i + 1}T10:00:00+00:00", verdict), events_dir)
     out = tmp_path / "kpi"
     assert main(["kpi", "export", "--events-dir", str(events_dir), "--out", str(out)]) == 0
-    assert sorted(p.name for p in out.iterdir()) == ["kpi-dashboard.html", "kpi-runs.csv", "kpi-runs.json", "kpi-summary.json"]
+    assert sorted(p.name for p in out.iterdir()) == ["kpi-dashboard.html", "kpi-runs.csv", "kpi-runs.json", "kpi-summary.json", "kpi-triage.csv"]
     summary = json.loads((out / "kpi-summary.json").read_text(encoding="utf-8"))
     assert summary["overall"]["runs"] == 3 and summary["overall"]["gate_pass_rate"] == pytest.approx(0.6667)

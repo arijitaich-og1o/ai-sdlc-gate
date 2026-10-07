@@ -78,6 +78,12 @@ _TEMPLATE = r"""<!doctype html>
     <div class="panel"><h3>Most frequent finding categories</h3><div id="cats"></div></div>
   </div>
 
+  <h2>Value and trust</h2>
+  <div class="grid2">
+    <div class="panel"><h3>Time saved estimate (net of gate waiting time)</h3><div id="saved"></div></div>
+    <div class="panel"><h3>False-positive rate by phase (developer triage)</h3><div id="fpphase"></div></div>
+  </div>
+
   <h2>Exceptions and data quality</h2>
   <div class="grid2">
     <div class="panel"><h3>Skip requests (SDLC-Skip trailers)</h3><div id="skips"></div></div>
@@ -123,13 +129,18 @@ _TEMPLATE = r"""<!doctype html>
     ["skip_granted_rate", "Skip rate", pct, "Runs with a valid SDLC-Skip waiver."],
     ["unverified_finding_share", "Unverified findings", pct, "Findings without evidence in the file (gate precision signal)."],
     ["gate_latency_s_p50", "Gate latency p50 / p90", null, "Review time per run, seconds."],
-    ["tokens_per_run", "Tokens / run", function (x) { return x === null ? null : Math.round(x).toLocaleString("en"); }, "Model tokens per metered run (cost driver)."]
+    ["tokens_per_run", "Tokens / run", function (x) { return x === null ? null : Math.round(x).toLocaleString("en"); }, "Model tokens per metered run (cost driver)."],
+    ["blocking_findings_per_kloc", "Blocking findings / 1k lines", function (x) { return num(x, 2); }, "Blocker + high per 1,000 changed lines (runs that report size)."],
+    ["time_saved", "Est. time saved / run", null, "Net developer hours per gate run: defects fixed before merge minus waiting for the gate."],
+    ["false_positives", "False-positive rate", null, "Share of triaged findings labelled false positive."]
   ];
   var NA_REASON = {
     first_time_right_rate: "no run with a known repository and branch",
     time_to_green_hours_median: "no blocked branch has turned green yet",
     unverified_finding_share: "no findings in scope",
-    tokens_per_run: "no run reported token usage"
+    tokens_per_run: "no run reported token usage",
+    blocking_findings_per_kloc: "no run reports changed lines yet (engines from this release on do)",
+    time_saved: "no gate runs in scope"
   };
 
   function renderTiles(k) {
@@ -138,6 +149,11 @@ _TEMPLATE = r"""<!doctype html>
       var value;
       if (t[0] === "gate_latency_s_p50") {
         value = k.gate_latency_s_p50 === null ? null : num(k.gate_latency_s_p50, 0) + " / " + num(k.gate_latency_s_p90, 0) + " s";
+      } else if (t[0] === "time_saved") {
+        value = k.time_saved.net_hours_per_run === null ? null : num(k.time_saved.net_hours_per_run, 2) + " h";
+      } else if (t[0] === "false_positives") {
+        value = pct(k.false_positives.rate);
+        if (value === null) NA_REASON.false_positives = "insufficient data (" + k.false_positives.labels + " of " + S.min_triage_labels + " labels needed)";
       } else {
         value = t[2](k[t[0]]);
       }
@@ -148,6 +164,8 @@ _TEMPLATE = r"""<!doctype html>
       // Small samples are flagged, so a median over two recoveries is not read as a trend.
       if (value !== null && t[0] === "time_to_green_hours_median") desc += " Based on " + k.time_to_green_recoveries + " recover" + (k.time_to_green_recoveries === 1 ? "y." : "ies.");
       if (value !== null && t[0] === "first_time_right_rate") desc += " " + k.first_time_right_branches + " branches.";
+      if (value !== null && t[0] === "time_saved") desc += " Estimate; precision " + k.time_saved.precision_source + ".";
+      if (value !== null && t[0] === "false_positives") desc += " " + k.false_positives.labels + " labels.";
       tile.appendChild(el("div", {"class": "d"}, desc));
       box.appendChild(tile);
     });
@@ -221,6 +239,46 @@ _TEMPLATE = r"""<!doctype html>
     var cats = Object.keys(k.top_categories).map(function (c) { return [c, k.top_categories[c]]; })
       .sort(function (a, b) { return b[1] - a[1] || (a[0] < b[0] ? -1 : 1); });
     hbars("cats", cats, function (v) { return v; }, "#EB001F");
+    renderSaved(k.time_saved);
+    renderFp(k.false_positives);
+  }
+
+  function table(id, rows, head) {
+    var box = clear(id), t = el("table");
+    if (head) { var hr = el("tr"); head.forEach(function (h) { hr.appendChild(el("th", {}, h)); }); t.appendChild(hr); }
+    rows.forEach(function (r) {
+      var tr = el("tr");
+      r.forEach(function (c, i) { tr.appendChild(el("td", i === r.length - 1 && r.length > 2 ? {"class": "note"} : {}, c)); });
+      t.appendChild(tr);
+    });
+    box.appendChild(t);
+    return box;
+  }
+
+  function renderSaved(ts) {
+    var a = ts.assumptions;
+    var box = table("saved", [
+      ["Blocking findings caught (once per blocked streak)", String(ts.caught_blocking_findings), "Lower bound: attributable branches only."],
+      ["Precision applied", pct(ts.precision), ts.precision_source],
+      ["Fix cost before / after merge", a.fix_hours_pre_merge + " h / " + a.fix_hours_post_merge + " h", "Assumption (5x escalation)."],
+      ["Gross hours saved", num(ts.gross_hours, 1) + " h", "caught x precision x (after - before)"],
+      ["Developer time waiting for the gate", num(ts.gate_wait_hours, 1) + " h", "Sum of gate run durations."],
+      ["Net hours saved", num(ts.net_hours, 1) + " h", "gross - waiting"]
+    ]);
+    box.appendChild(el("p", {"class": "note"}, "An estimate, not a measurement: human review time saved needs PR review data the gate does not collect yet (see docs/kpi/README.md)."));
+  }
+
+  function renderFp(fp) {
+    var phases = Object.keys(fp.by_phase);
+    if (!phases.length) {
+      clear("fpphase").appendChild(el("p", {"class": "note"},
+        "Insufficient data: no findings triaged yet. Developers label findings with `ai-sdlc-gate triage`; a rate is shown from " + S.min_triage_labels + " labels per group."));
+      return;
+    }
+    table("fpphase", phases.map(function (p) {
+      var g = fp.by_phase[p];
+      return [p + " " + (PHASES[p] || ""), g.rate === null ? "insufficient data" : pct(g.rate), g.labels + " labels"];
+    }), ["Phase", "False-positive rate", "Sample"]);
   }
 
   // Header, scope selector, trends.
@@ -262,8 +320,8 @@ _TEMPLATE = r"""<!doctype html>
   [
     ["Runs attributable to a repository and branch", pct(o.attributable_share), "Needed for first-time-right and time to green."],
     ["Runs reporting token usage", pct(o.token_metered_share), "Needed for the cost KPI."],
-    ["Changed-lines field in events", "missing", "Needed to normalise findings per 1,000 changed lines."],
-    ["False positives triaged by people", "not tracked", "The unverified share is an automatic lower bound."]
+    ["Runs reporting changed lines", o.sized_run_share ? pct(o.sized_run_share) : "missing", "Needed to normalise findings per 1,000 changed lines (engines from this release on)."],
+    ["Findings triaged by developers", o.false_positives.labels ? String(o.false_positives.labels) + " labels" : "not tracked", "Needed for the false-positive rate; the unverified share is an automatic lower bound."]
   ].forEach(function (r) {
     var tr = el("tr");
     tr.appendChild(el("td", {}, r[0]));
