@@ -1,119 +1,170 @@
-# AI SDLC Gate: delivery quality KPIs
+# AI SDLC Gate: adoption and impact KPIs
 
-Thirteen KPIs built only from data the gate records. Each gate run produces one metrics event
-(`events/YYYY/MM.jsonl` on the `metrics` branch, schema 1, see [../metrics.md](../metrics.md)). The exporter
-turns those events into a metadata-only dataset and computes the KPIs; a static dashboard shows them.
+**Measured only.** Every number on the dashboard is counted or timed from one of four data streams. Nothing is
+estimated from assumed parameters. A KPI without data shows **"no data yet"** and the command that would
+collect it.
 
 ```bash
-ai-sdlc-gate kpi export --events-dir <metrics-branch>/events --out out/kpi
+# 1. Gate run events: already collected for every run (events/YYYY/MM.jsonl on the `metrics` branch).
+# 2. Git history of each repository (metadata only):
+ai-sdlc-gate kpi collect-git --repo-dir <clone> --out git-<repo>.jsonl
+# 3. Pull requests of each GitHub repository:
+ai-sdlc-gate kpi collect-prs --slug <owner/repo> --out prs-<repo>.jsonl      # add --via-gh to use the gh CLI sign-in
+# 4. Developer feedback: `ai-sdlc-gate triage` labels travel inside the gate run events.
+# Then:
+ai-sdlc-gate kpi export --events-dir <metrics>/events --git git-*.jsonl --prs prs-*.jsonl --teams teams.yaml --out out/kpi
 ```
 
-This writes `kpi-runs.csv`, `kpi-runs.json` (one row per gate run), `kpi-triage.csv` (one row per finding label),
-`kpi-summary.json` (KPIs overall, per ISO week and per repository) and `kpi-dashboard.html` (one self-contained
-file, open it in a browser).
+`kpi export` writes:
+- `kpi-runs.csv` / `kpi-runs.json`: one row per gate run;
+- `kpi-triage.csv`: one row per finding label;
+- `kpi-summary.json`: every KPI overall, per ISO week, per repository and per team, plus adoption and the
+  outcome comparisons;
+- `kpi-dashboard.html`: one self-contained page.
 
 ## Ground rules
 
-- **Systems, not people.** Rows carry no developer login or e-mail, no finding titles, no file paths and no
-  code. The lowest level is a repository; the dashboard has no per-developer view.
-- **No raw cross-team ranking.** Repositories differ in language, risk and maturity. Compare a team with its own
-  history (trend), not with another team's number.
-- **n/a beats a wrong zero.** A KPI the data cannot support is reported as `null` / "n/a" with the reason, never as 0.
-- **Small samples are labelled.** First-time-right shows its branch count and time to green its recovery count.
+- **Measured, never estimated.** If a stream is missing, the KPI is `null` / "no data yet". There is no default
+  value, assumed rate or fallback constant anywhere in the computation; a test enforces this.
+- **Systems, not people.** No developer login, e-mail, name, commit message, finding title, file path or code
+  is exported. People are counted only through a one-way hash, and **any count of fewer than 5 people is
+  suppressed** (works-council rule). There is no per-person view.
+- **No ranking.** Compare a team with its own history (trend, before / after adoption), not with other teams.
+- **Show the n.** Every rate comes with its sample size: runs, branches, recoveries, labels, commits or PRs.
+
+## Data streams
+
+| Stream | Collected by | Holds | Privacy |
+|---|---|---|---|
+| Gate run events | every gate run (`emit-metrics`) | verdict, phases, findings by severity and category, skips, duration, tokens, changed lines | no titles, paths or code; developer e-mail only for hashed distinct counts |
+| Triage labels | `ai-sdlc-gate triage`, sent with the next run's event | phase, category, severity, label per finding | no title, file, line or note leaves the machine |
+| Git history | `kpi collect-git` | per commit: time, author key, merge / revert / fix flags | no name, e-mail, message or code; the author key is a keyed HMAC with a secret kept on the collecting machine (`~/.ai-sdlc-gate/kpi-salt`), so it cannot be reversed by hashing a list of likely addresses |
+| Pull requests | `kpi collect-prs` | per closed PR: opened, merged, reviews, changes requested, review comments, revert | no titles or bodies kept, except the revert flag |
+| Team map (optional) | a YAML file you maintain | `teams: {<team>: [<owner/repo glob>, ...]}` | none |
+
+Without a team map, a repository's team is its GitHub owner (e.g. `otto-ec`). Runs without a known repository
+are `(unattributed)`. If a repository matches several teams in the map, the first team in name order wins;
+`kpi export` reports such overlaps, globs without an `owner/` part, and teams that match no repository.
+Collect git history and export on the same machine, so people are keyed alike in git and in the gate data.
 
 ## The KPIs
 
-"Run" = one gate execution (a local commit/push hook or a CI job). "Branch" = a (repository, ref) pair; runs with
-ref `HEAD` or repository `unknown/unknown` cannot be attributed to one and are left out of K2 and K7.
+### Adoption and usage
 
-| # | KPI | What it measures | Why management cares | Formula (event fields) | Granularity | Don't misuse |
-|---|---|---|---|---|---|---|
-| K1 | **Gate pass rate** | Share of runs that passed every required phase | Quality: how often work meets the standard as submitted | runs with `verdict = pass` / runs | repo, week | A high rate after many skips is not quality; read it with K8. |
-| K2 | **First-time-right rate** | Share of branches whose first gate run passed | Quality and speed: rework avoided before review | branches whose earliest run has `verdict = pass` / attributable branches | repo, week | Depends on how often teams commit; few branches make it noisy (count shown). |
-| K3 | **Blocking findings per run and per 1,000 changed lines** | Blocker + high findings, per run and per changed line | Risk: how much must-fix work the gate catches, independent of change size | per run: Σ(`counts.blocker` + `counts.high`) / runs. Per 1k lines: same sum over runs that report size / Σ(`lines_added` + `lines_removed`) × 1000 | repo, week | Per-run favours small changes; use the per-line form once enough runs report size (share shown). |
-| K4 | **Phase fail rate** | Per SDLC phase: share of runs where that phase failed | Where to invest: design, testing, security or docs practice | runs with `phase_results[p].verdict = fail` / runs that checked phase p | phase, repo, week | Phases 6/7 run only for deploy/maintenance changes; small denominators. |
-| K5 | **Security-critical run rate** | Share of runs with a secret, hard-coded credential or known-vulnerable dependency finding | Risk: exposure that must never ship (non-waivable in the gate) | runs whose categories include `secret-exposure`, `hardcoded-credential` or `known-vulnerable-dependency` / runs | repo, week | Caught locally means it did *not* ship; a rising rate is a training signal, not a breach count. |
-| K6 | **Top finding categories** | Most frequent finding categories and their trend | Where quality is lost (tests, docs, resilience, security) | count of `findings_brief[].category` (older events: `top_categories`) | repo, week | `general` is a catch-all; the brief keeps at most 40 findings per run. |
-| K7 | **Median time to green** | Hours from a branch's first blocked run to its next passing run | Speed: cost of a block in elapsed time | median over branches of (`ts` of next pass − `ts` of first fail since last pass) | repo, month | Elapsed, not effort, time: weekends count. Show the recovery count. |
-| K8 | **Skip / waiver rate and reasons** | Share of runs with a valid `SDLC-Skip`; waived findings; the reasons | Governance: how often the standard is bypassed, and why | runs with `skip.valid` / runs; Σ `waived_count`; `skip.reason` | repo, week | A justified skip is healthy; read the reasons before judging the rate. `--no-verify` bypasses are a separate stream (server logs, see gaps). |
-| K9 | **Unverified finding share** | Share of findings the gate downgraded because their evidence is not in the file | Trust: gate precision; false positives cost developer time | Σ `unverified_count` / Σ `findings_total` | repo, week | An automatic lower bound on false positives, not the full rate (needs human triage, see gaps). Available from 2026-10-05. |
-| K10 | **Gate latency p50 / p90** | Review time per run | Speed: the gate's cost in developer waiting time | 50th / 90th percentile of `duration_s` (runs with duration > 0) | repo, week | Includes multiple review passes and model queueing; p90 shows the worst waits. |
-| K11 | **Tokens per run** | Model tokens per metered run | Cost: the model bill and its trend | Σ(`llm_usage.prompt_tokens` + `completion_tokens`) / metered runs | repo, month | Runs reporting 0 tokens are excluded (share shown); multiply by the model price for €. |
-| K12 | **Estimated time saved per run** | Net developer hours saved by fixing blocking defects before merge instead of after, minus the time spent waiting for the gate | Value: what the gate returns for its cost | (caught blocking findings × precision × (post-merge fix h − pre-merge fix h) − Σ `duration_s`/3600) / runs. See the method below | repo, month | An estimate from stated assumptions, not a measurement; never compare teams by it. |
-| K13 | **False-positive rate** | Share of triaged findings developers labelled false positive, overall, per phase and per category | Trust: a noisy gate gets bypassed; this shows where the skills need work | `false-positive` labels / all labels (`triage[]` in events) | phase, category, repo | Labels are a sample of what developers chose to label; shown only from 10 labels per group, with the count. |
+| KPI | Formula | Source | Status 2026-10-07 |
+|---|---|---|---|
+| **Cases** | gate runs, per month and team | events | **157** (Sep 40, Oct 117) |
+| **Active repositories** | distinct repositories with ≥ 1 run | events | **15** |
+| **Adoption phase per team** | from runs per ISO week, see the phase rule below | events | **0 of 6 operational**: 3 regular, 3 experimental |
+| **Gate users** | distinct verified developers (hashed), suppressed below 5 | events | **no data yet**: fewer than 5 verified users per team |
+| **Committer coverage** | gate users ∩ committers ÷ committers in the team's gated repositories, both ≥ 5 | events + git | **no data yet**: needs ≥ 5 people on both sides |
 
-Also in the summary for context: run counts, block rate (`blocked`/runs), skip request rate, data coverage shares.
+**Adoption phase rule** (one definition for every team, set in `kpi.py`):
+- A week is **active** for a team when it has **≥ 5 gate runs**.
+- **2 consecutive active weeks** = *regular*.
+- **4 consecutive active weeks** = *operational*.
+- Anything else with runs = *experimental*.
 
-## K12 time saved: the method
+The phase is measured each week, so it can fall back after an inactive week.
 
-**What is estimated.** A blocking finding fixed while the change is still open costs less than the same defect
-found after merge, when it needs rediscovery, a new branch and review, and possibly a redeploy. The gate's value is
-that difference, summed over the defects it catches, minus what the gate costs developers in waiting time.
+### Quality caught before merge
 
-```
-caught    = blocker + high findings of the FIRST failing run of each blocked streak on a branch
-precision = 1 − K13 false-positive rate     (measured, from 10 triage labels up)
-          = 0.8                             (assumed, until then)
-gross h   = caught × precision × (fix_hours_post_merge − fix_hours_pre_merge)
-net h     = gross h − Σ gate run duration (h)
-K12       = net h / gate runs
-```
+| KPI | Formula | Source | Status 2026-10-07 |
+|---|---|---|---|
+| **Gate pass rate** | runs with `verdict = pass` ÷ runs | events | **66.2%** |
+| **First-time-right** | branches whose first run passed ÷ attributable branches | events | **67.7%** (34 branches) |
+| **Block rate** | blocked runs ÷ runs | events | **33.8%** |
+| **Blocking findings per run** | Σ(blocker + high) ÷ runs | events | **2.65** |
+| **Blocking findings per 1,000 changed lines** | Σ(blocker + high) ÷ Σ(lines added + removed) × 1000, over runs that report size | events | **no data yet**: engines from PR #34 on report changed lines |
+| **Security-critical run rate** | runs with a `secret-exposure`, `hardcoded-credential` or `known-vulnerable-dependency` finding ÷ runs | events | **14.7%** |
+| **Phase fail rate** | runs where phase p failed ÷ runs that checked phase p | events | Design 18.8%, Development 18.8%, Testing 18.1%, Deployment 53.9%, Maintenance 56.5%, Security 8.1% (measured on the earlier 149 runs; the dashboard shows current values) |
+| **Top finding categories** | count of findings per category (run brief, ≤ 40 per run) | events | `general`, `missing-tests`, `hardcoded-configuration` lead |
 
-- **Counted once per streak.** A finding stays in the report on every run until it is fixed, so summing over
-  runs would count one defect several times.
-- **Lower bound.** Runs that cannot be attributed to a branch (`HEAD`, unknown repository) are left out.
-- **Assumptions, all in `TIME_SAVED_ASSUMPTIONS` in `kpi.py` and shown on the dashboard:**
-  - fix before merge: 0.5 h;
-  - fix after merge: 2.5 h;
-  - assumed precision: 0.8.
+### Fix cycle (replaces the former estimated "time saved")
 
-  The 5× ratio is deliberately at the low end of the defect-cost escalation reported in the literature. Boehm
-  and Basili's "Software Defect Reduction Top 10 List" (IEEE Computer, 2001) puts late fixes at up to 100×
-  for large systems and about 5× for small, non-critical ones. NIST's report "The Economic Impacts of
-  Inadequate Infrastructure for Software Testing" (2002) gives the same direction. Replace the defaults with
-  one.O's own figures when the Measurement workstream has them.
+A **block** is a streak of failing runs on one branch. It is **resolved** when a later run on that branch passes.
+A streak counts the blocker + high findings of its first run once: a finding stays in the report until it is
+fixed, so summing over runs would count it repeatedly.
 
-**From estimate to measurement.** Human review time saved, the second half of "time saved per review", can't be
-derived from gate data. To measure it, the gate (or the Measurement tool) must collect, per pull request:
+| KPI | Formula | Source | Status 2026-10-07 |
+|---|---|---|---|
+| **Blocks resolved before merge** | resolved streaks; and their blocking findings | events | **2 of 16** blocked branches; **6** blocking findings fixed |
+| **Median fix cycle** | median hours from a streak's first failing run to the next passing run | events | **58.6 h** (2 recoveries: too few to read as a trend) |
+| **Fix iterations** | median failing runs per resolved streak | events | **3.5** |
 
-| Field | Source |
-|---|---|
-| `pr_number`, `repo` (already in CI events) | gate event |
-| `review_minutes`: first review request to approval | GitHub pull request timeline |
-| `human_review_comments`, `review_rounds` | GitHub pull request reviews |
-| `lines_added`, `lines_removed` (now emitted by the gate) | gate event |
-| `gated`: whether the repository ran the gate on that PR | gate event present for the PR head |
+**Why there is no "time saved" figure.** Time saved cannot be measured from these streams without assuming a fix
+cost or a defect rate, so it is not reported. Its measured stand-ins are:
+- the **fix cycle** above;
+- the **pull-request review effect** below: cycle time and review rounds before and after adoption, measured
+  per PR.
 
-Comparing review minutes per 100 changed lines between gated and comparable ungated pull requests (same team,
-same period) gives the measured figure. Until then K12 covers the defect-fix side only.
+### Measured outcomes (git history and pull requests)
 
-## K13: how findings get triaged
+Cohorts per repository, using the date of its first gate run:
+- *gated, before adoption*;
+- *gated, after adoption*;
+- *never gated*: repositories with history but no gate runs.
 
-After a gate run, a developer lists the findings and labels the ones they want to confirm or dispute:
+Merge commits are excluded.
 
-```bash
-ai-sdlc-gate triage                                   # numbered list of the last run's findings
-ai-sdlc-gate triage 3 --label false-positive --note "framework escapes this"
-```
+| KPI | Formula | Source | Status 2026-10-07 |
+|---|---|---|---|
+| **Revert rate** | commits written by `git revert` ÷ non-merge commits, per cohort | git | 0% before (49 commits) / 0% after (36) / 0% ungated (7); 2 gated + 3 ungated repos, all Arijit's own |
+| **Fix-commit rate** | Conventional Commits `fix:` / `hotfix:` / `bugfix:` commits ÷ non-merge commits, per cohort | git | 0% / 0% / 14.3%. Only meaningful for repositories that follow Conventional Commits; `ai-sdlc-gate` uses `area: summary` subjects, so read 0% as "convention not used" |
+| **PR cycle time** | median hours opened → merged, per cohort | PRs | 0.04 h before (3 PRs) / 0.0 h after (22 PRs), one repository |
+| **Review rounds / changes requested / review comments** | median submitted reviews, share of PRs with a change request, median review comments | PRs | 0 / 0% / 0 in both cohorts: a single-maintainer repository, so no review effect can show yet |
+| **Revert PR rate** | PRs titled `Revert …` ÷ merged PRs | PRs | 0% |
 
-Labels are `accepted`, `false-positive` and `wont-fix`. They are kept in `~/.ai-sdlc-gate/triage.jsonl` and
-travel with the next gate run's metrics event, marked sent only after that dispatch succeeds. Only the phase,
-category, severity and label leave the machine. The finding's title, file, line and the note never do. The
-dashboard shows "insufficient data" until a group has 10 labels.
+These outcome rows need team repositories with real review traffic. See the data-access questions.
 
-## Data gaps (what the events do not support yet)
+### Cost
 
-Measured on the 149 events of 2026-09-22 to 2026-10-07:
+| KPI | Formula | Source | Status 2026-10-07 |
+|---|---|---|---|
+| **Tokens per run p50 / p90** | percentiles of prompt + completion tokens, metered runs | events | **29,897 / 884,262**; 35.6 M tokens in total; 74.5% of runs report usage |
+| **Run time p50 / p90** | percentiles of `duration_s` | events | **49 s / 279 s** |
 
-| Gap | Effect | Fix |
+### Feedback and governance
+
+| KPI | Formula | Source | Status 2026-10-07 |
+|---|---|---|---|
+| **Positive feedback** | `accepted` ÷ (`accepted` + `false-positive`), from 10 labels | triage | **no data yet** (0 labels) |
+| **False-positive rate** | `false-positive` ÷ all labels, per phase and category, from 10 labels per group | triage | **no data yet** |
+| **Label coverage** | labels ÷ findings | triage + events | 0% |
+| **Unverified finding share** | findings the gate downgraded (evidence not in the file, or self-declared sound) ÷ findings | events | **3.8%** |
+| **Skip rate and reasons** | runs with a valid `SDLC-Skip` ÷ runs; the reasons | events | **2.5%** (4 skips) |
+
+## Which slide KPIs we can fill now
+
+The reference slide is Resolve AI's customer slide for MSCI.
+
+- **Filled now with measured numbers:**
+  - cases (total and by month, stacked by team);
+  - adoption curve and phase per team;
+  - active repositories;
+  - issues caught before merge (blocks, security-critical runs, blocking findings resolved) and fix cycle;
+  - cost per run;
+  - pass / block / first-time-right rates.
+- **Need data collection first:**
+  - **Gate users and committer coverage:** needs ≥ 5 verified users per team, plus git history of the teams'
+    repositories.
+  - **Positive feedback %:** needs developers to label findings with `ai-sdlc-gate triage`.
+  - **Time saved / review effect:** needs pull-request data from team repositories with real reviews.
+  - **Quality outcome:** needs git history of team repositories.
+  - **Findings per 1k lines:** needs engines from PR #34 on.
+- **Not measurable from the gate's streams:** "alerts eliminated" has no counterpart. Incidents avoided would
+  need a join with incident tickets, which is out of the gate's scope.
+
+## Data gaps and fixes
+
+| Gap | Cause (measured) | Fix |
 |---|---|---|
-| Changed lines only from this release on | K3 per 1,000 lines covers new runs only (share shown) | Done: events now carry `lines_added` / `lines_removed` (additive, schema 1 stays valid). Fills as developers update. |
-| 47% of runs unattributable (`ref = HEAD` or repo `unknown/unknown`) | K2 and K7 rest on about half the runs; K7 had only 2 recoveries | Send the branch name and remote slug from the local hooks. |
-| 25% of runs report 0 tokens | K11 covers 75% of runs | Return usage from the review endpoint to the client in every case. |
-| No triage labels yet | K13 shows "insufficient data"; K12 uses the assumed precision | Done: `ai-sdlc-gate triage` records labels. Needs developers to use it; consider a PR-comment convention (`/gate fp <n>`) for CI runs. |
-| No pull request review data | K12 covers the defect-fix side only | Collect review minutes and rounds per PR (see the K12 method). |
-| `--no-verify` bypasses are in Cloud Logging, not in events | K8 sees only `SDLC-Skip` waivers | Export `sdlc_event="skip"` log lines into the same dataset. |
-| No link to production incidents | "escaped issues" cannot be measured | Join with incident tickets by repository and release (out of scope for the gate). |
+| 45% of runs unattributable | All 69 `unknown/unknown` runs come from **one** developer machine. The hooks parsed only `github.com` remotes, so other or missing remotes arrived empty, and raw Azure DevOps / GitLab URLs were rejected by the metrics store (those runs were lost). The branch read `HEAD` on unborn branches and during rebases. | Fixed in the engine: the slug is derived from GitHub, GitLab, Bitbucket and Azure DevOps remotes, else `local/<folder>`; the branch comes from `symbolic-ref` and rebase state. Applies to new runs; old events stay as they are. |
+| Changed lines only from PR #34 on | older engines | fills as developers update the gate |
+| 25% of runs report 0 tokens | the review endpoint does not return usage in every case | return usage from the endpoint |
+| No triage labels | the mechanism is new | developers use `ai-sdlc-gate triage`; a PR-comment convention would cover CI runs |
+| Git / PR data only for Arijit's repositories | collected with his own access only | team repositories need the owners' OK (see below) |
+| `--no-verify` bypasses are in Cloud Logging | separate stream | export `sdlc_event="skip"` log lines into the dataset |
 
 ## Why it matters
 
@@ -133,31 +184,31 @@ India's evidence for two maturity-matrix dimensions:
 
 | Maturity dimension | Gate KPIs that evidence it |
 |---|---|
-| **Delivery & Automation** | pass rate, first-time-right, time to green, latency, estimated time saved |
-| **Risk & Responsible AI** | security-critical run rate, skip / waiver governance, false-positive rate |
+| **Delivery & Automation** | adoption phase, cases, pass rate, first-time-right, blocks resolved, fix cycle, run time |
+| **Risk & Responsible AI** | security-critical run rate, skip / waiver governance, unverified share, false-positive rate |
 
 India runs every change through the gate, so all output is standardized; these KPIs show it.
 
 ## Plugging into the Measurement tool (due 15 Nov)
 
-**Contract.** The Measurement tool consumes `kpi-runs.json` (or `.csv`) and `kpi-summary.json`:
+**Contract.** The Measurement tool consumes:
 
-- `kpi-runs.*`: one row per gate run. The columns are listed in `COLUMNS` in `gate/ai_sdlc_gate/kpi.py`, in that
-  order. `dataset_version` is 1. Changes are additive only; a removed or renamed column bumps the version.
-  List values are `;`-joined in CSV (`phases`, `failed_phases`, `skip_phases`) and `category:count` pairs in
-  `categories`. Times are ISO-8601 UTC; `week` is the ISO week (`2026-W41`).
-- `kpi-triage.csv`: one row per finding label (`run_id, ts, week, repo, phase, category, severity, label`).
-- `kpi-summary.json`: the K1–K13 values `overall`, per `weeks[<iso week>]` and per `repos[<owner/name>]`, with
-  `null` where the data cannot support a KPI. K12 includes its inputs and assumptions.
+- **`kpi-runs.json` / `.csv`**: one row per gate run.
+  - The columns are `COLUMNS` in `gate/ai_sdlc_gate/kpi.py`, in that order; `team` was appended in this release.
+  - `dataset_version` is 1. Changes are additive only; a removed or renamed column bumps the version.
+  - List values are `;`-joined in CSV, and categories are written as `category:count` pairs.
+  - Times are ISO-8601 UTC; `week` is the ISO week.
+- **`kpi-triage.csv`**: one row per finding label.
+- **`kpi-summary.json`**: `overall`, `weeks`, `repos` and `teams` KPIs, plus `adoption`, `cases_by_month`,
+  `users`, `quality_outcome`, `review_effect`, `sources` and `rules`. `null` means no data.
 
 **Delivery, in two steps.**
 
-1. *Now (no new infrastructure):* a scheduled job on the central repository runs `ai-sdlc-gate kpi export` over
-   the `metrics` branch and commits the four files to `dashboard/kpi/`. The tool reads them over the GitHub
-   API with a read-only token. The dashboard is viewable straight from the branch.
-2. *Later (if the tool needs live data or filtering):* `GET /v1/kpi?from=&to=&repo=` on the existing Cloud Run
-   endpoint, returning the same rows / summary JSON, authorised with the org's Entra sign-in. Same contract, so
-   the tool does not change.
+1. *Now (no new infrastructure):* a scheduled job on the central repository runs the collectors and
+   `ai-sdlc-gate kpi export`, and commits the files to `dashboard/kpi/`. The tool reads them over the GitHub
+   API with a read-only token.
+2. *Later (if the tool needs live data or filtering):* `GET /v1/kpi?from=&to=&team=` on the existing Cloud Run
+   endpoint, returning the same JSON, authorised with the org's Entra sign-in.
 
 **What the tool should own:** cross-source joins (incidents, DORA metrics, survey data) and the management view
-across all AI-in-SDLC tools. The gate dataset stays one source among several, keyed by repository and week.
+across all AI-in-SDLC tools.
