@@ -175,6 +175,23 @@ def test_dashboard_embeds_data_safely_and_has_no_external_scripts():
     assert "textContent" in html and "innerHTML" not in html
 
 
+def test_hostile_repo_names_and_comment_closers_stay_data():
+    """Repository names reach option values and table cells; `-->` must not matter without a `<!--` before it."""
+    hostile = 'org/x"><img src=x onerror=alert(1)>'
+    e = ev(1, "2026-10-01T10:00:00+00:00",
+           skip={"requested": True, "valid": True, "requested_phases": [4], "valid_phases": [4], "reason": "--> <!-- -->", "errors": []})
+    e["repo"] = hostile  # not a valid slug, but the exporter must stay safe whatever reaches it
+    html = kpi.export([e])["kpi-dashboard.html"]
+    data_block = re.search(r'<script id="kpi-data" type="application/json">(.*?)</script>', html, re.S).group(1)
+    assert "<" not in data_block  # so neither `</script` nor `<!--` can occur, and `-->` alone is inert
+    assert "<img" not in html and hostile not in html
+    data = json.loads(data_block)
+    assert hostile in data["summary"]["repos"] and data["summary"]["skip_reasons"][0]["reason"] == "--> <!-- -->"
+    page_script = html.split('<script>', 1)[1]
+    assert "innerHTML" not in page_script and "outerHTML" not in page_script and "insertAdjacentHTML" not in page_script
+    assert "document.write" not in page_script and "aria-label" not in page_script
+
+
 def test_render_dashboard_uses_the_one_o_palette():
     html = render_dashboard(kpi.kpi_summary([]))
     for token in ("#434098", "#EB001F", "#EDECFC", "Lexend", "Source Sans 3"):

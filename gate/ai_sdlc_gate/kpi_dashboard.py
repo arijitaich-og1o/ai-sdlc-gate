@@ -342,7 +342,10 @@ _TEMPLATE = r"""<!doctype html>
 def render_dashboard(summary: dict[str, Any], rows: list[dict[str, Any]] | None = None) -> str:
     """The dashboard HTML with `summary` embedded. Rows are not embedded: the page needs only the aggregates."""
     payload = json.dumps({"summary": summary}, sort_keys=True, separators=(",", ":"))
-    # `</script>` in embedded text would close the element and `<!--` changes script parsing. `<` only occurs
-    # inside JSON strings, where < is the same character to JSON.parse, so escaping every one is safe.
+    # Inside <script>, only `</script` (closes the element) and `<!--` (switches the parser into its escaped state,
+    # which is also the only state where `-->` means anything) are dangerous, and both start with `<`. In this JSON
+    # a `<` can only occur inside a string, so every one is replaced by its six-character JSON unicode escape: the
+    # same character to JSON.parse, but no markup to the HTML parser. Untrusted text therefore cannot leave the
+    # data block, and the page writes it only through textContent and setAttribute (never as markup).
     payload = payload.replace("<", "\\u003c")
     return _TEMPLATE.replace("__KPI_DATA__", payload)
