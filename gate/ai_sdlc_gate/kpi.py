@@ -26,7 +26,7 @@ from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any, Callable, Iterable
 
-from .kpi_sources import person_key
+from .kpi_sources import person_key, subkey
 
 # Covers kpi-runs.*, kpi-summary.json and kpi-portal.json. Adding keys keeps the version; removing, renaming or
 # changing the meaning of a key bumps it. 2: summary `feedback` replaced `false_positives`, `time_saved` removed
@@ -606,7 +606,7 @@ def team_label(team: str, salt: str, real: bool = False) -> str:
     """
     if real:
         return team
-    return "Team " + hmac.new(salt.encode("utf-8"), team.encode("utf-8"), hashlib.sha256).hexdigest()[:6]
+    return "Team " + hmac.new(subkey(salt, "team-labels"), team.encode("utf-8"), hashlib.sha256).hexdigest()[:6]
 
 
 def portal_export(events: Iterable[dict[str, Any]], *, salt: str, git_rows: list[dict[str, Any]] | None = None,

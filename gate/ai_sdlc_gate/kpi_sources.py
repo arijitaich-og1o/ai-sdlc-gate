@@ -38,11 +38,20 @@ def person_salt(home: Path) -> str:
     return salt
 
 
+def subkey(salt: str, purpose: str) -> bytes:
+    """A key for one purpose only, derived from the machine secret (HMAC-SHA256 as the derivation function).
+
+    Internal person keys and published team pseudonyms use different sub-keys, so outputs published for one purpose
+    never share a key with the other.
+    """
+    if not salt:
+        raise ValueError("a salt is required to pseudonymise")
+    return hmac.new(salt.encode("utf-8"), b"ai-sdlc-gate/kpi/" + purpose.encode("utf-8"), hashlib.sha256).digest()
+
+
 def person_key(email: str, salt: str) -> str:
     """Pseudonymous, stable key for counting distinct people: keyed HMAC-SHA256, not reversible without `salt`."""
-    if not salt:
-        raise ValueError("a salt is required to pseudonymise people")
-    return hmac.new(salt.encode("utf-8"), (email or "").strip().lower().encode("utf-8"), hashlib.sha256).hexdigest()[:16]
+    return hmac.new(subkey(salt, "person-keys"), (email or "").strip().lower().encode("utf-8"), hashlib.sha256).hexdigest()[:16]
 
 
 def read_jsonl(paths: Iterable[str | Path]) -> list[dict[str, Any]]:

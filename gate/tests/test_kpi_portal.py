@@ -101,3 +101,19 @@ def test_outcomes_from_few_committers_are_a_pilot_even_across_many_repos():
                  "merge": False, "revert": False, "fix": False} for i in range(6)]
     p = kpi.portal_export(events, salt=SALT, git_rows=git_rows)
     assert p["quality_outcome"]["repositories"] == 6 and p["quality_outcome"]["scope"] == "pilot"
+
+
+def test_published_labels_and_internal_person_keys_use_separate_keys():
+    import hashlib
+    import hmac
+
+    import pytest
+
+    assert kpi_sources.subkey(SALT, "team-labels") != kpi_sources.subkey(SALT, "person-keys")
+    # Neither purpose keys its HMAC with the machine secret itself.
+    raw = hmac.new(SALT.encode(), b"big", hashlib.sha256).hexdigest()
+    assert kpi.team_label("big", SALT) != "Team " + raw[:6]
+    assert kpi_sources.person_key("big", SALT) != raw[:16]
+    assert kpi.team_label("big", SALT)[5:] != kpi_sources.person_key("big", SALT)[:6]
+    with pytest.raises(ValueError):
+        kpi.team_label("big", "")  # no secret, no pseudonym
