@@ -622,6 +622,8 @@ def portal_export(events: Iterable[dict[str, Any]], *, salt: str, git_rows: list
       still include its runs.
     - Team labels are stable pseudonyms unless `real_team_names` (needs the data owner's approval).
     """
+    if not salt:  # fail before any data is processed: without the secret there are no stable pseudonyms
+        raise ValueError("a salt is required for the portal export")
     events = list(events)
     git_rows, pr_rows = git_rows or [], pr_rows or []
     rows = build_rows(events, teams)

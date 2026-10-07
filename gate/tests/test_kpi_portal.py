@@ -117,3 +117,46 @@ def test_published_labels_and_internal_person_keys_use_separate_keys():
     assert kpi.team_label("big", SALT)[5:] != kpi_sources.person_key("big", SALT)[:6]
     with pytest.raises(ValueError):
         kpi.team_label("big", "")  # no secret, no pseudonym
+
+
+# ----------------------------------------------------------------------------- suppression boundaries
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize("big_people,expect_shown", [(5, True), (4, False)])
+def test_exactly_min_group_is_shown_and_one_less_is_folded(big_people, expect_shown):
+    p = kpi.portal_export(_team_runs("big/app", big_people, 0), salt=SALT)
+    assert (kpi.team_label("big", SALT) in p["teams"]) is expect_shown
+    assert p["suppression"]["teams_shown"] == int(expect_shown)
+    if not expect_shown:  # the only group is too small: nothing per team, organisation flagged
+        assert p["teams"] == {} and p["adoption"] == {} and p["users"]["by_team"] == {}
+        assert p["users"]["total_gate_users"] is None and p["suppression"]["organisation_below_min_group"] is True
+
+
+def test_all_teams_below_the_threshold_and_a_mixed_case():
+    small = _team_runs("a/x", 2, 0) + _team_runs("b/y", 2, 300) + _team_runs("c/z", 2, 600)
+    p = kpi.portal_export(small, salt=SALT)
+    # Every team is below 5, but the 6 people folded together are enough: only "Other teams" shows, recomputed.
+    assert list(p["teams"]) == [kpi.OTHER_TEAMS] and p["teams"][kpi.OTHER_TEAMS]["runs"] == len(small)
+    assert p["suppression"]["teams_folded"] == 3 and p["suppression"]["other_teams_shown"] is True
+    assert p["overall"]["runs"] == len(small) and p["users"]["total_gate_users"] == 6
+
+    mixed = _team_runs("big/app", 5, 0) + _team_runs("four/svc", 4, 500)
+    m = kpi.portal_export(mixed, salt=SALT)
+    assert list(m["teams"]) == [kpi.team_label("big", SALT)]  # 5 shown; 4 folded and the fold (4 people) hidden
+    assert m["suppression"] == {"min_group": 5, "teams_shown": 1, "teams_folded": 1, "other_teams_shown": False,
+                                "labels": "pseudonymous", "organisation_below_min_group": False}
+
+
+def test_empty_inputs_and_missing_salt():
+    p = kpi.portal_export([], salt=SALT)
+    assert p["overall"]["runs"] == 0 and p["teams"] == {} and p["quality_outcome"] is None and p["review_effect"] is None
+    assert p["suppression"]["teams_folded"] == 0 and p["suppression"]["organisation_below_min_group"] is True
+    for bad in ("", None):
+        with pytest.raises(ValueError):
+            kpi.portal_export(_team_runs("big/app", 5, 0), salt=bad)
+        with pytest.raises(ValueError):
+            kpi_sources.subkey(bad, "team-labels")
+        with pytest.raises(ValueError):
+            kpi_sources.person_key("x@example.invalid", bad)
