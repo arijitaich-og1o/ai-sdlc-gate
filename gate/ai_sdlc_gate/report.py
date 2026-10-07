@@ -39,6 +39,7 @@ def _finding_line(f: dict) -> str:
         " _(waived)_" if f.get("waived")
         else " _(late, advisory)_" if f.get("late")
         else " _(unverified, advisory)_" if f.get("unverified")
+        else f" _(capped from {_md(f['original_severity'], 20)}: documentation-only)_" if f.get("original_severity")
         else ""
     )
     loc = _loc(f)
@@ -194,7 +195,7 @@ def to_text(report: GateReport, full_report_path: str | None = None, max_finding
             lines.append(f"  ... and {len(late) - 10} more in the full report")
     if unverified:
         lines.append("")
-        lines.append(f"Unverified findings (advisory): {len(unverified)} whose quoted code or claimed encoding is not in the file:")
+        lines.append(f"Unverified findings (advisory): {len(unverified)} whose evidence is not in the file, or that state the code is sound:")
         for f in unverified[:10]:
             loc = f"{f['file']}:{f['line']}" if f.get("file") and f.get("line") else (f.get("file") or "-")
             lines.append(f"  [{f['severity'].upper():7}] {loc}  {f['title']}")

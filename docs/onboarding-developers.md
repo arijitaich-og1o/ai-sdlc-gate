@@ -72,6 +72,11 @@ The gate is designed to give you the complete list in one go and then stay consi
   **unverified** and does not block. Secret and credential findings are never downgraded this way. If an
   unverified finding is in fact right, fix it anyway; if the gate keeps producing them, report it to the gate
   owners. `gate.review.verify_quotes: false` turns off the quote check (the HTML-entity check always runs).
+- A finding that says itself that the code is already right ("the current implementation is functionally sound",
+  "no change needed") is also shown as **unverified** and does not block. Findings that only ask for
+  documentation or readability (the `gate.review.advisory_categories` list: changelog, runbook, ADR, docs,
+  naming, test readability) are reported but capped at `medium`, so they never block on their own. Neither rule
+  ever touches secrets, credentials, vulnerable dependencies or gate manipulation.
 
 A blocked commit prints a compact list of the blocking findings with file, line and fix. The full report of the
 last run is kept at `~/.ai-sdlc-gate/last-report.md`; `ai-sdlc-gate last` shows it again (`--md` for the full
