@@ -372,10 +372,11 @@ def content_security_policy(template: str = _TEMPLATE) -> str:
 def render_dashboard(summary: dict[str, Any], rows: list[dict[str, Any]] | None = None) -> str:
     """The dashboard HTML with `summary` embedded. Rows are not embedded: the page needs only the aggregates."""
     payload = json.dumps({"summary": summary}, sort_keys=True, separators=(",", ":"))
-    # Inside <script>, only `</script` (closes the element) and `<!--` (switches the parser into its escaped state,
-    # which is also the only state where `-->` means anything) are dangerous, and both start with `<`. In this JSON
-    # a `<` can only occur inside a string, so every one is replaced by its six-character JSON unicode escape: the
-    # same character to JSON.parse, but no markup to the HTML parser. Untrusted text therefore cannot leave the
-    # data block, and the page writes it only through textContent and setAttribute (never as markup).
+    # Escaping contract, tested by test_dashboard_embeds_data_safely_and_has_no_external_scripts and
+    # test_hostile_repo_names_and_comment_closers_stay_data (gate/tests/test_kpi.py): every `<` in the JSON
+    # payload is replaced by the six-character JSON escape `\u003c`. JSON.parse reads it back as `<`, but the HTML
+    # parser never sees a `<` inside the data block, so neither `</script` nor `<!--` can occur there (and `-->`
+    # means nothing without a preceding `<!--`). The page writes data only through textContent and setAttribute,
+    # and the Content-Security-Policy pins its one script by hash.
     payload = payload.replace("<", "\\u003c")
     return _TEMPLATE.replace("__CSP__", content_security_policy()).replace("__KPI_DATA__", payload)
