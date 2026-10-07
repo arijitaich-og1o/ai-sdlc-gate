@@ -367,6 +367,18 @@ def cmd_metrics_build(args: argparse.Namespace) -> int:
     return EXIT_PASS
 
 
+def cmd_kpi_export(args: argparse.Namespace) -> int:
+    from . import kpi as kpi_mod
+
+    events = metrics_mod.load_events(Path(args.events_dir))
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    for name, content in kpi_mod.export(events).items():
+        (out / name).write_text(content, encoding="utf-8", newline="\n")
+    print(f"KPI export from {len(events)} events written to {out}")
+    return EXIT_PASS
+
+
 def cmd_report_skip(args: argparse.Namespace) -> int:
     """Notify the organisation endpoint that the developer bypassed the gate with `--no-verify`.
 
@@ -498,6 +510,12 @@ def build_parser() -> argparse.ArgumentParser:
     mb = msub.add_parser("build")
     mb.add_argument("--events-dir", required=True), mb.add_argument("--out", required=True)
     mb.set_defaults(func=cmd_metrics_build)
+
+    kp = sub.add_parser("kpi", help="KPI dataset and dashboard from stored metrics events")
+    ksub = kp.add_subparsers(dest="kcmd", required=True)
+    ke = ksub.add_parser("export", help="write kpi-runs.csv/json, kpi-summary.json and kpi-dashboard.html")
+    ke.add_argument("--events-dir", required=True), ke.add_argument("--out", required=True)
+    ke.set_defaults(func=cmd_kpi_export)
     _add_client_parsers(sub)
     return p
 
