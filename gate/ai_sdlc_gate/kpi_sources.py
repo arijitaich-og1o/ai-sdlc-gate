@@ -101,6 +101,9 @@ def collect_git(repo_dir: str | Path, salt: str, slug: str | None = None, ref: s
 
 # ----------------------------------------------------------------------------- pull requests
 
+# A fetch takes an API path and returns the decoded JSON body, or raises on any failure (HTTP error, empty or
+# undecodable output). It never returns None to signal an error. Callers still check the shape they expect,
+# because a successful response can be an error object, e.g. {"message": "Bad credentials"}.
 Fetch = Callable[[str], Any]
 
 
@@ -129,10 +132,14 @@ def gh_fetch(gh: str = "gh") -> Fetch:
     import subprocess
 
     def fetch(path: str) -> Any:
-        out = subprocess.run([gh, "api", path], capture_output=True, text=True, timeout=60)
+        # gh writes UTF-8 whatever the platform. Decoding with the locale (cp1252 on Windows) failed on non-ASCII
+        # PR bodies inside subprocess's reader thread, left stdout as None and made a repository read as "0 PRs".
+        out = subprocess.run([gh, "api", path], capture_output=True, encoding="utf-8", errors="replace", timeout=60)
         if out.returncode != 0:
-            raise RuntimeError(f"gh api {path.split('?')[0]} failed: {out.stderr.strip()[:200]}")
-        return json.loads(out.stdout or "null")
+            raise RuntimeError(f"gh api {path.split('?')[0]} failed: {(out.stderr or '').strip()[:200]}")
+        if not (out.stdout or "").strip():
+            raise RuntimeError(f"gh api {path.split('?')[0]} returned no output")
+        return json.loads(out.stdout)
 
     return fetch
 
@@ -146,6 +153,10 @@ def collect_prs(slug: str, fetch: Fetch, max_prs: int = 200) -> list[dict[str, A
     page = 1
     while len(pulls) < max_prs:
         batch = fetch(f"/repos/{slug}/pulls?state=closed&per_page=100&sort=created&direction=desc&page={page}")
+        # Only an empty list means "no more pull requests"; anything else is a failed read that must not pass as
+        # a repository without PRs (the KPI would silently show 0).
+        if not isinstance(batch, list):
+            raise RuntimeError(f"unexpected response for pull requests of {slug} (page {page}): {type(batch).__name__}")
         if not batch:
             break
         pulls.extend(batch)
