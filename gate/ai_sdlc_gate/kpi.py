@@ -16,17 +16,22 @@ from __future__ import annotations
 
 import csv
 import fnmatch
+import hashlib
+import hmac
 import io
 import json
 import secrets
 import statistics
 from collections import Counter, defaultdict
 from datetime import datetime
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
-from .kpi_sources import person_key
+from .kpi_sources import person_key, subkey
 
-DATASET_VERSION = 1
+# Covers kpi-runs.*, kpi-summary.json and kpi-portal.json. Adding keys keeps the version; removing, renaming or
+# changing the meaning of a key bumps it. 2: summary `feedback` replaced `false_positives`, `time_saved` removed
+# (PR #36, which should have bumped it), portal export added.
+DATASET_VERSION = 2
 SEVERITIES = ("blocker", "high", "medium", "low", "info")
 # Categories that mean "a secret or a known-vulnerable component reached a commit". Non-waivable in the gate.
 SECURITY_CRITICAL = ("secret-exposure", "hardcoded-credential", "known-vulnerable-dependency")
@@ -438,7 +443,7 @@ def cases_by_month(rows: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
 
 
 def users(gate_user_rows: list[tuple[str, str, str]], git_rows: list[dict[str, Any]], teams: dict[str, list[str]] | None,
-          gated_repos: set[str]) -> dict[str, Any]:
+          gated_repos: set[str], label: Callable[[str], str] = lambda t: t) -> dict[str, Any]:
     """Distinct gate users and, where git history is available, committers in the same teams' gated repositories.
 
     Every count below MIN_GROUP is suppressed (None). Coverage compares two people sets keyed the same way; it is
@@ -451,7 +456,7 @@ def users(gate_user_rows: list[tuple[str, str, str]], git_rows: list[dict[str, A
     git_by_team: dict[str, set[str]] = defaultdict(set)
     for g in git_rows:
         if g["repo"] in gated_repos and not g.get("merge"):
-            git_by_team[team_of(g["repo"], teams)].add(g["author"])
+            git_by_team[label(team_of(g["repo"], teams))].add(g["author"])
     out = {}
     for team in sorted(set(gate_by_team) | set(git_by_team)):
         u, c = _suppressed(len(gate_by_team[team])), _suppressed(len(git_by_team[team]))
@@ -522,7 +527,8 @@ def review_effect(pr_rows: list[dict[str, Any]], adopted: dict[str, str]) -> dic
 
 def kpi_summary(rows: list[dict[str, Any]], triage_rows: list[dict[str, Any]] | None = None, *,
                 gate_user_rows: list[tuple[str, str, str]] | None = None, git_rows: list[dict[str, Any]] | None = None,
-                pr_rows: list[dict[str, Any]] | None = None, teams: dict[str, list[str]] | None = None) -> dict[str, Any]:
+                pr_rows: list[dict[str, Any]] | None = None, teams: dict[str, list[str]] | None = None,
+                label: Callable[[str], str] = lambda t: t) -> dict[str, Any]:
     """Every KPI: overall, per ISO week, per repository and per team, plus adoption and outcome comparisons."""
     triage_rows = triage_rows or []
     git_rows = git_rows or []
@@ -535,7 +541,7 @@ def kpi_summary(rows: list[dict[str, Any]], triage_rows: list[dict[str, Any]] | 
     for t in triage_rows:
         tgroups["week"][t["week"]].append(t)
         tgroups["repo"][t["repo"]].append(t)
-        tgroups["team"][team_of(t["repo"], teams)].append(t)
+        tgroups["team"][label(team_of(t["repo"], teams))].append(t)
     adopted = _adoption_dates(rows)
     return {
         "dataset_version": DATASET_VERSION,
@@ -546,7 +552,7 @@ def kpi_summary(rows: list[dict[str, Any]], triage_rows: list[dict[str, Any]] | 
         "teams": {k: compute_kpis(v, tgroups["team"].get(k)) for k, v in sorted(groups["team"].items())},
         "adoption": adoption(rows),
         "cases_by_month": cases_by_month(rows),
-        "users": users(gate_user_rows or [], git_rows, teams, set(adopted)),
+        "users": users(gate_user_rows or [], git_rows, teams, set(adopted), label),
         "quality_outcome": quality_outcome(git_rows, adopted),
         "review_effect": review_effect(pr_rows, adopted),
         "sources": {"gate_runs": len(rows), "triage_labels": len(triage_rows), "git_commits": len(git_rows),
@@ -583,4 +589,101 @@ def export(events: Iterable[dict[str, Any]], *, git_rows: list[dict[str, Any]] |
         "kpi-triage.csv": triage_to_csv(triage_rows),
         "kpi-summary.json": json.dumps(summary, indent=1, sort_keys=True) + "\n",
         "kpi-dashboard.html": render_dashboard(summary),
+    }
+
+
+# ----------------------------------------------------------------------------- portal export
+
+PORTAL_SCHEMA = "ai-sdlc-gate/kpi-portal"
+OTHER_TEAMS = "Other teams"
+
+
+def team_label(team: str, salt: str, real: bool = False) -> str:
+    """The name a team is shown under outside the gate: a stable pseudonym unless real names were approved.
+
+    Keyed with the machine's secret, so the label of a team never changes when another team appears (an
+    alphabetical "Team A, B, ..." would relabel teams between refreshes) and cannot be reversed by guessing names.
+    """
+    if real:
+        return team
+    return "Team " + hmac.new(subkey(salt, "team-labels"), team.encode("utf-8"), hashlib.sha256).hexdigest()[:6]
+
+
+def portal_export(events: Iterable[dict[str, Any]], *, salt: str, git_rows: list[dict[str, Any]] | None = None,
+                  pr_rows: list[dict[str, Any]] | None = None, teams: dict[str, list[str]] | None = None,
+                  real_team_names: bool = False) -> dict[str, Any]:
+    """The sanitised dataset for publishing outside the gate (e.g. the AI Innovation Portal).
+
+    - Only aggregate sections; no repository names, skip reasons, run rows, finding text or person keys.
+    - A team is shown on its own only with at least MIN_GROUP verified gate users; smaller teams (and runs without
+      a known repository) are folded into "Other teams", recomputed from the run rows (rates and medians cannot be
+      combined from per-team summaries). If "Other teams" itself has fewer than MIN_GROUP users it is left out of
+      every per-team section, so it cannot expose a small team under another name; the organisation-wide numbers
+      still include its runs.
+    - Team labels are stable pseudonyms unless `real_team_names` (needs the data owner's approval).
+    """
+    if not salt:  # fail before any data is processed: without the secret there are no stable pseudonyms
+        raise ValueError("a salt is required for the portal export")
+    events = list(events)
+    git_rows, pr_rows = git_rows or [], pr_rows or []
+    rows = build_rows(events, teams)
+    user_rows = gate_users(events, teams, salt)
+    people: dict[str, set[str]] = defaultdict(set)
+    for team, _, key in user_rows:
+        people[team].add(key)
+    shown = {t for t, keys in people.items() if len(keys) >= MIN_GROUP and t != UNATTRIBUTED_TEAM}
+
+    def label(team: str) -> str:
+        return team_label(team, salt, real_team_names) if team in shown else OTHER_TEAMS
+
+    folded = {r["team"] for r in rows} - shown
+    other_users = len(set().union(*(people[t] for t in folded))) if folded else 0
+    other_shown = bool(folded) and other_users >= MIN_GROUP
+    summary = kpi_summary(
+        [{**r, "team": label(r["team"])} for r in rows], build_triage_rows(events),
+        gate_user_rows=[(label(t), m, k) for t, m, k in user_rows], git_rows=git_rows, pr_rows=pr_rows,
+        teams=teams, label=label,
+    )
+
+    def strip(k: dict[str, Any]) -> dict[str, Any]:
+        return {key: v for key, v in k.items() if key != "top_categories"}
+
+    def per_team(d: dict[str, Any]) -> dict[str, Any]:
+        return {t: v for t, v in d.items() if t != OTHER_TEAMS or other_shown}
+
+    def outcome(section: dict[str, Any] | None, repos: int, people: int | None) -> dict[str, Any] | None:
+        if section is None:
+            return None
+        # A comparison is a pilot, not a picture of the organisation, when it rests on fewer than MIN_GROUP
+        # repositories or (where people are known) fewer than MIN_GROUP distinct committers: five repositories of
+        # one maintainer are still one person's history.
+        small = repos < MIN_GROUP or (people is not None and people < MIN_GROUP)
+        return {"scope": "pilot" if small else "organisation", "repositories": repos, "cohorts": section}
+
+    src = summary["sources"]
+    committers = len({g["author"] for g in git_rows if not g.get("merge")})
+    return {
+        "schema": PORTAL_SCHEMA,
+        "dataset_version": DATASET_VERSION,
+        "period": summary["period"],
+        "overall": strip(summary["overall"]),
+        "teams": {t: strip(v) for t, v in per_team(summary["teams"]).items()},
+        "weeks": {w: strip(v) for w, v in summary["weeks"].items()},
+        "adoption": per_team(summary["adoption"]),
+        "cases_by_month": {m: per_team(c) for m, c in summary["cases_by_month"].items()},
+        "users": {"total_gate_users": summary["users"]["total_gate_users"], "by_team": per_team(summary["users"]["by_team"])},
+        "quality_outcome": outcome(summary["quality_outcome"], src["git_repos"], committers),
+        # Pull request rows carry no author, so only the repository count applies here.
+        "review_effect": outcome(summary["review_effect"], src["pr_repos"], None),
+        "sources": src,
+        "rules": summary["rules"],
+        "suppression": {
+            "min_group": MIN_GROUP,
+            "teams_shown": len(shown),
+            "teams_folded": len(folded),
+            "other_teams_shown": other_shown,
+            "labels": "real" if real_team_names else "pseudonymous",
+            # True when even the whole organisation has fewer than MIN_GROUP verified users.
+            "organisation_below_min_group": summary["users"]["total_gate_users"] is None,
+        },
     }

@@ -441,6 +441,19 @@ def cmd_kpi_export(args: argparse.Namespace) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     salt = kpi_sources.person_salt(identity_mod.sdlc_home())
+    if args.portal:
+        # Only the sanitised file: the repository-bearing exports are never written next to it, so they cannot be
+        # handed over by mistake.
+        data = kpi_mod.portal_export(events, salt=salt, git_rows=git_rows, pr_rows=pr_rows, teams=teams,
+                                     real_team_names=args.real_team_names)
+        (out / "kpi-portal.json").write_text(json.dumps(data, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+        sup = data["suppression"]
+        print(f"portal export written to {out / 'kpi-portal.json'}: {sup['teams_shown']} team(s) shown, {sup['teams_folded']} folded"
+              + (", organisation below the minimum group size" if sup["organisation_below_min_group"] else ""))
+        return EXIT_PASS
+    if args.real_team_names:
+        _eprint("--real-team-names only applies to --portal")
+        return EXIT_ERROR
     for name, content in kpi_mod.export(events, git_rows=git_rows, pr_rows=pr_rows, teams=teams, salt=salt).items():
         (out / name).write_text(content, encoding="utf-8", newline="\n")
     print(f"KPI export from {len(events)} events, {len(git_rows)} commits, {len(pr_rows)} pull requests written to {out}")
@@ -626,6 +639,8 @@ def build_parser() -> argparse.ArgumentParser:
     ke.add_argument("--git", nargs="*", help="commit files from `kpi collect-git` (JSONL)")
     ke.add_argument("--prs", nargs="*", help="pull request files from `kpi collect-prs` (JSONL)")
     ke.add_argument("--teams", help="YAML team map: teams: {<team>: [<owner/repo glob>, ...]}")
+    ke.add_argument("--portal", action="store_true", help="write only the sanitised kpi-portal.json for publishing outside the gate")
+    ke.add_argument("--real-team-names", action="store_true", help="with --portal: show team names instead of stable pseudonyms (needs the data owner's approval)")
     ke.set_defaults(func=cmd_kpi_export)
     kg = ksub.add_parser("collect-git", help="commit metadata of one repository (no names, messages or code)")
     kg.add_argument("--repo-dir", required=True), kg.add_argument("--out", required=True)

@@ -189,6 +189,33 @@ India's evidence for two maturity-matrix dimensions:
 
 India runs every change through the gate, so all output is standardized; these KPIs show it.
 
+## Publishing outside the gate: the portal export
+
+For any page outside the gate repository (e.g. the One.O AI Innovation Portal), publish only the sanitised file:
+
+```bash
+ai-sdlc-gate kpi export --events-dir <metrics>/events --git git-*.jsonl --prs prs-*.jsonl --teams teams.yaml --portal --out out/portal
+```
+
+`--portal` writes **only** `kpi-portal.json` (schema `ai-sdlc-gate/kpi-portal`, `dataset_version` 2). The
+repository-bearing exports are never written next to it.
+
+| Rule | Effect |
+|---|---|
+| Aggregates only | `overall`, `teams`, `weeks`, `adoption`, `cases_by_month`, `users`, `quality_outcome`, `review_effect`, `sources`, `rules`, `suppression`. No repository names, skip reasons, run rows, finding text, categories list or person keys. |
+| Small teams fold | A team appears on its own only with ≥ 5 verified gate users. Smaller teams and unattributed runs become **Other teams**, recomputed from the run rows (rates and medians cannot be combined from per-team values). |
+| Small fold is hidden | If **Other teams** itself has fewer than 5 users, it is left out of every per-team section, so it cannot expose a small team under another name. The organisation-wide numbers still count its runs. |
+| Stable pseudonyms | Teams are shown as `Team <6 hex>`, keyed with a sub-key derived from the exporting machine's secret for this purpose only (internal person keys use a different sub-key): stable across refreshes and not reversible by guessing names. Real names only with `--real-team-names`, which needs the data owners' approval. |
+| Outcome scope | `quality_outcome` / `review_effect` carry `scope: pilot` when they rest on fewer than 5 repositories, or (git history) fewer than 5 distinct committers: five repositories of one maintainer are still one person's history. |
+| Disclosure | `suppression` reports teams shown and folded, whether Other teams is shown, the label mode, and `organisation_below_min_group` (true while the whole organisation has fewer than 5 verified users). |
+
+Export from the same machine every time, so pseudonyms stay the same between refreshes.
+
+**Versioning.** `dataset_version` covers `kpi-runs.*`, `kpi-summary.json` and `kpi-portal.json`. Adding keys
+keeps the version; removing, renaming or changing the meaning of a key bumps it. Version 2 records the summary
+change of PR #36 (`feedback` replaced `false_positives`; `time_saved` removed), which should have bumped it then,
+and adds the portal export.
+
 ## Plugging into the Measurement tool (due 15 Nov)
 
 **Contract.** The Measurement tool consumes:
