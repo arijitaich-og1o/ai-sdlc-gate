@@ -192,6 +192,22 @@ def test_hostile_repo_names_and_comment_closers_stay_data():
     assert "document.write" not in page_script and "aria-label" not in page_script
 
 
+def test_dashboard_ships_a_strict_content_security_policy():
+    import base64
+    import hashlib
+
+    html = kpi.export([ev(1, "2026-10-01T10:00:00+00:00")])["kpi-dashboard.html"]
+    csp = re.search(r'<meta http-equiv="Content-Security-Policy" content="([^"]+)">', html).group(1)
+    assert "default-src 'none'" in csp and "connect-src 'none'" in csp and "base-uri 'none'" in csp
+    assert "unsafe-inline" not in csp and "unsafe-eval" not in csp
+    # The hashes must match what the browser will see, or the page would silently not run.
+    for tag, directive in (("script", "script-src"), ("style", "style-src")):
+        body = re.search(rf"<{tag}>(.*?)</{tag}>", html, re.S).group(1)
+        digest = base64.b64encode(hashlib.sha256(body.encode("utf-8")).digest()).decode()
+        assert f"{directive} 'sha256-{digest}'" in csp
+    assert ' style="' not in html  # hash-pinned styles do not cover style attributes
+
+
 def test_render_dashboard_uses_the_one_o_palette():
     html = render_dashboard(kpi.kpi_summary([]))
     for token in ("#434098", "#EB001F", "#EDECFC", "Lexend", "Source Sans 3"):

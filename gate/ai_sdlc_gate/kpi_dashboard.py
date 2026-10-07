@@ -5,13 +5,17 @@ it cannot close the script tag, and the page only ever writes it with textConten
 """
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
+import re
 from typing import Any
 
 _TEMPLATE = r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI SDLC Gate KPIs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,6 +46,9 @@ _TEMPLATE = r"""<!doctype html>
   .panel h3 { font: 600 14px/1.3 Lexend, system-ui, sans-serif; margin: 0 0 8px; }
   .legend { display: flex; gap: 14px; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
   .legend i { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 5px; }
+  .legend .sw-purple { background: var(--purple); }
+  .legend .sw-red { background: var(--red); }
+  .legend .sw-bar { background: var(--lilac); height: 10px; border: 1px solid var(--purple); }
   svg text { font: 12px "Source Sans 3", system-ui, sans-serif; fill: var(--muted); }
   table { border-collapse: collapse; width: 100%; font-size: 14px; }
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -68,8 +75,8 @@ _TEMPLATE = r"""<!doctype html>
 
   <h2>Trends (all repositories, by ISO week)</h2>
   <div class="grid2">
-    <div class="panel"><h3>Gate pass rate and block rate</h3><div class="legend"><span><i style="background:var(--purple)"></i>pass rate</span><span><i style="background:var(--red)"></i>block rate</span></div><div id="trendRates"></div></div>
-    <div class="panel"><h3>Gate runs and blocking findings per run</h3><div class="legend"><span><i style="background:var(--lilac);height:10px;border:1px solid var(--purple)"></i>runs</span><span><i style="background:var(--red)"></i>blocker + high per run</span></div><div id="trendRuns"></div></div>
+    <div class="panel"><h3>Gate pass rate and block rate</h3><div class="legend"><span><i class="sw-purple"></i>pass rate</span><span><i class="sw-red"></i>block rate</span></div><div id="trendRates"></div></div>
+    <div class="panel"><h3>Gate runs and blocking findings per run</h3><div class="legend"><span><i class="sw-bar"></i>runs</span><span><i class="sw-red"></i>blocker + high per run</span></div><div id="trendRuns"></div></div>
   </div>
 
   <h2>Where quality is lost</h2>
@@ -339,6 +346,29 @@ _TEMPLATE = r"""<!doctype html>
 """
 
 
+def _sha256(text: str) -> str:
+    return "'sha256-" + base64.b64encode(hashlib.sha256(text.encode("utf-8")).digest()).decode("ascii") + "'"
+
+
+def content_security_policy(template: str = _TEMPLATE) -> str:
+    """Defence in depth on top of the escaping: the page may run only its own inline script and stylesheet (pinned
+    by hash, so no 'unsafe-inline'), load fonts from Google Fonts and nothing else; no network calls, no forms, no
+    <base>. The JSON data block is not executed, so it needs no allowance. Hashes come from the template itself,
+    so they cannot go stale when the page changes."""
+    style = re.search(r"<style>(.*?)</style>", template, re.S).group(1)
+    script = re.search(r"<script>(.*?)</script>", template, re.S).group(1)
+    return "; ".join([
+        "default-src 'none'",
+        f"script-src {_sha256(script)}",
+        f"style-src {_sha256(style)} https://fonts.googleapis.com",
+        "font-src https://fonts.gstatic.com",
+        "img-src 'none'",
+        "connect-src 'none'",
+        "base-uri 'none'",
+        "form-action 'none'",
+    ])
+
+
 def render_dashboard(summary: dict[str, Any], rows: list[dict[str, Any]] | None = None) -> str:
     """The dashboard HTML with `summary` embedded. Rows are not embedded: the page needs only the aggregates."""
     payload = json.dumps({"summary": summary}, sort_keys=True, separators=(",", ":"))
@@ -348,4 +378,4 @@ def render_dashboard(summary: dict[str, Any], rows: list[dict[str, Any]] | None 
     # same character to JSON.parse, but no markup to the HTML parser. Untrusted text therefore cannot leave the
     # data block, and the page writes it only through textContent and setAttribute (never as markup).
     payload = payload.replace("<", "\\u003c")
-    return _TEMPLATE.replace("__KPI_DATA__", payload)
+    return _TEMPLATE.replace("__CSP__", content_security_policy()).replace("__KPI_DATA__", payload)
