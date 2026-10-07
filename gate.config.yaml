@@ -138,6 +138,18 @@ gate:
     # advisory instead of blocking (secrets, credentials and gate manipulation are exempt). Claims of HTML entities
     # in code that contains none are always advisory, whatever this is set to.
     verify_quotes: true
+    # Categories that only ask for documentation or readability. They are still reported, but capped at `medium`
+    # so they never block a change on their own (the original severity is kept on the finding). Security-relevant
+    # documentation (`sensitive-data-in-doc`) and deprecations that can hide a breaking change stay blocking.
+    advisory_categories:
+      - missing-changelog
+      - missing-documentation
+      - missing-runbook
+      - stale-documentation
+      - test-readability
+      - undocumented-configuration
+      - undocumented-decision
+      - poor-naming
     # Remember findings and reviewed code per repository and branch on the developer's machine.
     ledger: true
 

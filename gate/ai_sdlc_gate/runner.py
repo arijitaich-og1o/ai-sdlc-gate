@@ -409,6 +409,46 @@ _QUOTE_RE = re.compile(r"`([^`\n]*)`")
 _CODE_SHAPED_RE = re.compile(r"[\s()\[\]{}<>=!&|+*/%;,:]")
 
 
+# A finding that says, in its own words, that the code is already right. Kept to explicit verdict phrases (a
+# subject plus "is sound/correct", "does this correctly", "no change needed") so ordinary advice such as "ensure
+# the input is correct" does not match.
+_SELF_DECLARED_SOUND_RE = re.compile(
+    r"\bfunctionally sound\b"
+    r"|\b(?:current|existing) (?:code|implementation|escaping|logic|approach|behaviou?r|design)(?: \w+){0,3} (?:is|are) (?:already )?(?:functionally |technically )?(?:sound|correct|safe)\b"
+    r"|\b(?:does|handles) (?:this|it) correctly\b"
+    r"|\bno (?:code )?(?:action|change|changes|fix) (?:is |are )?(?:needed|required|necessary)\b"
+    r"|\bthis is (?:the )?correct(?: pattern| approach| security logic)?\b",
+    re.IGNORECASE,
+)
+
+
+def calibrate_findings(findings: list[dict[str, Any]], non_skippable: set[str], advisory_categories: set[str]) -> dict[str, int]:
+    """Keep the model's own non-defects from blocking. Mutates `findings` in place; returns counts.
+
+    - A finding in a documentation-only category (`gate.review.advisory_categories`) is capped at `medium`; its
+      model severity is kept as `original_severity`.
+    - A finding whose title, description or recommendation states that the code is already sound ("the current
+      implementation is functionally sound", "no change needed") is marked `unverified`: reported, never blocking.
+      The model often keeps such confirmations at high, and the gate is not deterministic enough to block on them.
+    Protected categories (secrets, credentials, vulnerable dependencies, gate manipulation) are never touched.
+    """
+    capped = sound = 0
+    for f in findings:
+        if f.get("category") in non_skippable:
+            continue
+        if f.get("category") in advisory_categories and severity_rank(f["severity"]) > severity_rank("medium"):
+            f["original_severity"] = f["severity"]
+            f["severity"] = "medium"
+            f["calibration_note"] = "capped at medium: documentation-only category"
+            capped += 1
+        text = f"{f.get('title', '')}\n{f.get('description', '')}\n{f.get('recommendation', '')}"
+        if not f.get("unverified") and _SELF_DECLARED_SOUND_RE.search(text):
+            f["unverified"] = True
+            f["unverified_note"] = "not counted towards blocking: the finding itself states that the code is sound"
+            sound += 1
+    return {"capped": capped, "self_declared_sound": sound}
+
+
 def _norm(text: str) -> str:
     return " ".join(text.split())
 
@@ -518,11 +558,13 @@ def run_gate(
             ledger, all_phase_findings, ledger_mod.content_lines(cs.files), non_skippable,
             late_mode=str((cfg.gate.get("review") or {}).get("late_findings", "advisory")),
         )
+    review_cfg = cfg.gate.get("review") or {}
+    all_findings = [f for pr in results for f in pr.findings]
+    # Calibration: documentation-only categories never block, nor do findings that call the code sound themselves.
+    calibration = calibrate_findings(all_findings, non_skippable, set(review_cfg.get("advisory_categories") or []))
     # Evidence check: a finding whose quoted code or claimed encoding is not in the file never blocks.
-    unverified = verify_findings(
-        [f for pr in results for f in pr.findings], cs, non_skippable,
-        check_quotes=bool((cfg.gate.get("review") or {}).get("verify_quotes", True)),
-    )
+    verify_findings(all_findings, cs, non_skippable, check_quotes=bool(review_cfg.get("verify_quotes", True)))
+    unverified = sum(1 for f in all_findings if f.get("unverified"))
     for pr in results:
         if pr.skill_name == "(missing)":
             continue
@@ -613,6 +655,7 @@ def run_gate(
             "branch": cs.branch,
             "stability": stability,
             "unverified": unverified,
+            "calibration": calibration,
             "ledger_runs": ledger.runs if ledger is not None else 0,
             "review": {
                 "passes": {str(pr.phase): pr.passes for pr in results if pr.skill_name != "(missing)"},
