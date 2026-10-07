@@ -5,9 +5,9 @@
         "Anitha9765"
       ],
       "actors_count": 1,
-      "attested": 16,
+      "attested": 17,
       "attested_rate": 1.0,
-      "block_rate": 0.5,
+      "block_rate": 0.471,
       "blocked": 8,
       "developers_count": 1,
       "findings": {
@@ -17,23 +17,23 @@
         "low": 12,
         "medium": 32
       },
-      "findings_per_run": 4.62,
+      "findings_per_run": 4.35,
       "first_seen": "2026-09-30T11:47:15+00:00",
-      "flag_rate": 0.5,
+      "flag_rate": 0.471,
       "flagged": 8,
       "intents": {
-        "commit": 15,
+        "commit": 16,
         "deploy": 1
       },
-      "last_seen": "2026-10-06T10:11:23+00:00",
-      "pass_rate": 0.5,
-      "passed": 8,
+      "last_seen": "2026-10-07T08:09:06+00:00",
+      "pass_rate": 0.529,
+      "passed": 9,
       "repos": [
         "Anitha9765/psw_internal-proxy_AnithaB",
         "otto-ec/kraken_samplenator",
         "otto-ec/kraken_suppressions"
       ],
-      "runs": 16,
+      "runs": 17,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -146,8 +146,8 @@
       "waived_findings": 0
     }
   },
-  "events": 144,
-  "generated_at": "2026-10-06T21:32:45+00:00",
+  "events": 145,
+  "generated_at": "2026-10-07T08:09:23+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -210,9 +210,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 104,
+      "attested": 105,
       "attested_rate": 1.0,
-      "block_rate": 0.327,
+      "block_rate": 0.324,
       "blocked": 34,
       "developers_count": 2,
       "findings": {
@@ -222,18 +222,18 @@
         "low": 341,
         "medium": 493
       },
-      "findings_per_run": 11.35,
+      "findings_per_run": 11.24,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.327,
+      "flag_rate": 0.324,
       "flagged": 34,
       "intents": {
-        "commit": 91,
+        "commit": 92,
         "deploy": 3,
         "maintenance": 10
       },
-      "last_seen": "2026-10-06T21:32:23+00:00",
-      "pass_rate": 0.673,
-      "passed": 70,
+      "last_seen": "2026-10-07T08:09:06+00:00",
+      "pass_rate": 0.676,
+      "passed": 71,
       "repos": [
         "OG-DW/sofa_docs",
         "OG-DW/sofa_openhands",
@@ -245,7 +245,7 @@
         "otto-ec/kraken_suppressions",
         "unknown/unknown"
       ],
-      "runs": 104,
+      "runs": 105,
       "skip_rate": 0.038,
       "skips_granted": 4,
       "skips_requested": 4,
@@ -266,9 +266,9 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 143,
+    "attested": 144,
     "attested_rate": 0.993,
-    "block_rate": 0.312,
+    "block_rate": 0.31,
     "blocked": 45,
     "developers_count": 3,
     "findings": {
@@ -278,18 +278,18 @@
       "low": 418,
       "medium": 641
     },
-    "findings_per_run": 10.37,
+    "findings_per_run": 10.3,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.312,
+    "flag_rate": 0.31,
     "flagged": 45,
     "intents": {
-      "commit": 121,
+      "commit": 122,
       "deploy": 13,
       "maintenance": 10
     },
-    "last_seen": "2026-10-06T21:32:23+00:00",
-    "pass_rate": 0.688,
-    "passed": 99,
+    "last_seen": "2026-10-07T08:09:06+00:00",
+    "pass_rate": 0.69,
+    "passed": 100,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
       "OG-DW/sofa_docs",
@@ -307,7 +307,7 @@
       "otto-ec/kraken_suppressions",
       "unknown/unknown"
     ],
-    "runs": 144,
+    "runs": 145,
     "skip_rate": 0.028,
     "skips_granted": 4,
     "skips_requested": 4,
@@ -888,7 +888,7 @@
         "Anitha9765"
       ],
       "actors_count": 1,
-      "attested": 2,
+      "attested": 3,
       "attested_rate": 1.0,
       "block_rate": 0.0,
       "blocked": 0,
@@ -900,20 +900,20 @@
         "low": 0,
         "medium": 8
       },
-      "findings_per_run": 4.0,
+      "findings_per_run": 2.67,
       "first_seen": "2026-10-06T10:09:45+00:00",
       "flag_rate": 0.0,
       "flagged": 0,
       "intents": {
-        "commit": 2
+        "commit": 3
       },
-      "last_seen": "2026-10-06T10:11:23+00:00",
+      "last_seen": "2026-10-07T08:09:06+00:00",
       "pass_rate": 1.0,
-      "passed": 2,
+      "passed": 3,
       "repos": [
         "otto-ec/kraken_suppressions"
       ],
-      "runs": 2,
+      "runs": 3,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
