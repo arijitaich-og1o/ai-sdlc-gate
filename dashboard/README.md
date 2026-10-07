@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-07T08:09:23+00:00 from 145 gate run(s)._
+_Generated 2026-10-07T08:11:02+00:00 from 146 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 145 |
-| Pass rate | 69% |
-| Runs flagged (findings at/above threshold) | 45 (31%) |
-| Runs blocked | 45 (31%) |
+| Gate runs | 146 |
+| Pass rate | 68% |
+| Runs flagged (findings at/above threshold) | 46 (32%) |
+| Runs blocked | 46 (32%) |
 | Skips requested / granted | 4 / 4 |
 | Findings waived via skips | 42 |
-| Findings per run | 10.3 |
+| Findings per run | 10.26 |
 | Runs with local client attestation | 99% |
 | Active developers / repositories | 3 / 15 |
 | Top finding categories | general, hardcoded-configuration, missing-tests, undocumented-decision, observability-gap |
@@ -22,14 +22,14 @@ _Generated 2026-10-07T08:09:23+00:00 from 145 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 105 | 68% | 34 | 4 | 24 | 232 | 493 |
+| 2026-10 | 106 | 67% | 35 | 4 | 24 | 236 | 494 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 121 | 74% | 32 | 32 | 4/4 | 42 | 9.79 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-06 |
-| anitha.bantu@og1o.in (@Anitha9765) | 17 | 53% | 8 | 8 | 0/0 | 0 | 4.35 | 100% | logic-error, breaking-api-change, missing-contract-tests | 2026-10-07 |
+| anitha.bantu@og1o.in (@Anitha9765) | 18 | 50% | 9 | 9 | 0/0 | 0 | 4.39 | 100% | logic-error, breaking-api-change, missing-contract-tests | 2026-10-07 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
 ## Repositories
@@ -42,9 +42,9 @@ _Generated 2026-10-07T08:09:23+00:00 from 145 gate run(s)._
 | arijitaich-og1o/creditlens | 9 | 0% | 9 | 4 | 1 | 62.22 | general, hardcoded-configuration, breaking-api-change |
 | OG-DW/sofa_docs | 8 | 62% | 3 | 0 | 1 | 12.25 | general, undocumented-decision, observability-gap |
 | OG-DW/sofa_poc_fabro | 6 | 17% | 5 | 0 | 1 | 26.83 | general, hardcoded-configuration, observability-gap |
+| otto-ec/kraken_suppressions | 4 | 75% | 1 | 0 | 1 | 3.25 | general, hardcoded-configuration, undocumented-decision |
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
-| otto-ec/kraken_suppressions | 3 | 100% | 0 | 0 | 1 | 2.67 | hardcoded-configuration, general |
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
 | Anitha9765/psw_internal-proxy_AnithaB | 1 | 0% | 1 | 0 | 1 | 7.0 | general, logic-error, dead-code |

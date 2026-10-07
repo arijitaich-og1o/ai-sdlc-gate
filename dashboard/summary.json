@@ -5,35 +5,35 @@
         "Anitha9765"
       ],
       "actors_count": 1,
-      "attested": 17,
+      "attested": 18,
       "attested_rate": 1.0,
-      "block_rate": 0.471,
-      "blocked": 8,
+      "block_rate": 0.5,
+      "blocked": 9,
       "developers_count": 1,
       "findings": {
         "blocker": 2,
-        "high": 25,
+        "high": 29,
         "info": 3,
         "low": 12,
-        "medium": 32
+        "medium": 33
       },
-      "findings_per_run": 4.35,
+      "findings_per_run": 4.39,
       "first_seen": "2026-09-30T11:47:15+00:00",
-      "flag_rate": 0.471,
-      "flagged": 8,
+      "flag_rate": 0.5,
+      "flagged": 9,
       "intents": {
-        "commit": 16,
+        "commit": 17,
         "deploy": 1
       },
-      "last_seen": "2026-10-07T08:09:06+00:00",
-      "pass_rate": 0.529,
+      "last_seen": "2026-10-07T08:10:47+00:00",
+      "pass_rate": 0.5,
       "passed": 9,
       "repos": [
         "Anitha9765/psw_internal-proxy_AnithaB",
         "otto-ec/kraken_samplenator",
         "otto-ec/kraken_suppressions"
       ],
-      "runs": 17,
+      "runs": 18,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -42,7 +42,7 @@
         "breaking-api-change",
         "missing-contract-tests",
         "inconsistent-api-contract",
-        "hardcoded-configuration"
+        "undocumented-decision"
       ],
       "waived_findings": 0
     },
@@ -146,8 +146,8 @@
       "waived_findings": 0
     }
   },
-  "events": 145,
-  "generated_at": "2026-10-07T08:09:23+00:00",
+  "events": 146,
+  "generated_at": "2026-10-07T08:11:02+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -210,29 +210,29 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 105,
+      "attested": 106,
       "attested_rate": 1.0,
-      "block_rate": 0.324,
-      "blocked": 34,
+      "block_rate": 0.33,
+      "blocked": 35,
       "developers_count": 2,
       "findings": {
         "blocker": 24,
-        "high": 232,
+        "high": 236,
         "info": 90,
         "low": 341,
-        "medium": 493
+        "medium": 494
       },
-      "findings_per_run": 11.24,
+      "findings_per_run": 11.18,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.324,
-      "flagged": 34,
+      "flag_rate": 0.33,
+      "flagged": 35,
       "intents": {
-        "commit": 92,
+        "commit": 93,
         "deploy": 3,
         "maintenance": 10
       },
-      "last_seen": "2026-10-07T08:09:06+00:00",
-      "pass_rate": 0.676,
+      "last_seen": "2026-10-07T08:10:47+00:00",
+      "pass_rate": 0.67,
       "passed": 71,
       "repos": [
         "OG-DW/sofa_docs",
@@ -245,7 +245,7 @@
         "otto-ec/kraken_suppressions",
         "unknown/unknown"
       ],
-      "runs": 105,
+      "runs": 106,
       "skip_rate": 0.038,
       "skips_granted": 4,
       "skips_requested": 4,
@@ -266,29 +266,29 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 144,
+    "attested": 145,
     "attested_rate": 0.993,
-    "block_rate": 0.31,
-    "blocked": 45,
+    "block_rate": 0.315,
+    "blocked": 46,
     "developers_count": 3,
     "findings": {
       "blocker": 37,
-      "high": 282,
+      "high": 286,
       "info": 115,
       "low": 418,
-      "medium": 641
+      "medium": 642
     },
-    "findings_per_run": 10.3,
+    "findings_per_run": 10.26,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.31,
-    "flagged": 45,
+    "flag_rate": 0.315,
+    "flagged": 46,
     "intents": {
-      "commit": 122,
+      "commit": 123,
       "deploy": 13,
       "maintenance": 10
     },
-    "last_seen": "2026-10-07T08:09:06+00:00",
-    "pass_rate": 0.69,
+    "last_seen": "2026-10-07T08:10:47+00:00",
+    "pass_rate": 0.685,
     "passed": 100,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
@@ -307,8 +307,8 @@
       "otto-ec/kraken_suppressions",
       "unknown/unknown"
     ],
-    "runs": 145,
-    "skip_rate": 0.028,
+    "runs": 146,
+    "skip_rate": 0.027,
     "skips_granted": 4,
     "skips_requested": 4,
     "top_categories": [
@@ -888,38 +888,41 @@
         "Anitha9765"
       ],
       "actors_count": 1,
-      "attested": 3,
+      "attested": 4,
       "attested_rate": 1.0,
-      "block_rate": 0.0,
-      "blocked": 0,
+      "block_rate": 0.25,
+      "blocked": 1,
       "developers_count": 1,
       "findings": {
         "blocker": 0,
-        "high": 0,
+        "high": 4,
         "info": 0,
         "low": 0,
-        "medium": 8
+        "medium": 9
       },
-      "findings_per_run": 2.67,
+      "findings_per_run": 3.25,
       "first_seen": "2026-10-06T10:09:45+00:00",
-      "flag_rate": 0.0,
-      "flagged": 0,
+      "flag_rate": 0.25,
+      "flagged": 1,
       "intents": {
-        "commit": 3
+        "commit": 4
       },
-      "last_seen": "2026-10-07T08:09:06+00:00",
-      "pass_rate": 1.0,
+      "last_seen": "2026-10-07T08:10:47+00:00",
+      "pass_rate": 0.75,
       "passed": 3,
       "repos": [
         "otto-ec/kraken_suppressions"
       ],
-      "runs": 3,
+      "runs": 4,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
       "top_categories": [
+        "general",
         "hardcoded-configuration",
-        "general"
+        "undocumented-decision",
+        "gate-manipulation",
+        "known-vulnerable-dependency"
       ],
       "waived_findings": 0
     },
