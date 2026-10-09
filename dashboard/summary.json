@@ -52,29 +52,29 @@
         "arijitaich-og1o"
       ],
       "actors_count": 1,
-      "attested": 131,
+      "attested": 132,
       "attested_rate": 0.992,
-      "block_rate": 0.326,
-      "blocked": 43,
+      "block_rate": 0.331,
+      "blocked": 44,
       "developers_count": 1,
       "findings": {
         "blocker": 27,
-        "high": 342,
+        "high": 343,
         "info": 118,
         "low": 520,
-        "medium": 833
+        "medium": 835
       },
-      "findings_per_run": 13.94,
+      "findings_per_run": 13.86,
       "first_seen": "2026-09-22T10:56:08+00:00",
-      "flag_rate": 0.326,
-      "flagged": 43,
+      "flag_rate": 0.331,
+      "flagged": 44,
       "intents": {
-        "commit": 113,
+        "commit": 114,
         "deploy": 8,
         "maintenance": 11
       },
-      "last_seen": "2026-10-08T00:29:01+00:00",
-      "pass_rate": 0.674,
+      "last_seen": "2026-10-09T01:20:23+00:00",
+      "pass_rate": 0.669,
       "passed": 89,
       "repos": [
         "OG-DW/sofa_docs",
@@ -83,11 +83,12 @@
         "arijitaich-og1o/ai-sdlc-gate",
         "arijitaich-og1o/creditlens",
         "arijitaich-og1o/sofa-terraform-sandbox",
+        "local/demo",
         "oneo-dice/oggpt-x-backend",
         "oneo-dice/oggpt-x-infra",
         "unknown/unknown"
       ],
-      "runs": 132,
+      "runs": 133,
       "skip_rate": 0.03,
       "skips_granted": 4,
       "skips_requested": 4,
@@ -147,8 +148,8 @@
       "waived_findings": 0
     }
   },
-  "events": 162,
-  "generated_at": "2026-10-08T00:29:19+00:00",
+  "events": 163,
+  "generated_at": "2026-10-09T01:20:38+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -211,29 +212,29 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 122,
+      "attested": 123,
       "attested_rate": 1.0,
-      "block_rate": 0.385,
-      "blocked": 47,
+      "block_rate": 0.39,
+      "blocked": 48,
       "developers_count": 2,
       "findings": {
         "blocker": 26,
-        "high": 365,
+        "high": 366,
         "info": 113,
         "low": 511,
-        "medium": 835
+        "medium": 837
       },
-      "findings_per_run": 15.16,
+      "findings_per_run": 15.07,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.385,
-      "flagged": 47,
+      "flag_rate": 0.39,
+      "flagged": 48,
       "intents": {
-        "commit": 106,
+        "commit": 107,
         "deploy": 5,
         "maintenance": 11
       },
-      "last_seen": "2026-10-08T00:29:01+00:00",
-      "pass_rate": 0.615,
+      "last_seen": "2026-10-09T01:20:23+00:00",
+      "pass_rate": 0.61,
       "passed": 75,
       "repos": [
         "OG-DW/sofa_docs",
@@ -242,12 +243,13 @@
         "arijitaich-og1o/ai-sdlc-gate",
         "arijitaich-og1o/creditlens",
         "arijitaich-og1o/sofa-terraform-sandbox",
+        "local/demo",
         "otto-ec/kraken_partner_order_api",
         "otto-ec/kraken_samplenator",
         "otto-ec/kraken_suppressions",
         "unknown/unknown"
       ],
-      "runs": 122,
+      "runs": 123,
       "skip_rate": 0.033,
       "skips_granted": 4,
       "skips_requested": 4,
@@ -268,29 +270,29 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 161,
+    "attested": 162,
     "attested_rate": 0.994,
-    "block_rate": 0.358,
-    "blocked": 58,
+    "block_rate": 0.362,
+    "blocked": 59,
     "developers_count": 3,
     "findings": {
       "blocker": 39,
-      "high": 415,
+      "high": 416,
       "info": 138,
       "low": 588,
-      "medium": 983
+      "medium": 985
     },
-    "findings_per_run": 13.35,
+    "findings_per_run": 13.29,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.358,
-    "flagged": 58,
+    "flag_rate": 0.362,
+    "flagged": 59,
     "intents": {
-      "commit": 136,
+      "commit": 137,
       "deploy": 15,
       "maintenance": 11
     },
-    "last_seen": "2026-10-08T00:29:01+00:00",
-    "pass_rate": 0.642,
+    "last_seen": "2026-10-09T01:20:23+00:00",
+    "pass_rate": 0.638,
     "passed": 104,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
@@ -300,6 +302,7 @@
       "arijitaich-og1o/ai-sdlc-gate",
       "arijitaich-og1o/creditlens",
       "arijitaich-og1o/sofa-terraform-sandbox",
+      "local/demo",
       "oneo-dice/oggpt-x-backend",
       "oneo-dice/oggpt-x-infra",
       "otto-ec/flagship_benefits_service",
@@ -310,7 +313,7 @@
       "otto-ec/kraken_suppressions",
       "unknown/unknown"
     ],
-    "runs": 162,
+    "runs": 163,
     "skip_rate": 0.025,
     "skips_granted": 4,
     "skips_requested": 4,
@@ -625,6 +628,47 @@
         "scalability-risk",
         "hardcoded-configuration",
         "missing-security-tests"
+      ],
+      "waived_findings": 0
+    },
+    "local/demo": {
+      "actors": [
+        "arijitaich-og1o"
+      ],
+      "actors_count": 1,
+      "attested": 1,
+      "attested_rate": 1.0,
+      "block_rate": 1.0,
+      "blocked": 1,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 0,
+        "high": 1,
+        "info": 0,
+        "low": 0,
+        "medium": 2
+      },
+      "findings_per_run": 3.0,
+      "first_seen": "2026-10-09T01:20:23+00:00",
+      "flag_rate": 1.0,
+      "flagged": 1,
+      "intents": {
+        "commit": 1
+      },
+      "last_seen": "2026-10-09T01:20:23+00:00",
+      "pass_rate": 0.0,
+      "passed": 0,
+      "repos": [
+        "local/demo"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [
+        "undocumented-decision",
+        "requirement-mismatch",
+        "missing-tests"
       ],
       "waived_findings": 0
     },
