@@ -5,9 +5,9 @@
         "Anitha9765"
       ],
       "actors_count": 1,
-      "attested": 24,
+      "attested": 25,
       "attested_rate": 1.0,
-      "block_rate": 0.417,
+      "block_rate": 0.4,
       "blocked": 10,
       "developers_count": 1,
       "findings": {
@@ -17,17 +17,17 @@
         "low": 12,
         "medium": 33
       },
-      "findings_per_run": 3.67,
+      "findings_per_run": 3.52,
       "first_seen": "2026-09-30T11:47:15+00:00",
-      "flag_rate": 0.417,
+      "flag_rate": 0.4,
       "flagged": 10,
       "intents": {
-        "commit": 23,
+        "commit": 24,
         "deploy": 1
       },
-      "last_seen": "2026-10-09T06:27:34+00:00",
-      "pass_rate": 0.583,
-      "passed": 14,
+      "last_seen": "2026-10-09T06:27:55+00:00",
+      "pass_rate": 0.6,
+      "passed": 15,
       "repos": [
         "Anitha9765/psw_internal-proxy_AnithaB",
         "otto-ec/kraken_partner_order_api",
@@ -35,7 +35,7 @@
         "otto-ec/kraken_suppressions",
         "otto-ec/kraken_voucher_management_ui"
       ],
-      "runs": 24,
+      "runs": 25,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -149,8 +149,8 @@
       "waived_findings": 0
     }
   },
-  "events": 166,
-  "generated_at": "2026-10-09T06:27:52+00:00",
+  "events": 167,
+  "generated_at": "2026-10-09T06:28:11+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -213,9 +213,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 2,
-      "attested": 126,
+      "attested": 127,
       "attested_rate": 1.0,
-      "block_rate": 0.397,
+      "block_rate": 0.394,
       "blocked": 50,
       "developers_count": 2,
       "findings": {
@@ -225,18 +225,18 @@
         "low": 527,
         "medium": 879
       },
-      "findings_per_run": 15.33,
+      "findings_per_run": 15.21,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.397,
+      "flag_rate": 0.394,
       "flagged": 50,
       "intents": {
-        "commit": 109,
+        "commit": 110,
         "deploy": 6,
         "maintenance": 11
       },
-      "last_seen": "2026-10-09T06:27:34+00:00",
-      "pass_rate": 0.603,
-      "passed": 76,
+      "last_seen": "2026-10-09T06:27:55+00:00",
+      "pass_rate": 0.606,
+      "passed": 77,
       "repos": [
         "OG-DW/sofa_docs",
         "OG-DW/sofa_openhands",
@@ -251,8 +251,8 @@
         "otto-ec/kraken_voucher_management_ui",
         "unknown/unknown"
       ],
-      "runs": 126,
-      "skip_rate": 0.032,
+      "runs": 127,
+      "skip_rate": 0.031,
       "skips_granted": 4,
       "skips_requested": 4,
       "top_categories": [
@@ -272,9 +272,9 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 165,
+    "attested": 166,
     "attested_rate": 0.994,
-    "block_rate": 0.367,
+    "block_rate": 0.365,
     "blocked": 61,
     "developers_count": 3,
     "findings": {
@@ -284,18 +284,18 @@
       "low": 604,
       "medium": 1027
     },
-    "findings_per_run": 13.52,
+    "findings_per_run": 13.44,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.367,
+    "flag_rate": 0.365,
     "flagged": 61,
     "intents": {
-      "commit": 139,
+      "commit": 140,
       "deploy": 16,
       "maintenance": 11
     },
-    "last_seen": "2026-10-09T06:27:34+00:00",
-    "pass_rate": 0.633,
-    "passed": 105,
+    "last_seen": "2026-10-09T06:27:55+00:00",
+    "pass_rate": 0.635,
+    "passed": 106,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
       "OG-DW/sofa_docs",
@@ -316,7 +316,7 @@
       "otto-ec/kraken_voucher_management_ui",
       "unknown/unknown"
     ],
-    "runs": 166,
+    "runs": 167,
     "skip_rate": 0.024,
     "skips_granted": 4,
     "skips_requested": 4,
@@ -1019,7 +1019,7 @@
         "Anitha9765"
       ],
       "actors_count": 1,
-      "attested": 1,
+      "attested": 2,
       "attested_rate": 1.0,
       "block_rate": 0.0,
       "blocked": 0,
@@ -1036,15 +1036,15 @@
       "flag_rate": 0.0,
       "flagged": 0,
       "intents": {
-        "commit": 1
+        "commit": 2
       },
-      "last_seen": "2026-10-09T06:27:34+00:00",
+      "last_seen": "2026-10-09T06:27:55+00:00",
       "pass_rate": 1.0,
-      "passed": 1,
+      "passed": 2,
       "repos": [
         "otto-ec/kraken_voucher_management_ui"
       ],
-      "runs": 1,
+      "runs": 2,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
