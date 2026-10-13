@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-12T11:10:34+00:00 from 168 gate run(s)._
+_Generated 2026-10-13T11:46:08+00:00 from 169 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 168 |
-| Pass rate | 64% |
-| Runs flagged (findings at/above threshold) | 61 (36%) |
-| Runs blocked | 61 (36%) |
+| Gate runs | 169 |
+| Pass rate | 63% |
+| Runs flagged (findings at/above threshold) | 62 (37%) |
+| Runs blocked | 62 (37%) |
 | Skips requested / granted | 4 / 4 |
 | Findings waived via skips | 42 |
-| Findings per run | 13.36 |
+| Findings per run | 13.32 |
 | Runs with local client attestation | 99% |
 | Active developers / repositories | 3 / 18 |
 | Top finding categories | general, hardcoded-configuration, undocumented-decision, missing-tests, observability-gap |
@@ -22,14 +22,14 @@ _Generated 2026-10-12T11:10:34+00:00 from 168 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 128 | 61% | 50 | 4 | 30 | 382 | 879 |
+| 2026-10 | 129 | 60% | 51 | 4 | 30 | 384 | 881 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
-| anitha.bantu@og1o.in (@Anitha9765) | 26 | 62% | 10 | 10 | 0/0 | 0 | 3.38 | 100% | logic-error, undocumented-decision, breaking-api-change | 2026-10-12 |
+| anitha.bantu@og1o.in (@Anitha9765) | 27 | 59% | 11 | 11 | 0/0 | 0 | 3.48 | 100% | logic-error, general, undocumented-decision | 2026-10-13 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 7 | 29% | 5 | 5 | 0/0 | 0 | 33.57 | 100% | hardcoded-configuration, hardcoded-credential, unpinned-action-or-image | 2026-09-30 |
 
 ## Repositories
@@ -44,9 +44,9 @@ _Generated 2026-10-12T11:10:34+00:00 from 168 gate run(s)._
 | OG-DW/sofa_poc_fabro | 6 | 17% | 5 | 0 | 1 | 26.83 | general, hardcoded-configuration, observability-gap |
 | otto-ec/kraken_suppressions | 5 | 60% | 2 | 0 | 1 | 4.4 | general, hardcoded-configuration, undocumented-decision |
 | OG-DW/sofa_openhands | 4 | 0% | 4 | 0 | 1 | 44.5 | hardcoded-configuration, general, insecure-design |
+| otto-ec/kraken_partner_order_api | 4 | 75% | 1 | 0 | 1 | 1.5 | unpinned-action-or-image, missing-changelog, general |
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
-| otto-ec/kraken_partner_order_api | 3 | 100% | 0 | 0 | 1 | 0.0 | - |
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
 | otto-ec/kraken_voucher_management_ui | 2 | 100% | 0 | 0 | 1 | 0.0 | - |
