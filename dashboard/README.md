@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-14T06:36:09+00:00 from 171 gate run(s)._
+_Generated 2026-10-14T06:51:13+00:00 from 172 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 171 |
-| Pass rate | 63% |
-| Runs flagged (findings at/above threshold) | 64 (37%) |
-| Runs blocked | 64 (37%) |
+| Gate runs | 172 |
+| Pass rate | 62% |
+| Runs flagged (findings at/above threshold) | 65 (38%) |
+| Runs blocked | 65 (38%) |
 | Skips requested / granted | 4 / 4 |
 | Findings waived via skips | 42 |
-| Findings per run | 13.35 |
+| Findings per run | 13.38 |
 | Runs with local client attestation | 99% |
 | Active developers / repositories | 3 / 19 |
 | Top finding categories | general, hardcoded-configuration, missing-tests, undocumented-decision, observability-gap |
@@ -22,14 +22,14 @@ _Generated 2026-10-14T06:36:09+00:00 from 171 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 131 | 60% | 53 | 4 | 30 | 393 | 899 |
+| 2026-10 | 132 | 59% | 54 | 4 | 30 | 399 | 909 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
-| anitha.bantu@og1o.in (@Anitha9765) | 27 | 59% | 11 | 11 | 0/0 | 0 | 3.48 | 100% | logic-error, general, undocumented-decision | 2026-10-13 |
+| anitha.bantu@og1o.in (@Anitha9765) | 28 | 57% | 12 | 12 | 0/0 | 0 | 4.04 | 100% | logic-error, general, undocumented-decision | 2026-10-14 |
 | pavan.neela@og1o.in (@PavanNeela0011) | 9 | 22% | 7 | 7 | 0/0 | 0 | 29.56 | 100% | hardcoded-configuration, hardcoded-credential, missing-tests | 2026-10-14 |
 
 ## Repositories
@@ -42,9 +42,9 @@ _Generated 2026-10-14T06:36:09+00:00 from 171 gate run(s)._
 | OG-DW/sofa_docs | 9 | 56% | 4 | 0 | 1 | 15.33 | undocumented-decision, observability-gap, requirement-mismatch |
 | arijitaich-og1o/creditlens | 9 | 0% | 9 | 4 | 1 | 62.22 | general, hardcoded-configuration, breaking-api-change |
 | OG-DW/sofa_poc_fabro | 6 | 17% | 5 | 0 | 1 | 26.83 | general, hardcoded-configuration, observability-gap |
+| otto-ec/kraken_partner_order_api | 5 | 60% | 2 | 0 | 1 | 5.0 | missing-changelog, general, unpinned-action-or-image |
 | otto-ec/kraken_suppressions | 5 | 60% | 2 | 0 | 1 | 4.4 | general, hardcoded-configuration, undocumented-decision |
 | OG-DW/sofa_openhands | 4 | 0% | 4 | 0 | 1 | 44.5 | hardcoded-configuration, general, insecure-design |
-| otto-ec/kraken_partner_order_api | 4 | 75% | 1 | 0 | 1 | 1.5 | unpinned-action-or-image, missing-changelog, general |
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
