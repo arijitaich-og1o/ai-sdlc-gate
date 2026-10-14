@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-14T07:19:52+00:00 from 174 gate run(s)._
+_Generated 2026-10-14T10:34:17+00:00 from 175 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 174 |
-| Pass rate | 63% |
-| Runs flagged (findings at/above threshold) | 65 (37%) |
-| Runs blocked | 65 (37%) |
+| Gate runs | 175 |
+| Pass rate | 62% |
+| Runs flagged (findings at/above threshold) | 66 (38%) |
+| Runs blocked | 66 (38%) |
 | Skips requested / granted | 4 / 4 |
 | Findings waived via skips | 42 |
-| Findings per run | 13.22 |
+| Findings per run | 13.25 |
 | Runs with local client attestation | 99% |
 | Active developers / repositories | 3 / 20 |
 | Top finding categories | general, hardcoded-configuration, missing-tests, undocumented-decision, observability-gap |
@@ -22,7 +22,7 @@ _Generated 2026-10-14T07:19:52+00:00 from 174 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 134 | 60% | 54 | 4 | 30 | 399 | 909 |
+| 2026-10 | 135 | 59% | 55 | 4 | 30 | 404 | 919 |
 
 ## Developers
 
@@ -30,7 +30,7 @@ _Generated 2026-10-14T07:19:52+00:00 from 174 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
 | anitha.bantu@og1o.in (@Anitha9765) | 30 | 60% | 12 | 12 | 0/0 | 0 | 3.77 | 100% | logic-error, general, undocumented-decision | 2026-10-14 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 9 | 22% | 7 | 7 | 0/0 | 0 | 29.56 | 100% | hardcoded-configuration, hardcoded-credential, missing-tests | 2026-10-14 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 10 | 20% | 8 | 8 | 0/0 | 0 | 28.4 | 100% | hardcoded-configuration, observability-gap, hardcoded-credential | 2026-10-14 |
 
 ## Repositories
 
@@ -45,11 +45,11 @@ _Generated 2026-10-14T07:19:52+00:00 from 174 gate run(s)._
 | otto-ec/kraken_partner_order_api | 5 | 60% | 2 | 0 | 1 | 5.0 | missing-changelog, general, unpinned-action-or-image |
 | otto-ec/kraken_suppressions | 5 | 60% | 2 | 0 | 1 | 4.4 | general, hardcoded-configuration, undocumented-decision |
 | OG-DW/sofa_openhands | 4 | 0% | 4 | 0 | 1 | 44.5 | hardcoded-configuration, general, insecure-design |
+| otto-ec/flagship_api_composer | 3 | 0% | 3 | 0 | 1 | 16.33 | missing-resilience, observability-gap, missing-input-validation-design |
 | otto-ec/flagship_benefits_service | 3 | 0% | 3 | 0 | 1 | 29.33 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 3 | 33% | 2 | 0 | 1 | 45.67 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
-| otto-ec/flagship_api_composer | 2 | 0% | 2 | 0 | 1 | 15.5 | missing-negative-tests, missing-tests, missing-resilience |
 | otto-ec/kraken_github | 2 | 100% | 0 | 0 | 1 | 0.0 | - |
 | otto-ec/kraken_voucher_management_ui | 2 | 100% | 0 | 0 | 1 | 0.0 | - |
 | Anitha9765/psw_internal-proxy_AnithaB | 1 | 0% | 1 | 0 | 1 | 7.0 | general, logic-error, dead-code |
