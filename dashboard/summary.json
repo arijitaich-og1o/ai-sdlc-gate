@@ -5,9 +5,9 @@
         "Anitha9765"
       ],
       "actors_count": 1,
-      "attested": 28,
+      "attested": 29,
       "attested_rate": 1.0,
-      "block_rate": 0.429,
+      "block_rate": 0.414,
       "blocked": 12,
       "developers_count": 1,
       "findings": {
@@ -17,26 +17,27 @@
         "low": 14,
         "medium": 45
       },
-      "findings_per_run": 4.04,
+      "findings_per_run": 3.9,
       "first_seen": "2026-09-30T11:47:15+00:00",
-      "flag_rate": 0.429,
+      "flag_rate": 0.414,
       "flagged": 12,
       "intents": {
-        "commit": 25,
+        "commit": 26,
         "deploy": 2,
         "maintenance": 1
       },
-      "last_seen": "2026-10-14T06:50:53+00:00",
-      "pass_rate": 0.571,
-      "passed": 16,
+      "last_seen": "2026-10-14T07:18:40+00:00",
+      "pass_rate": 0.586,
+      "passed": 17,
       "repos": [
         "Anitha9765/psw_internal-proxy_AnithaB",
+        "otto-ec/kraken_github",
         "otto-ec/kraken_partner_order_api",
         "otto-ec/kraken_samplenator",
         "otto-ec/kraken_suppressions",
         "otto-ec/kraken_voucher_management_ui"
       ],
-      "runs": 28,
+      "runs": 29,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 0,
@@ -151,8 +152,8 @@
       "waived_findings": 0
     }
   },
-  "events": 172,
-  "generated_at": "2026-10-14T06:51:13+00:00",
+  "events": 173,
+  "generated_at": "2026-10-14T07:18:58+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -216,9 +217,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 3,
-      "attested": 132,
+      "attested": 133,
       "attested_rate": 1.0,
-      "block_rate": 0.409,
+      "block_rate": 0.406,
       "blocked": 54,
       "developers_count": 3,
       "findings": {
@@ -228,18 +229,18 @@
         "low": 533,
         "medium": 909
       },
-      "findings_per_run": 15.06,
+      "findings_per_run": 14.95,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.409,
+      "flag_rate": 0.406,
       "flagged": 54,
       "intents": {
-        "commit": 113,
+        "commit": 114,
         "deploy": 7,
         "maintenance": 12
       },
-      "last_seen": "2026-10-14T06:50:53+00:00",
-      "pass_rate": 0.591,
-      "passed": 78,
+      "last_seen": "2026-10-14T07:18:40+00:00",
+      "pass_rate": 0.594,
+      "passed": 79,
       "repos": [
         "OG-DW/sofa_docs",
         "OG-DW/sofa_openhands",
@@ -249,13 +250,14 @@
         "arijitaich-og1o/sofa-terraform-sandbox",
         "local/demo",
         "otto-ec/flagship_api_composer",
+        "otto-ec/kraken_github",
         "otto-ec/kraken_partner_order_api",
         "otto-ec/kraken_samplenator",
         "otto-ec/kraken_suppressions",
         "otto-ec/kraken_voucher_management_ui",
         "unknown/unknown"
       ],
-      "runs": 132,
+      "runs": 133,
       "skip_rate": 0.03,
       "skips_granted": 4,
       "skips_requested": 4,
@@ -276,9 +278,9 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 171,
+    "attested": 172,
     "attested_rate": 0.994,
-    "block_rate": 0.378,
+    "block_rate": 0.376,
     "blocked": 65,
     "developers_count": 3,
     "findings": {
@@ -288,18 +290,18 @@
       "low": 610,
       "medium": 1057
     },
-    "findings_per_run": 13.38,
+    "findings_per_run": 13.3,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.378,
+    "flag_rate": 0.376,
     "flagged": 65,
     "intents": {
-      "commit": 143,
+      "commit": 144,
       "deploy": 17,
       "maintenance": 12
     },
-    "last_seen": "2026-10-14T06:50:53+00:00",
-    "pass_rate": 0.622,
-    "passed": 107,
+    "last_seen": "2026-10-14T07:18:40+00:00",
+    "pass_rate": 0.624,
+    "passed": 108,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
       "OG-DW/sofa_docs",
@@ -315,13 +317,14 @@
       "otto-ec/flagship_benefits_service",
       "otto-ec/flagship_connection_service",
       "otto-ec/flagship_customer_service",
+      "otto-ec/kraken_github",
       "otto-ec/kraken_partner_order_api",
       "otto-ec/kraken_samplenator",
       "otto-ec/kraken_suppressions",
       "otto-ec/kraken_voucher_management_ui",
       "unknown/unknown"
     ],
-    "runs": 172,
+    "runs": 173,
     "skip_rate": 0.023,
     "skips_granted": 4,
     "skips_requested": 4,
@@ -936,6 +939,43 @@
         "missing-resilience",
         "general"
       ],
+      "waived_findings": 0
+    },
+    "otto-ec/kraken_github": {
+      "actors": [
+        "Anitha9765"
+      ],
+      "actors_count": 1,
+      "attested": 1,
+      "attested_rate": 1.0,
+      "block_rate": 0.0,
+      "blocked": 0,
+      "developers_count": 1,
+      "findings": {
+        "blocker": 0,
+        "high": 0,
+        "info": 0,
+        "low": 0,
+        "medium": 0
+      },
+      "findings_per_run": 0.0,
+      "first_seen": "2026-10-14T07:18:40+00:00",
+      "flag_rate": 0.0,
+      "flagged": 0,
+      "intents": {
+        "commit": 1
+      },
+      "last_seen": "2026-10-14T07:18:40+00:00",
+      "pass_rate": 1.0,
+      "passed": 1,
+      "repos": [
+        "otto-ec/kraken_github"
+      ],
+      "runs": 1,
+      "skip_rate": 0.0,
+      "skips_granted": 0,
+      "skips_requested": 0,
+      "top_categories": [],
       "waived_findings": 0
     },
     "otto-ec/kraken_partner_order_api": {
