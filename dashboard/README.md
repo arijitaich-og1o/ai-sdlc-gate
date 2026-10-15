@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-15T15:47:43+00:00 from 183 gate run(s)._
+_Generated 2026-10-15T15:50:05+00:00 from 184 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 183 |
+| Gate runs | 184 |
 | Pass rate | 62% |
 | Runs flagged (findings at/above threshold) | 70 (38%) |
 | Runs blocked | 70 (38%) |
 | Skips requested / granted | 5 / 4 |
 | Findings waived via skips | 42 |
-| Findings per run | 12.92 |
+| Findings per run | 12.87 |
 | Runs with local client attestation | 100% |
 | Active developers / repositories | 3 / 20 |
 | Top finding categories | general, hardcoded-configuration, undocumented-decision, missing-tests, observability-gap |
@@ -22,7 +22,7 @@ _Generated 2026-10-15T15:47:43+00:00 from 183 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 143 | 59% | 59 | 4 | 30 | 410 | 948 |
+| 2026-10 | 144 | 59% | 59 | 4 | 30 | 410 | 950 |
 
 ## Developers
 
@@ -30,7 +30,7 @@ _Generated 2026-10-15T15:47:43+00:00 from 183 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
 | anitha.bantu@og1o.in (@Anitha9765) | 30 | 60% | 12 | 12 | 0/0 | 0 | 3.77 | 100% | logic-error, general, undocumented-decision | 2026-10-14 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 18 | 33% | 12 | 12 | 1/0 | 0 | 18.33 | 100% | hardcoded-configuration, hardcoded-credential, general | 2026-10-15 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 19 | 37% | 12 | 12 | 1/0 | 0 | 17.53 | 100% | hardcoded-configuration, general, hardcoded-credential | 2026-10-15 |
 
 ## Repositories
 
@@ -41,8 +41,8 @@ _Generated 2026-10-15T15:47:43+00:00 from 183 gate run(s)._
 | otto-ec/kraken_samplenator | 15 | 53% | 7 | 0 | 1 | 3.93 | breaking-api-change, logic-error, inconsistent-api-contract |
 | OG-DW/sofa_docs | 9 | 56% | 4 | 0 | 1 | 15.33 | undocumented-decision, observability-gap, requirement-mismatch |
 | arijitaich-og1o/creditlens | 9 | 0% | 9 | 4 | 1 | 62.22 | general, hardcoded-configuration, breaking-api-change |
+| otto-ec/flagship_customer_service | 7 | 57% | 3 | 0 | 1 | 7.71 | hardcoded-configuration, general, hardcoded-credential |
 | OG-DW/sofa_poc_fabro | 6 | 17% | 5 | 0 | 1 | 26.83 | general, hardcoded-configuration, observability-gap |
-| otto-ec/flagship_customer_service | 6 | 50% | 3 | 0 | 1 | 8.5 | hardcoded-configuration, hardcoded-credential, undocumented-decision |
 | otto-ec/kraken_partner_order_api | 5 | 60% | 2 | 0 | 1 | 5.0 | missing-changelog, general, unpinned-action-or-image |
 | otto-ec/kraken_suppressions | 5 | 60% | 2 | 0 | 1 | 4.4 | general, hardcoded-configuration, undocumented-decision |
 | OG-DW/sofa_openhands | 4 | 0% | 4 | 0 | 1 | 44.5 | hardcoded-configuration, general, insecure-design |
