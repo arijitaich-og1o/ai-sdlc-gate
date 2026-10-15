@@ -109,9 +109,9 @@
         "PavanNeela0011"
       ],
       "actors_count": 1,
-      "attested": 14,
+      "attested": 15,
       "attested_rate": 1.0,
-      "block_rate": 0.786,
+      "block_rate": 0.733,
       "blocked": 11,
       "developers_count": 1,
       "findings": {
@@ -121,24 +121,24 @@
         "low": 71,
         "medium": 169
       },
-      "findings_per_run": 23.14,
+      "findings_per_run": 21.6,
       "first_seen": "2026-09-29T08:12:46+00:00",
-      "flag_rate": 0.786,
+      "flag_rate": 0.733,
       "flagged": 11,
       "intents": {
-        "commit": 6,
+        "commit": 7,
         "deploy": 8
       },
-      "last_seen": "2026-10-15T09:45:42+00:00",
-      "pass_rate": 0.214,
-      "passed": 3,
+      "last_seen": "2026-10-15T09:49:04+00:00",
+      "pass_rate": 0.267,
+      "passed": 4,
       "repos": [
         "otto-ec/flagship_api_composer",
         "otto-ec/flagship_benefits_service",
         "otto-ec/flagship_connection_service",
         "otto-ec/flagship_customer_service"
       ],
-      "runs": 14,
+      "runs": 15,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 1,
@@ -152,8 +152,8 @@
       "waived_findings": 0
     }
   },
-  "events": 179,
-  "generated_at": "2026-10-15T09:46:01+00:00",
+  "events": 180,
+  "generated_at": "2026-10-15T09:49:20+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -217,9 +217,9 @@
         "arijitaich-og1o"
       ],
       "actors_count": 3,
-      "attested": 139,
+      "attested": 140,
       "attested_rate": 1.0,
-      "block_rate": 0.417,
+      "block_rate": 0.414,
       "blocked": 58,
       "developers_count": 3,
       "findings": {
@@ -229,18 +229,18 @@
         "low": 544,
         "medium": 943
       },
-      "findings_per_run": 14.72,
+      "findings_per_run": 14.61,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.417,
+      "flag_rate": 0.414,
       "flagged": 58,
       "intents": {
-        "commit": 118,
+        "commit": 119,
         "deploy": 9,
         "maintenance": 12
       },
-      "last_seen": "2026-10-15T09:45:42+00:00",
-      "pass_rate": 0.583,
-      "passed": 81,
+      "last_seen": "2026-10-15T09:49:04+00:00",
+      "pass_rate": 0.586,
+      "passed": 82,
       "repos": [
         "OG-DW/sofa_docs",
         "OG-DW/sofa_openhands",
@@ -259,7 +259,7 @@
         "otto-ec/kraken_voucher_management_ui",
         "unknown/unknown"
       ],
-      "runs": 139,
+      "runs": 140,
       "skip_rate": 0.029,
       "skips_granted": 4,
       "skips_requested": 5,
@@ -280,9 +280,9 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 178,
+    "attested": 179,
     "attested_rate": 0.994,
-    "block_rate": 0.385,
+    "block_rate": 0.383,
     "blocked": 69,
     "developers_count": 3,
     "findings": {
@@ -292,18 +292,18 @@
       "low": 621,
       "medium": 1091
     },
-    "findings_per_run": 13.18,
+    "findings_per_run": 13.11,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.385,
+    "flag_rate": 0.383,
     "flagged": 69,
     "intents": {
-      "commit": 148,
+      "commit": 149,
       "deploy": 19,
       "maintenance": 12
     },
-    "last_seen": "2026-10-15T09:45:42+00:00",
-    "pass_rate": 0.615,
-    "passed": 110,
+    "last_seen": "2026-10-15T09:49:04+00:00",
+    "pass_rate": 0.617,
+    "passed": 111,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
       "OG-DW/sofa_docs",
@@ -326,7 +326,7 @@
       "otto-ec/kraken_voucher_management_ui",
       "unknown/unknown"
     ],
-    "runs": 179,
+    "runs": 180,
     "skip_rate": 0.022,
     "skips_granted": 4,
     "skips_requested": 5,
@@ -906,9 +906,9 @@
         "PavanNeela0011"
       ],
       "actors_count": 1,
-      "attested": 4,
+      "attested": 5,
       "attested_rate": 1.0,
-      "block_rate": 0.75,
+      "block_rate": 0.6,
       "blocked": 3,
       "developers_count": 1,
       "findings": {
@@ -918,21 +918,21 @@
         "low": 12,
         "medium": 28
       },
-      "findings_per_run": 12.25,
+      "findings_per_run": 9.8,
       "first_seen": "2026-09-29T08:12:46+00:00",
-      "flag_rate": 0.75,
+      "flag_rate": 0.6,
       "flagged": 3,
       "intents": {
-        "commit": 2,
+        "commit": 3,
         "deploy": 2
       },
-      "last_seen": "2026-10-15T09:45:42+00:00",
-      "pass_rate": 0.25,
-      "passed": 1,
+      "last_seen": "2026-10-15T09:49:04+00:00",
+      "pass_rate": 0.4,
+      "passed": 2,
       "repos": [
         "otto-ec/flagship_customer_service"
       ],
-      "runs": 4,
+      "runs": 5,
       "skip_rate": 0.0,
       "skips_granted": 0,
       "skips_requested": 1,
