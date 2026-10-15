@@ -109,28 +109,28 @@
         "PavanNeela0011"
       ],
       "actors_count": 1,
-      "attested": 11,
+      "attested": 12,
       "attested_rate": 1.0,
-      "block_rate": 0.818,
-      "blocked": 9,
+      "block_rate": 0.833,
+      "blocked": 10,
       "developers_count": 1,
       "findings": {
         "blocker": 10,
-        "high": 50,
-        "info": 19,
-        "low": 67,
-        "medium": 154
+        "high": 53,
+        "info": 20,
+        "low": 71,
+        "medium": 167
       },
-      "findings_per_run": 27.27,
+      "findings_per_run": 26.75,
       "first_seen": "2026-09-29T08:12:46+00:00",
-      "flag_rate": 0.818,
-      "flagged": 9,
+      "flag_rate": 0.833,
+      "flagged": 10,
       "intents": {
         "commit": 4,
-        "deploy": 7
+        "deploy": 8
       },
-      "last_seen": "2026-10-15T07:02:29+00:00",
-      "pass_rate": 0.182,
+      "last_seen": "2026-10-15T07:22:17+00:00",
+      "pass_rate": 0.167,
       "passed": 2,
       "repos": [
         "otto-ec/flagship_api_composer",
@@ -138,22 +138,22 @@
         "otto-ec/flagship_connection_service",
         "otto-ec/flagship_customer_service"
       ],
-      "runs": 11,
+      "runs": 12,
       "skip_rate": 0.0,
       "skips_granted": 0,
-      "skips_requested": 0,
+      "skips_requested": 1,
       "top_categories": [
         "hardcoded-configuration",
         "observability-gap",
         "hardcoded-credential",
         "undocumented-decision",
-        "missing-tests"
+        "unpinned-action-or-image"
       ],
       "waived_findings": 0
     }
   },
-  "events": 176,
-  "generated_at": "2026-10-15T07:02:46+00:00",
+  "events": 177,
+  "generated_at": "2026-10-15T07:22:36+00:00",
   "months": {
     "2026-09": {
       "actors": [
@@ -217,29 +217,29 @@
         "arijitaich-og1o"
       ],
       "actors_count": 3,
-      "attested": 136,
+      "attested": 137,
       "attested_rate": 1.0,
-      "block_rate": 0.412,
-      "blocked": 56,
+      "block_rate": 0.416,
+      "blocked": 57,
       "developers_count": 3,
       "findings": {
         "blocker": 30,
-        "high": 405,
-        "info": 119,
-        "low": 540,
-        "medium": 928
+        "high": 408,
+        "info": 120,
+        "low": 544,
+        "medium": 941
       },
-      "findings_per_run": 14.87,
+      "findings_per_run": 14.91,
       "first_seen": "2026-10-01T02:15:41+00:00",
-      "flag_rate": 0.412,
-      "flagged": 56,
+      "flag_rate": 0.416,
+      "flagged": 57,
       "intents": {
         "commit": 116,
-        "deploy": 8,
+        "deploy": 9,
         "maintenance": 12
       },
-      "last_seen": "2026-10-15T07:02:29+00:00",
-      "pass_rate": 0.588,
+      "last_seen": "2026-10-15T07:22:17+00:00",
+      "pass_rate": 0.584,
       "passed": 80,
       "repos": [
         "OG-DW/sofa_docs",
@@ -258,10 +258,10 @@
         "otto-ec/kraken_voucher_management_ui",
         "unknown/unknown"
       ],
-      "runs": 136,
+      "runs": 137,
       "skip_rate": 0.029,
       "skips_granted": 4,
-      "skips_requested": 4,
+      "skips_requested": 5,
       "top_categories": [
         "general",
         "hardcoded-configuration",
@@ -279,29 +279,29 @@
       "arijitaich-og1o"
     ],
     "actors_count": 3,
-    "attested": 175,
+    "attested": 176,
     "attested_rate": 0.994,
-    "block_rate": 0.381,
-    "blocked": 67,
+    "block_rate": 0.384,
+    "blocked": 68,
     "developers_count": 3,
     "findings": {
       "blocker": 43,
-      "high": 455,
-      "info": 144,
-      "low": 617,
-      "medium": 1076
+      "high": 458,
+      "info": 145,
+      "low": 621,
+      "medium": 1089
     },
-    "findings_per_run": 13.27,
+    "findings_per_run": 13.31,
     "first_seen": "2026-09-22T10:56:08+00:00",
-    "flag_rate": 0.381,
-    "flagged": 67,
+    "flag_rate": 0.384,
+    "flagged": 68,
     "intents": {
       "commit": 146,
-      "deploy": 18,
+      "deploy": 19,
       "maintenance": 12
     },
-    "last_seen": "2026-10-15T07:02:29+00:00",
-    "pass_rate": 0.619,
+    "last_seen": "2026-10-15T07:22:17+00:00",
+    "pass_rate": 0.616,
     "passed": 109,
     "repos": [
       "Anitha9765/psw_internal-proxy_AnithaB",
@@ -325,10 +325,10 @@
       "otto-ec/kraken_voucher_management_ui",
       "unknown/unknown"
     ],
-    "runs": 176,
+    "runs": 177,
     "skip_rate": 0.023,
     "skips_granted": 4,
-    "skips_requested": 4,
+    "skips_requested": 5,
     "top_categories": [
       "general",
       "hardcoded-configuration",
@@ -904,42 +904,42 @@
         "PavanNeela0011"
       ],
       "actors_count": 1,
-      "attested": 2,
+      "attested": 3,
       "attested_rate": 1.0,
-      "block_rate": 0.5,
-      "blocked": 1,
+      "block_rate": 0.667,
+      "blocked": 2,
       "developers_count": 1,
       "findings": {
         "blocker": 0,
-        "high": 1,
-        "info": 3,
-        "low": 8,
-        "medium": 14
+        "high": 4,
+        "info": 4,
+        "low": 12,
+        "medium": 27
       },
-      "findings_per_run": 13.0,
+      "findings_per_run": 15.67,
       "first_seen": "2026-09-29T08:12:46+00:00",
-      "flag_rate": 0.5,
-      "flagged": 1,
+      "flag_rate": 0.667,
+      "flagged": 2,
       "intents": {
         "commit": 1,
-        "deploy": 1
+        "deploy": 2
       },
-      "last_seen": "2026-10-15T07:02:29+00:00",
-      "pass_rate": 0.5,
+      "last_seen": "2026-10-15T07:22:17+00:00",
+      "pass_rate": 0.333,
       "passed": 1,
       "repos": [
         "otto-ec/flagship_customer_service"
       ],
-      "runs": 2,
+      "runs": 3,
       "skip_rate": 0.0,
       "skips_granted": 0,
-      "skips_requested": 0,
+      "skips_requested": 1,
       "top_categories": [
         "hardcoded-configuration",
         "undocumented-decision",
-        "general",
-        "insecure-design",
-        "observability-gap"
+        "observability-gap",
+        "hardcoded-credential",
+        "general"
       ],
       "waived_findings": 0
     },
