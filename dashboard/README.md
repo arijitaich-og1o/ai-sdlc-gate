@@ -1,20 +1,20 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-26T09:12:49+00:00 from 184 gate run(s)._
+_Generated 2026-10-26T15:31:22+00:00 from 185 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 184 |
+| Gate runs | 185 |
 | Pass rate | 62% |
-| Runs flagged (findings at/above threshold) | 70 (38%) |
-| Runs blocked | 70 (38%) |
+| Runs flagged (findings at/above threshold) | 71 (38%) |
+| Runs blocked | 71 (38%) |
 | Skips requested / granted | 5 / 4 |
 | Findings waived via skips | 42 |
-| Findings per run | 12.87 |
+| Findings per run | 12.97 |
 | Runs with local client attestation | 100% |
-| Active developers / repositories | 3 / 20 |
+| Active developers / repositories | 3 / 21 |
 | Top finding categories | general, hardcoded-configuration, undocumented-decision, missing-tests, observability-gap |
 
 ## Monthly trend
@@ -22,7 +22,7 @@ _Generated 2026-10-26T09:12:49+00:00 from 184 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 144 | 59% | 59 | 4 | 30 | 410 | 950 |
+| 2026-10 | 145 | 59% | 60 | 4 | 31 | 413 | 964 |
 
 ## Developers
 
@@ -30,7 +30,7 @@ _Generated 2026-10-26T09:12:49+00:00 from 184 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
 | anitha.bantu@og1o.in (@Anitha9765) | 30 | 60% | 12 | 12 | 0/0 | 0 | 3.77 | 100% | logic-error, general, undocumented-decision | 2026-10-14 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 19 | 37% | 12 | 12 | 1/0 | 0 | 17.53 | 100% | hardcoded-configuration, general, hardcoded-credential | 2026-10-15 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 20 | 35% | 13 | 13 | 1/0 | 0 | 18.2 | 100% | hardcoded-configuration, general, observability-gap | 2026-10-26 |
 
 ## Repositories
 
@@ -56,6 +56,7 @@ _Generated 2026-10-26T09:12:49+00:00 from 184 gate run(s)._
 | Anitha9765/psw_internal-proxy_AnithaB | 1 | 0% | 1 | 0 | 1 | 7.0 | general, logic-error, dead-code |
 | local/demo | 1 | 0% | 1 | 0 | 1 | 3.0 | undocumented-decision, requirement-mismatch, missing-tests |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
+| otto-ec/flagship_ottoup_ui | 1 | 0% | 1 | 0 | 1 | 31.0 | logic-error, missing-negative-tests, hardcoded-configuration |
 
 ### Reading this dashboard
 
