@@ -1,6 +1,6 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-19T09:09:59+00:00 from 184 gate run(s)._
+_Generated 2026-10-26T09:12:49+00:00 from 184 gate run(s)._
 
 ## Organisation snapshot
 
