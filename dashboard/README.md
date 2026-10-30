@@ -1,12 +1,12 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-10-26T15:31:22+00:00 from 185 gate run(s)._
+_Generated 2026-10-30T10:06:46+00:00 from 186 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 185 |
+| Gate runs | 186 |
 | Pass rate | 62% |
 | Runs flagged (findings at/above threshold) | 71 (38%) |
 | Runs blocked | 71 (38%) |
@@ -22,7 +22,7 @@ _Generated 2026-10-26T15:31:22+00:00 from 185 gate run(s)._
 | Month | Runs | Pass rate | Blocked | Skips granted | Blockers | High | Medium |
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
-| 2026-10 | 145 | 59% | 60 | 4 | 31 | 413 | 964 |
+| 2026-10 | 146 | 59% | 60 | 4 | 31 | 413 | 969 |
 
 ## Developers
 
@@ -30,7 +30,7 @@ _Generated 2026-10-26T15:31:22+00:00 from 185 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
 | anitha.bantu@og1o.in (@Anitha9765) | 30 | 60% | 12 | 12 | 0/0 | 0 | 3.77 | 100% | logic-error, general, undocumented-decision | 2026-10-14 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 20 | 35% | 13 | 13 | 1/0 | 0 | 18.2 | 100% | hardcoded-configuration, general, observability-gap | 2026-10-26 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 21 | 38% | 13 | 13 | 1/0 | 0 | 17.95 | 100% | hardcoded-configuration, hardcoded-credential, general | 2026-10-30 |
 
 ## Repositories
 
@@ -43,10 +43,10 @@ _Generated 2026-10-26T15:31:22+00:00 from 185 gate run(s)._
 | arijitaich-og1o/creditlens | 9 | 0% | 9 | 4 | 1 | 62.22 | general, hardcoded-configuration, breaking-api-change |
 | otto-ec/flagship_customer_service | 7 | 57% | 3 | 0 | 1 | 7.71 | hardcoded-configuration, general, hardcoded-credential |
 | OG-DW/sofa_poc_fabro | 6 | 17% | 5 | 0 | 1 | 26.83 | general, hardcoded-configuration, observability-gap |
+| otto-ec/flagship_api_composer | 5 | 20% | 4 | 0 | 1 | 12.8 | missing-negative-tests, missing-resilience, observability-gap |
 | otto-ec/kraken_partner_order_api | 5 | 60% | 2 | 0 | 1 | 5.0 | missing-changelog, general, unpinned-action-or-image |
 | otto-ec/kraken_suppressions | 5 | 60% | 2 | 0 | 1 | 4.4 | general, hardcoded-configuration, undocumented-decision |
 | OG-DW/sofa_openhands | 4 | 0% | 4 | 0 | 1 | 44.5 | hardcoded-configuration, general, insecure-design |
-| otto-ec/flagship_api_composer | 4 | 0% | 4 | 0 | 1 | 12.75 | missing-resilience, observability-gap, missing-input-validation-design |
 | otto-ec/flagship_benefits_service | 4 | 25% | 3 | 0 | 1 | 22.25 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 4 | 50% | 2 | 0 | 1 | 34.75 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
