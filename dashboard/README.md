@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-11-02T11:30:20+00:00 from 186 gate run(s)._
+_Generated 2026-11-05T09:00:52+00:00 from 187 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 186 |
+| Gate runs | 187 |
 | Pass rate | 62% |
-| Runs flagged (findings at/above threshold) | 71 (38%) |
-| Runs blocked | 71 (38%) |
+| Runs flagged (findings at/above threshold) | 72 (38%) |
+| Runs blocked | 72 (38%) |
 | Skips requested / granted | 5 / 4 |
 | Findings waived via skips | 42 |
-| Findings per run | 12.97 |
+| Findings per run | 13.04 |
 | Runs with local client attestation | 100% |
 | Active developers / repositories | 3 / 21 |
 | Top finding categories | general, hardcoded-configuration, undocumented-decision, missing-tests, observability-gap |
@@ -23,6 +23,7 @@ _Generated 2026-11-02T11:30:20+00:00 from 186 gate run(s)._
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
 | 2026-10 | 146 | 59% | 60 | 4 | 31 | 413 | 969 |
+| 2026-11 | 1 | 0% | 1 | 0 | 0 | 2 | 15 |
 
 ## Developers
 
@@ -30,7 +31,7 @@ _Generated 2026-11-02T11:30:20+00:00 from 186 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
 | anitha.bantu@og1o.in (@Anitha9765) | 30 | 60% | 12 | 12 | 0/0 | 0 | 3.77 | 100% | logic-error, general, undocumented-decision | 2026-10-14 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 21 | 38% | 13 | 13 | 1/0 | 0 | 17.95 | 100% | hardcoded-configuration, hardcoded-credential, general | 2026-10-30 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 22 | 36% | 14 | 14 | 1/0 | 0 | 18.36 | 100% | hardcoded-configuration, general, observability-gap | 2026-11-05 |
 
 ## Repositories
 
@@ -51,12 +52,12 @@ _Generated 2026-11-02T11:30:20+00:00 from 186 gate run(s)._
 | otto-ec/flagship_connection_service | 4 | 50% | 2 | 0 | 1 | 34.75 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
+| otto-ec/flagship_ottoup_ui | 2 | 0% | 2 | 0 | 1 | 29.0 | missing-negative-tests, missing-input-validation-design, observability-gap |
 | otto-ec/kraken_github | 2 | 100% | 0 | 0 | 1 | 0.0 | - |
 | otto-ec/kraken_voucher_management_ui | 2 | 100% | 0 | 0 | 1 | 0.0 | - |
 | Anitha9765/psw_internal-proxy_AnithaB | 1 | 0% | 1 | 0 | 1 | 7.0 | general, logic-error, dead-code |
 | local/demo | 1 | 0% | 1 | 0 | 1 | 3.0 | undocumented-decision, requirement-mismatch, missing-tests |
 | oneo-dice/oggpt-x-infra | 1 | 0% | 1 | 0 | 1 | 8.0 | missing-resilience, undocumented-decision, observability-gap |
-| otto-ec/flagship_ottoup_ui | 1 | 0% | 1 | 0 | 1 | 31.0 | logic-error, missing-negative-tests, hardcoded-configuration |
 
 ### Reading this dashboard
 
