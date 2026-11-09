@@ -1,15 +1,15 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-11-09T07:12:08+00:00 from 192 gate run(s)._
+_Generated 2026-11-09T07:47:33+00:00 from 193 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 192 |
+| Gate runs | 193 |
 | Pass rate | 60% |
-| Runs flagged (findings at/above threshold) | 77 (40%) |
-| Runs blocked | 77 (40%) |
+| Runs flagged (findings at/above threshold) | 78 (40%) |
+| Runs blocked | 78 (40%) |
 | Skips requested / granted | 5 / 4 |
 | Findings waived via skips | 42 |
 | Findings per run | 13.05 |
@@ -23,7 +23,7 @@ _Generated 2026-11-09T07:12:08+00:00 from 192 gate run(s)._
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
 | 2026-10 | 146 | 59% | 60 | 4 | 31 | 413 | 969 |
-| 2026-11 | 6 | 0% | 6 | 0 | 0 | 19 | 50 |
+| 2026-11 | 7 | 0% | 7 | 0 | 0 | 23 | 57 |
 
 ## Developers
 
@@ -31,7 +31,7 @@ _Generated 2026-11-09T07:12:08+00:00 from 192 gate run(s)._
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
 | anitha.bantu@og1o.in (@Anitha9765) | 30 | 60% | 12 | 12 | 0/0 | 0 | 3.77 | 100% | logic-error, general, undocumented-decision | 2026-10-14 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 27 | 30% | 19 | 19 | 1/0 | 0 | 17.41 | 100% | hardcoded-configuration, undocumented-decision, general | 2026-11-09 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 28 | 29% | 20 | 20 | 1/0 | 0 | 17.25 | 100% | hardcoded-configuration, undocumented-decision, general | 2026-11-09 |
 
 ## Repositories
 
@@ -40,7 +40,7 @@ _Generated 2026-11-09T07:12:08+00:00 from 192 gate run(s)._
 | unknown/unknown | 69 | 86% | 10 | 0 | 1 | 5.03 | debug-statement, missing-tests, logic-error |
 | arijitaich-og1o/ai-sdlc-gate | 32 | 69% | 10 | 0 | 1 | 10.38 | missing-negative-tests, undocumented-decision, hardcoded-configuration |
 | otto-ec/kraken_samplenator | 15 | 53% | 7 | 0 | 1 | 3.93 | breaking-api-change, logic-error, inconsistent-api-contract |
-| otto-ec/flagship_api_composer | 10 | 10% | 9 | 0 | 1 | 13.0 | undocumented-decision, hardcoded-configuration, missing-negative-tests |
+| otto-ec/flagship_api_composer | 11 | 9% | 10 | 0 | 1 | 13.0 | undocumented-decision, missing-negative-tests, missing-resilience |
 | OG-DW/sofa_docs | 9 | 56% | 4 | 0 | 1 | 15.33 | undocumented-decision, observability-gap, requirement-mismatch |
 | arijitaich-og1o/creditlens | 9 | 0% | 9 | 4 | 1 | 62.22 | general, hardcoded-configuration, breaking-api-change |
 | otto-ec/flagship_customer_service | 7 | 57% | 3 | 0 | 1 | 7.71 | hardcoded-configuration, general, hardcoded-credential |
