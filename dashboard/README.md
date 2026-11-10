@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-11-10T09:43:48+00:00 from 201 gate run(s)._
+_Generated 2026-11-10T10:02:40+00:00 from 202 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 201 |
-| Pass rate | 59% |
-| Runs flagged (findings at/above threshold) | 84 (42%) |
-| Runs blocked | 83 (41%) |
+| Gate runs | 202 |
+| Pass rate | 58% |
+| Runs flagged (findings at/above threshold) | 85 (42%) |
+| Runs blocked | 84 (42%) |
 | Skips requested / granted | 8 / 7 |
 | Findings waived via skips | 44 |
-| Findings per run | 13.36 |
+| Findings per run | 13.32 |
 | Runs with local client attestation | 100% |
 | Active developers / repositories | 3 / 21 |
 | Top finding categories | general, hardcoded-configuration, undocumented-decision, missing-tests, observability-gap |
@@ -23,14 +23,14 @@ _Generated 2026-11-10T09:43:48+00:00 from 201 gate run(s)._
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
 | 2026-10 | 146 | 59% | 60 | 4 | 31 | 413 | 969 |
-| 2026-11 | 15 | 20% | 12 | 3 | 0 | 44 | 142 |
+| 2026-11 | 16 | 19% | 13 | 3 | 0 | 46 | 144 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 36 | 31% | 26 | 25 | 4/3 | 2 | 18.08 | 100% | hardcoded-configuration, general, undocumented-decision | 2026-11-10 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 37 | 30% | 27 | 26 | 4/3 | 2 | 17.7 | 100% | hardcoded-configuration, undocumented-decision, general | 2026-11-10 |
 | anitha.bantu@og1o.in (@Anitha9765) | 30 | 60% | 12 | 12 | 0/0 | 0 | 3.77 | 100% | logic-error, general, undocumented-decision | 2026-10-14 |
 
 ## Repositories
@@ -41,7 +41,7 @@ _Generated 2026-11-10T09:43:48+00:00 from 201 gate run(s)._
 | arijitaich-og1o/ai-sdlc-gate | 32 | 69% | 10 | 0 | 1 | 10.38 | missing-negative-tests, undocumented-decision, hardcoded-configuration |
 | otto-ec/flagship_customer_service | 15 | 47% | 8 | 3 | 1 | 14.8 | general, hardcoded-configuration, undocumented-decision |
 | otto-ec/kraken_samplenator | 15 | 53% | 7 | 0 | 1 | 3.93 | breaking-api-change, logic-error, inconsistent-api-contract |
-| otto-ec/flagship_api_composer | 11 | 9% | 10 | 0 | 1 | 13.0 | undocumented-decision, missing-negative-tests, missing-resilience |
+| otto-ec/flagship_api_composer | 12 | 8% | 11 | 0 | 1 | 12.25 | undocumented-decision, missing-negative-tests, missing-tests |
 | OG-DW/sofa_docs | 9 | 56% | 4 | 0 | 1 | 15.33 | undocumented-decision, observability-gap, requirement-mismatch |
 | arijitaich-og1o/creditlens | 9 | 0% | 9 | 4 | 1 | 62.22 | general, hardcoded-configuration, breaking-api-change |
 | OG-DW/sofa_poc_fabro | 6 | 17% | 5 | 0 | 1 | 26.83 | general, hardcoded-configuration, observability-gap |
