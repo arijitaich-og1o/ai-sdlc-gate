@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-11-19T07:13:28+00:00 from 218 gate run(s)._
+_Generated 2026-11-19T07:16:19+00:00 from 219 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 218 |
-| Pass rate | 59% |
-| Runs flagged (findings at/above threshold) | 91 (42%) |
-| Runs blocked | 90 (41%) |
+| Gate runs | 219 |
+| Pass rate | 58% |
+| Runs flagged (findings at/above threshold) | 92 (42%) |
+| Runs blocked | 91 (42%) |
 | Skips requested / granted | 8 / 7 |
 | Findings waived via skips | 44 |
-| Findings per run | 12.81 |
+| Findings per run | 12.82 |
 | Runs with local client attestation | 100% |
 | Active developers / repositories | 3 / 22 |
 | Top finding categories | general, undocumented-decision, hardcoded-configuration, missing-tests, observability-gap |
@@ -23,14 +23,14 @@ _Generated 2026-11-19T07:13:28+00:00 from 218 gate run(s)._
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
 | 2026-10 | 146 | 59% | 60 | 4 | 31 | 413 | 969 |
-| 2026-11 | 32 | 41% | 19 | 3 | 0 | 69 | 192 |
+| 2026-11 | 33 | 39% | 20 | 3 | 0 | 71 | 201 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 49 | 41% | 30 | 29 | 4/3 | 2 | 15.0 | 100% | general, undocumented-decision, hardcoded-configuration | 2026-11-19 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 50 | 40% | 31 | 30 | 4/3 | 2 | 15.0 | 100% | undocumented-decision, general, hardcoded-configuration | 2026-11-19 |
 | anitha.bantu@og1o.in (@Anitha9765) | 34 | 56% | 15 | 15 | 0/0 | 0 | 3.97 | 100% | undocumented-decision, general, logic-error | 2026-11-19 |
 
 ## Repositories
@@ -51,7 +51,7 @@ _Generated 2026-11-19T07:13:28+00:00 from 218 gate run(s)._
 | OG-DW/sofa_openhands | 4 | 0% | 4 | 0 | 1 | 44.5 | hardcoded-configuration, general, insecure-design |
 | otto-ec/flagship_benefits_service | 4 | 25% | 3 | 0 | 1 | 22.25 | missing-tests, hardcoded-credential, hardcoded-configuration |
 | otto-ec/flagship_connection_service | 4 | 50% | 2 | 0 | 1 | 34.75 | unpinned-action-or-image, missing-changelog, hardcoded-credential |
-| otto-ec/flagship_customer_management_ui | 3 | 33% | 2 | 0 | 1 | 11.0 | undocumented-decision, timezone-bug, logic-error |
+| otto-ec/flagship_customer_management_ui | 4 | 25% | 3 | 0 | 1 | 12.0 | undocumented-decision, logic-error, tight-coupling |
 | arijitaich-og1o/sofa-terraform-sandbox | 2 | 0% | 2 | 0 | 1 | 90.5 | general, missing-negative-tests, scalability-risk |
 | oneo-dice/oggpt-x-backend | 2 | 100% | 0 | 0 | 1 | 7.0 | missing-changelog, capacity-risk, observability-gap |
 | otto-ec/kraken_github | 2 | 100% | 0 | 0 | 1 | 0.0 | - |
