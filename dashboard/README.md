@@ -1,18 +1,18 @@
 # AI SDLC Gate — Organisation Dashboard
 
-_Generated 2026-11-19T07:38:34+00:00 from 220 gate run(s)._
+_Generated 2026-11-19T10:27:19+00:00 from 221 gate run(s)._
 
 ## Organisation snapshot
 
 | Metric | Value |
 |---|---|
-| Gate runs | 220 |
+| Gate runs | 221 |
 | Pass rate | 58% |
 | Runs flagged (findings at/above threshold) | 93 (42%) |
 | Runs blocked | 92 (42%) |
 | Skips requested / granted | 8 / 7 |
 | Findings waived via skips | 44 |
-| Findings per run | 12.79 |
+| Findings per run | 12.73 |
 | Runs with local client attestation | 100% |
 | Active developers / repositories | 3 / 22 |
 | Top finding categories | general, undocumented-decision, hardcoded-configuration, missing-tests, observability-gap |
@@ -23,14 +23,14 @@ _Generated 2026-11-19T07:38:34+00:00 from 220 gate run(s)._
 |---|---|---|---|---|---|---|---|
 | 2026-09 | 40 | 72% | 11 | 0 | 13 | 50 | 148 |
 | 2026-10 | 146 | 59% | 60 | 4 | 31 | 413 | 969 |
-| 2026-11 | 34 | 38% | 21 | 3 | 0 | 72 | 205 |
+| 2026-11 | 35 | 40% | 21 | 3 | 0 | 72 | 205 |
 
 ## Developers
 
 | Developer | Runs | Pass rate | Flagged | Blocked | Skips req/granted | Waived findings | Findings/run | Client attested | Top categories | Last seen |
 |---|---|---|---|---|---|---|---|---|---|---|
 | arijit.aich@og1o.in (@arijitaich-og1o) | 135 | 66% | 46 | 46 | 4/4 | 42 | 14.24 | 99% | general, hardcoded-configuration, missing-tests | 2026-10-09 |
-| pavan.neela@og1o.in (@PavanNeela0011) | 51 | 39% | 32 | 31 | 4/3 | 2 | 14.84 | 100% | undocumented-decision, general, hardcoded-configuration | 2026-11-19 |
+| pavan.neela@og1o.in (@PavanNeela0011) | 52 | 40% | 32 | 31 | 4/3 | 2 | 14.56 | 100% | undocumented-decision, general, hardcoded-configuration | 2026-11-19 |
 | anitha.bantu@og1o.in (@Anitha9765) | 34 | 56% | 15 | 15 | 0/0 | 0 | 3.97 | 100% | undocumented-decision, general, logic-error | 2026-11-19 |
 
 ## Repositories
@@ -41,7 +41,7 @@ _Generated 2026-11-19T07:38:34+00:00 from 220 gate run(s)._
 | arijitaich-og1o/ai-sdlc-gate | 32 | 69% | 10 | 0 | 1 | 10.38 | missing-negative-tests, undocumented-decision, hardcoded-configuration |
 | otto-ec/flagship_customer_service | 15 | 47% | 8 | 3 | 1 | 14.8 | general, hardcoded-configuration, undocumented-decision |
 | otto-ec/kraken_samplenator | 15 | 53% | 7 | 0 | 1 | 3.93 | breaking-api-change, logic-error, inconsistent-api-contract |
-| otto-ec/flagship_api_composer | 13 | 15% | 11 | 0 | 1 | 11.69 | undocumented-decision, hardcoded-configuration, missing-negative-tests |
+| otto-ec/flagship_api_composer | 14 | 21% | 11 | 0 | 1 | 10.86 | undocumented-decision, hardcoded-configuration, missing-negative-tests |
 | otto-ec/flagship_ottoup_ui | 10 | 70% | 3 | 0 | 1 | 10.0 | missing-negative-tests, missing-security-tests, missing-input-validation-design |
 | OG-DW/sofa_docs | 9 | 56% | 4 | 0 | 1 | 15.33 | undocumented-decision, observability-gap, requirement-mismatch |
 | arijitaich-og1o/creditlens | 9 | 0% | 9 | 4 | 1 | 62.22 | general, hardcoded-configuration, breaking-api-change |
